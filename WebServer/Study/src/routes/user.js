@@ -18,12 +18,27 @@ var login = function(req,res){
                     
             if(docs){
                 console.dir(docs);
+                
                 res.writeHead(200, {"Content-Type":"text/html;charset=utf-8"});
-                res.write('<h1>사용자 로그인 성공</h1>');
-                res.write('<div><p>사용자 : ' + docs[0].name + '</p></div>')
-                res.write('<br><br><a href="/public/login.html">다시 로그인하기</a>');
-                res.end();
-                return;
+                    
+                var context = {
+                    userid: paramId,
+                    username: docs[0].name
+                }
+                req.app.render('login_success', context, function(err, html){
+                    if(err){
+                        console.log('뷰 렌더링 중 에러 발생 : ' + err.stack);
+                        console.log('에러 발생.');
+                                
+                        res.writeHead(200, {"Content-Type":"text/html;charset=utf-8"});
+                        res.write('<h1>뷰 렌더링 중 에러 발생</h1>');
+                        res.write('<br><p>' + err.stack + '</p>');
+                        res.end();
+                        return;
+                    }
+                    res.end(html);
+                })
+                
             }else{
                 console.log('에러 발생.');
                 res.writeHead(200, {"Content-Type":"text/html;charset=utf-8"});
