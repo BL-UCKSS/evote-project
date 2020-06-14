@@ -1,6 +1,6 @@
 # Nodejs Web Server
 ## Language
-* Frontend : HTML+CSS+Javascript
+* Frontend : HTML+CSS+Javascript, JQuery
 * Backend : Node.js
 
 ## Project setup
