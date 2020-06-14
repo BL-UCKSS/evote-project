@@ -27,9 +27,9 @@
         var selected = $('select option:selected').val();
         if(selected){
             $.ajax({
-                type: "GET",
+                type: "POST",
                 url:'/queryWithQueryString',
-                data: {'selected':$('select option:selected').val()},
+                data: {'selected':selected},
                 success:function(data){
                     $('#querybytype').html(data);
                 }

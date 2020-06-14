@@ -1,10 +1,11 @@
+/* eslint-disable require-atomic-updates */
 'use strict';
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 //const morgan = require('morgan');
-const util = require('util');
+//const util = require('util');
 const path = require('path');
 const fs = require('fs');
 const servestatic = require('serve-static');
@@ -13,6 +14,7 @@ let network = require('./fabric/network.js');
 
 const app = express();
 //app.use(morgan('combined'));
+app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 app.use(cors());
 app.use('/public', servestatic(path.join(process.cwd(), 'public')));
@@ -31,19 +33,19 @@ const appAdmin = config.appAdmin;
 const htmlrender = function(req, res, fname, context){
   req.app.render(fname, context, function(err, html){
     if(err){
-      res.writeHead(200, {"Content-Type":"text/html;charset=utf-8"});
+      res.writeHead(200, {'Content-Type':'text/html;charset=utf-8'});
       res.write('<h1>뷰 렌더링 중 에러 발생</h1>');
       res.write('<br><p>'+err.stack + '</p>');
       res.end();
       return;
     }
-    res.writeHead(200, {"Content-Type":"text/html;charset=utf-8"});
+    res.writeHead(200, {'Content-Type':'text/html;charset=utf-8'});
     res.end(html);
-  })
-}
+  });
+};
 
 app.get('/', async (req, res) => {
-  let context = {}
+  let context = {};
   htmlrender(req, res, 'home', context);
 });
 
@@ -57,9 +59,19 @@ app.get('/querybytype', async (req, res) => {
   htmlrender(req, res, 'querybytype', context);
 });
 
+app.get('/querybykey', async (req, res) => {
+  let context = {};
+  htmlrender(req, res, 'querybykey', context);
+});
+
 app.get('/checkrating', async (req, res) => {
   let context = {};
   htmlrender(req, res, 'checkrating', context);
+});
+
+app.get('/castBallot', async (req, res) => {
+  let context = {};
+  htmlrender(req, res, 'vote', context);
 });
 
 //get all assets in world state
@@ -88,8 +100,8 @@ app.post('/castBallot', async (req, res) => {
   ////console.log('util inspecting');
   ////console.log(util.inspect(networkObj));
   req.body = JSON.stringify(req.body);
-  ////console.log('req.body');
-  ////console.log(req.body);
+  console.log('req.body');
+  console.log(req.body);
   let args = [req.body];
 
   let response = await network.invoke(networkObj, false, 'castVote', args);
@@ -104,7 +116,7 @@ app.post('/castBallot', async (req, res) => {
 });
 
 //query for certain objects within the world state
-app.get('/queryWithQueryString', async (req, res) => {
+app.post('/queryWithQueryString', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', req.query.selected);
   let parsedResponse = await JSON.parse(response);

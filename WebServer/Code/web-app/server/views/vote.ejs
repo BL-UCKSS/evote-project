@@ -1,0 +1,75 @@
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+</head>
+
+<body>
+    <%- include('header.ejs'); %>
+    <div class="posts">
+        <h1>Cast Ballot</h1>
+        <input type="radio" id="one" name="ballot" value="Republican">
+        <label for="one">Donald Trump (Republican)</label><br>
+        <input type="radio" id="two" name="ballot" value="Democrat">
+        <label for="two">TBA (Democratic)</label><br>
+        <input type="radio" id="three" name="ballot" value="Green">
+        <label for="three">TBA (Green Party)</label><br>
+        <input type="radio" id="four" name="ballot" value="Independent">
+        <label for="four">TBA (Independent)</label><br>
+        <input type="radio" id="five" name="ballot" value="Libertarian">
+        <label for="five">TBA (Libertarian)</label><br><br>
+        <span id="picked"></span><br><br>
+        <input type="text" id="voterId" placeholder="Enter VoterId" value=""><br>
+        <input type="hidden" id="electionId" value="1">
+        <button onclick="vote()">Cast Vote</button><br>
+        <br>
+        <span id="castBallot"><b></b></span><br>
+        <!---->
+    </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    var vote = function () {
+        var electionId = $('#electionId').val();
+        var picked = $('input[type=radio]:checked').val();
+        var voterId = $('#voterId').val();
+        if(picked == undefined|| picked == ''){
+            console.log(picked == '');
+            $('#castBallot > b').html('You have to pick a party to vote for!');
+            return;
+        }
+        else if (voterId == undefined || voterId == ''){
+            $('#castBallot > b').html('You have to enter your voterId to cast a vote!');
+            return;
+        }
+        else {
+            $.ajax({
+                type: "POST",
+                url: '/castBallot',
+                data: { 'electionId': electionId,
+                        'picked': picked,
+                        'voterId': voterId },
+                success: function (data) {
+                    var d = JSON.parse(data);
+                    if(d.error){
+                        $('#castBallot > b').html(d.error);
+                    }
+                    else{
+                        $('#castBallot > b').html(JSON.stringify(data, undefined, 4));
+                    }
+                }
+            })
+        }
+    }
+    $(function(){
+        $('input[type=radio]').click(function(){
+            var radioValue = $(this).val();
+            radioValue = '<b>'+radioValue+'</b>';
+            $('#picked').html('Picked : ' + radioValue);
+        })
+    })
+</script>
+
+</html>

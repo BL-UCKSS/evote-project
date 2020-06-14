@@ -7,26 +7,65 @@
 <body style="text-align: center;">
     <%- include('header.ejs'); %>
     <div class="posts">
-            <h1>2020 Presidential Election</h1>
-            <h3>If you are a registered voter, enter your voterId below</h3>
-            <form method="post" action="">
-                <input type="text" placeholder="Enter VoterId"><br>
-                <input type="submit" value="Login"><br><br>
-                <span><b></b></span><br>
-            </form><br>
-            <h3>Otherwise, fill out the form below to register!</h3>
-            <form method="post" action="/registerVoter">
-                <input type="text" placeholder="Enter Drivers License"><br>
-                <input type="text" placeholder="Enter Registrar ID"><br>
-                <input type="text" placeholder="Enter first name"><br>
-                <input type="text" placeholder="Enter last name"><br>
-                <input type="submit" value="Register">
-            </form><br>
-            <span><b></b></span><br>
-            <!---->
-        </div>
+        <h1>2020 Presidential Election</h1>
+        <h3>If you are a registered voter, enter your voterId below</h3>
+        <input id="voterId" type="text" placeholder="Enter VoterId"><br>
+        <button onclick="login()">Login</button><br><br>
+        <span id="validateVoter"><b></b></span><br>
+        <br>
+        <h3>Otherwise, fill out the form below to register!</h3>
+            <input id="voterId2" type="text" placeholder="Enter Drivers License"><br>
+            <input id="registrarId" type="text" placeholder="Enter Registrar ID"><br>
+            <input id="firstName" type="text" placeholder="Enter first name"><br>
+            <input id="lastName" type="text" placeholder="Enter last name"><br>
+            <button onclick="register()">Register</button>
+        <br>
+        <span id="registerVoter"><b></b></span><br>
+        <!---->
     </div>
-    <!-- built files will be auto injected -->
+    </div>
 </body>
+
+<script type="text/javascript">
+    var login = function () {
+        var voterId = $('#voterId').val();
+        if (voterId.length != 0 || voterId != undefined || voterId != '') {
+            $.ajax({
+                type: "POST",
+                url: '/validateVoter',
+                data: { 'voterId': voterId },
+                success: function (data) {
+                    location.replace('/castBallot');
+                }
+            })
+        }else {
+            $('#validateVoter > b').html('Please enter a VoterId');
+        }
+    }
+    var register = function () {
+        var voterId = $('#voterId2').val();
+        var registrarId = $('#registrarId').val();
+        var firstName = $('#firstName').val();
+        var lastName = $('#lastName').val();
+        if (voterId.length != 0 ||
+        registrarId.length != 0 ||
+        firstName.length != 0 ||
+        lastName.length != 0) {
+            $.ajax({
+                type: "POST",
+                url: '/registerVoter',
+                data: { 'voterId': voterId,
+                        'registrarId': registrarId,
+                        'firstName': firstName,
+                        'lastName': lastName },
+                success: function (data) {
+                    $('#registerVoter > b').html(JSON.stringify(data, undefined, 4));
+                }
+            })
+        }else{
+            $('#registerVoter > b').html('Error! You need to fill all fields before you can register!');
+        }
+    }
+</script>
 
 </html>
