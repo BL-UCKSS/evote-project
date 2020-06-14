@@ -1,7 +1,7 @@
 # evote-project
 Capstone Design - evote hyperledger fabric project
 
-# To-Do
+# To-Do List
 ## 공통
 1. Prototype 마무리
 2. 발표 PPT 제작
