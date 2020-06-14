@@ -1,0 +1,32 @@
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+</head>
+
+<body style="text-align: center;">
+    <%- include('header.ejs'); %>
+    <div class="posts">
+            <h1>2020 Presidential Election</h1>
+            <h3>If you are a registered voter, enter your voterId below</h3>
+            <form method="post" action="">
+                <input type="text" placeholder="Enter VoterId"><br>
+                <input type="submit" value="Login"><br><br>
+                <span><b></b></span><br>
+            </form><br>
+            <h3>Otherwise, fill out the form below to register!</h3>
+            <form method="post" action="/registerVoter">
+                <input type="text" placeholder="Enter Drivers License"><br>
+                <input type="text" placeholder="Enter Registrar ID"><br>
+                <input type="text" placeholder="Enter first name"><br>
+                <input type="text" placeholder="Enter last name"><br>
+                <input type="submit" value="Register">
+            </form><br>
+            <span><b></b></span><br>
+            <!---->
+        </div>
+    </div>
+    <!-- built files will be auto injected -->
+</body>
+
+</html>
