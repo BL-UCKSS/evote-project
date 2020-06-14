@@ -7,8 +7,7 @@ Capstone Design - evote hyperledger fabric project
 2. 발표 PPT 제작
 3. 발표 준비
 
-## Webserver Part
-Code Link : [**클릭**](https://github.com/BL-UCKSS/evote-project/tree/master/WebServer/Code/web-app)
+## Webserver Part (Code Link : [**클릭**](https://github.com/BL-UCKSS/evote-project/tree/master/WebServer/Code/web-app))
 1. ibm evote Frontend Vue에서 HTML+CSS+Javascript로 변환작업 (**완료**)
 2. Database MongoDB로 구현작업
 3. UI 설계한 대로 구현작업
