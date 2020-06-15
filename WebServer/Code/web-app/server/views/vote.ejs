@@ -32,7 +32,7 @@
 
 <script type="text/javascript">
     var vote = function () {
-        var electionId = $('#electionId').val();
+        // var electionId = $('#electionId').val();
         var picked = $('input[type=radio]:checked').val();
         var voterId = $('#voterId').val();
         if(picked == undefined|| picked == ''){
@@ -45,24 +45,41 @@
             return;
         }
         else {
+            var electionId = '';
+
             $.ajax({
                 type: "POST",
-                url: '/castBallot',
-                data: { 'electionId': electionId,
-                        'picked': picked,
-                        'voterId': voterId },
-                success: function (data) {
-                    var d = JSON.parse(data);
-                    if(d.error){
-                        $('#castBallot > b').html(d.error);
-                    }
-                    else{
-                        $('#castBallot > b').html(JSON.stringify(data, undefined, 4));
-                    }
+                url:'/queryWithQueryString',
+                data: {'selected': 'election'},
+                success:function(data){
+                    var json_data = JSON.parse(data);
+                    // console.log(json_data[0]);
+                    electionId = json_data[0].Key;
+                    // electionId = JSON.stringify(electionId);
+
+                    $.ajax({
+                        type: "POST",
+                        url: '/castBallot',
+                        data: { 'electionId': electionId,
+                                'picked': picked,
+                                'voterId': voterId },
+                        success: function (data) {
+                            var d = JSON.parse(data);
+                            if(d.error){
+                                $('#castBallot > b').html(d.error);
+                            }
+                            else{
+                                $('#castBallot > b').html(JSON.stringify(data, undefined, 4));
+                            }
+                        }
+                    })
                 }
             })
+
+            
         }
     }
+    
     $(function(){
         $('input[type=radio]').click(function(){
             var radioValue = $(this).val();
