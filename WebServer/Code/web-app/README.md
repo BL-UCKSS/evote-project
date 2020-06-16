@@ -1,7 +1,7 @@
 # Nodejs Web Server
 ## Language
 * Frontend : HTML+CSS+Javascript, JQuery
-* Backend : Node.js
+* Backend : Node.js, Fabric APIs
 
 ## Project setup
 ```
