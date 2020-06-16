@@ -14,5 +14,6 @@ Capstone Design - evote hyperledger fabric project
 4. Chaincode에 맞춰서 Backend+Frontend 구현작업
 
 ## Chaincode Part
-1. (써주세요.)
-2. (써주세요.)
+1. contract/lib 폴더 내부 함수 요구사항분석에 맞추어 변경
+2. invoke, registeruser 등의 체인코드 변경
+3. 서버와 동기화 확인
