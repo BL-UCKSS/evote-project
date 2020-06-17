@@ -8,8 +8,9 @@
     <%- include('header.ejs'); %>
     <div class="posts">
         <h1>2020 Presidential Election</h1>
-        <h3>If you are a registered voter, enter your voterId below</h3>
-        <input id="voterId" type="text" placeholder="Enter VoterId"><br>
+        <h3>If you are a registered voter, enter your Student Number below</h3>
+        <input id="voterId" type="text" placeholder="Enter Student Number"><br>
+        <input id="pwd" type="password" name="password" placeholder="Enter Password"><br>
         <button onclick="login()">Login</button><br><br>
         <span id="validateVoter"><b></b></span><br>
         <br>
@@ -28,18 +29,38 @@
 
 <script type="text/javascript">
     var login = function () {
-        var voterId = $('#voterId').val();
-        if (voterId.length != 0 || voterId != undefined || voterId != '') {
+        var voterId = $('#voterId').val(); //학번
+        var pwd = $('#pwd').val(); //비번
+        
+        if (voterId.length == 0 || voterId == undefined || voterId == '') {
+            $('#validateVoter > b').html('Please enter a Student Number');
+            return;
+        }else if(pwd.length == 0 || pwd == undefined || pwd == ''){
+            $('#validateVoter > b').html('Please enter a Password');
+            return;
+        }
+        else {
             $.ajax({
                 type: "POST",
-                url: '/validateVoter',
-                data: { 'voterId': voterId },
-                success: function (data) {
-                    location.replace('/castBallot');
+                url: '/process/login',
+                data: {'voterId':voterId,
+                        'password':pwd},
+                success: function(data){
+                    if(data.success){
+                        $.ajax({
+                            type: "POST",
+                            url: '/validateVoter',
+                            data: { 'voterId': voterId },
+                            success: function (data) {
+                                location.replace('/castBallot');
+                            }
+                        });
+                    }else{
+                        $('#validateVoter > b').html('There is no user');
+                    }
                 }
-            })
-        }else {
-            $('#validateVoter > b').html('Please enter a VoterId');
+            });
+            
         }
     }
     var register = function () {

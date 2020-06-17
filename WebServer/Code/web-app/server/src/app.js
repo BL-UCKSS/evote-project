@@ -10,7 +10,61 @@ const path = require('path');
 const fs = require('fs');
 const servestatic = require('serve-static');
 
+// sso user login 세션 관리용
+const cookieParser = require('cookie-parser');
+const expressSession = require('express-session');
+
 let network = require('./fabric/network.js');
+
+// mongoose 모듈 사용
+let mongoose = require('mongoose');
+
+let database;
+let UserSchema;
+let UserModel;
+
+function connectDB() {
+  let databaseUrl = 'mongodb://localhost:27017/local';
+  
+  mongoose.Promise = global.Promise;
+  mongoose.connect(databaseUrl);
+  database = mongoose.connection;
+  
+  database.on('open', function() {
+    console.log('데이터베이스에 연결됨 : ' + databaseUrl);
+      
+          
+    UserSchema = mongoose.Schema({
+      stdno: {type:String, required:true, unique:true},
+      password: {type:String, required:true},
+      name: {type:String, index:'hashed'},
+      grade: {type:Number, default:1, required:true},
+      dept: {type:String, required:true},
+      stat: {type:String, required:true},
+      email: {type:String, required:true},
+    });
+    console.log('UserSchema 정의함.');
+      
+    //함수 등록(이후 모델 객체에서 사용가능)
+    UserSchema.static('findById', function(stdno, callback) {
+      return this.find({stdno:stdno}, callback);        
+    });
+          
+    UserSchema.static('findAll', function(callback){
+      return this.find({}, callback);        
+    });
+          
+    UserModel = mongoose.model('ssousers', UserSchema);
+    console.log('UserModel 정의함.');
+      
+  });
+  
+  database.on('disconnected', function(){
+    console.log('데이터베이스 연결 끊어짐.');    
+  });
+  
+  database.on('error', console.error.bind(console, 'mongoose 연결 에러.'));
+}
 
 const app = express();
 //app.use(morgan('combined'));
@@ -19,6 +73,13 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use('/public', servestatic(path.join(process.cwd(), 'public')));
 app.use('/img', servestatic(path.join(process.cwd(), 'public/img')));
+
+app.use(cookieParser());
+app.use(expressSession({
+  secret:'my key',
+  resave:true,
+  saveUninitialized:true
+}));
 
 app.set('views', path.join(process.cwd(), '/views'));
 app.set('view engine', 'ejs');
@@ -49,6 +110,73 @@ app.get('/', async (req, res) => {
   htmlrender(req, res, 'home', context);
 });
 
+// SSO 로그인 관련 router
+let authUser = function(database, stdno, password, callback) {
+  console.log('authUser 호출됨 : ' + stdno + ', ' + password);
+  
+  UserModel.findById(stdno, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    console.log('아이디 %s로 검색됨.');
+    if(result.length > 0){
+      if(result[0]._doc.password === password) {
+        console.log('비밀번호 일치함.');
+        callback(null, result);
+      } else {
+        console.log('비밀번호 일치하지 않음.');
+        callback(null, null);
+      }
+    }else{
+      console.log('아이디 일치하는 사용자 없음.');
+      callback(null, null);
+    }
+  });
+  
+};
+
+app.post('/process/login', async (req, res) => {
+  console.log('/process/login 라우팅 함수 호출됨.');
+      
+  let paramStdno = req.body.voterId || req.query.voterId;
+  let paramPassword = req.body.password || req.query.password;
+  console.log('요청 파라미터 : ' + paramStdno + ', ' + paramPassword);    
+  
+  if (database) {
+    authUser(database, paramStdno, paramPassword, function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+                  
+      if(docs){
+        console.dir(docs);
+        //사용자 로그인 성공
+        let context = {success:'login successful'};
+        res.send(context);
+        return;
+      }else{
+        console.log('에러 발생.');
+        //사용자 데이터 조회 안됨
+        let context = {error:'no user'};
+        res.send(context);
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+});
+
+// vote 관련 router
 app.get('/queryallpage', async (req, res) => {
   let context = {};
   htmlrender(req, res, 'queryall', context);
@@ -224,4 +352,7 @@ app.all('*', function(req, res) {
 
 app.listen(process.env.PORT || 8081, function(){
   console.log('server is running : '+8081);
+
+  //DB연결
+  connectDB();
 });
