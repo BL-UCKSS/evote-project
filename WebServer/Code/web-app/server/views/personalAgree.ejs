@@ -64,29 +64,8 @@
                             url: '/validateVoter',
                             data: { 'voterId': voterId },
                             success: function (data) {
-                                //투표를 기권표로 투표한다.
-                                var electionId = '';
-                                $.ajax({
-                                    type: "POST",
-                                    url:'/queryWithQueryString',
-                                    data: {'selected': 'election'},
-                                    success:function(data){
-                                        var json_data = JSON.parse(data);
-                                        electionId = json_data[0].Key;
-
-                                        $.ajax({
-                                            type: "POST",
-                                            url: '/castBallot',
-                                            data: { 'electionId': electionId,
-                                                    'picked': 'blank',
-                                                    'voterId': voterId },
-                                            success: function (data) {
-                                                //홈으로 돌아간다.
-                                                location.replace('/');
-                                            }
-                                        })
-                                    }
-                                })
+                                //동의안하면 그냥 홈으로 돌아간다
+                                location.replace('/');
                             }
                         });
                     }else{

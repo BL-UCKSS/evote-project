@@ -74,6 +74,7 @@
             &nbsp;&nbsp;1. 선거운동본부명칭 : <%=hname%><br>
             &nbsp;&nbsp;2. 정후보 : <%=name1%>(<%=dept1%> <%=grade1%>학년)<br>
             &nbsp;&nbsp;3. 부후보 : <%=name2%>(<%=dept2%> <%=grade2%>학년)<br>
+            <a href="<%=link%>" target="_blank">소견문 링크</a>
             <br>
             <p>* 최종 선택 후(제출 완료)에는 변경하실 수 없습니다.</p>
             <div style="font-size:10px;text-align:center;">
@@ -160,7 +161,9 @@
                     // console.log(json_data[0]);
                     electionId = json_data[0].Key;
                     // electionId = JSON.stringify(electionId);
-
+                    if(picked == 'agree'){
+                        picked = '<%=hname%>';
+                    }
                     $.ajax({
                         type: "POST",
                         url: '/castBallot',
