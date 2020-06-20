@@ -448,7 +448,7 @@ app.get('/castBallot/:electId', async (req, res) => {
         }
         context = {
           contents: array,
-          session:req.session
+          session: req.session
         };
         console.log(context);
         htmlrender(req, res, 'vote', context);

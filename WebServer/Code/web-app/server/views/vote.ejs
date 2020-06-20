@@ -135,7 +135,7 @@
         <!-- 조건문 끝 -->
         <br>
         <span id="picked"></span><br><br>
-        <input type="text" id="voterId" placeholder="Enter VoterId" value=""><br>
+        <!--input type="text" id="voterId" placeholder="Enter VoterId" value=""><br-->
         <input type="hidden" id="electionId" value="1">
         <button onclick="vote()">Cast Vote</button><br>
         <br>
@@ -149,7 +149,7 @@
     var vote = function () {
         // var electionId = $('#electionId').val();
         var picked = $('input[type=radio]:checked').val();
-        var voterId = $('#voterId').val();
+        var voterId = '<%=session.userid%>';
         if(picked == undefined|| picked == ''){
             console.log(picked == '');
             $('#castBallot > b').html('You have to pick a party to vote for!');
@@ -187,7 +187,7 @@
                             }
                             else{
                                 if(d.ballotCast){
-                                    $('#castBallot > b').html('vote finished');
+                                    //$('#castBallot > b').html('vote finished');
                                     $.ajax({
                                         type: "POST",
                                         url: '/process/personalagree',
@@ -197,6 +197,8 @@
                                             console.log('개인정보동의됨');
                                         }
                                     });
+                                    alert('vote finished');
+                                    location.replace('/');
                                 }else{
                                     $('#castBallot > b').html(JSON.stringify(data, undefined, 4));
                                 }

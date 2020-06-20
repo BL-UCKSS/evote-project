@@ -12,7 +12,7 @@
         <script>location.replace('/');</script>
     <% } %>
     <div class="posts">
-            <h1>Query By Key</h1>
+            <h1>내 투표 확인</h1>
             <!--input type="text" id="key" placeholder="Enter Key to Query"><br-->
             <!--button onclick="querybykey()">Query</button><br-->
             <div id="querybykey"><b></b></div><br>
@@ -34,8 +34,13 @@
                 url: '/queryByKey',
                 data: { 'key': key },
                 success: function (data) {
-                    console.log(data);
-                    $('#querybykey > b').html(JSON.stringify(data, undefined, 4));
+                    // picked, voterId
+                    var picked = data.picked;
+                    if(picked == 'blank'){
+                        picked = '기권';
+                    }
+                    var str = '<h3>내 학번 : '+data.voterId+'</h3><h3>투표 : '+picked+'</h3>';
+                    $('#querybykey > b').html(str);
                 }
             })
         }

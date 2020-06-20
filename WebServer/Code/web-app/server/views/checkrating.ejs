@@ -12,9 +12,9 @@
         <script>location.replace('/');</script>
     <% } %>
     <div class="posts">
-        <h1>Get the Current Poll Standings</h1>
+        <h1>투표율</h1>
         <!--button onclick="checkpoll()">Check Poll</button-->
-        <label>투표율<div id="test" style="font-size:50px;"></div></label>
+        <div id="test" style="font-size:50px;"></div>
     </div>
 </div>
 
@@ -32,7 +32,7 @@
                     "jsonarray": JSON.parse(data)
                 };
                 var labels = jsonfile.jsonarray.map(function(e) {
-                    console.log(e.Key);
+                    //console.log(e.Key);
                     if(e.Record.ballotCast){
                         cnt++;
                     }
