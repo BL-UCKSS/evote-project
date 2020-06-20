@@ -6,6 +6,11 @@
 
 <body style="text-align: center;">
     <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } else { %>
+        <script>location.replace('/');</script>
+    <% } %>
     <div class="posts">
             <h1>Query By Key</h1>
             <input type="text" id="key" placeholder="Enter Key to Query"><br>

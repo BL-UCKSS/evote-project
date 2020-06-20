@@ -6,6 +6,9 @@
 
 <body style="text-align: center;">
     <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } %>
     <div class="posts">
         <h1>Select the type of object to query for</h1>
         <select>

@@ -159,7 +159,17 @@ const htmlrender = function(req, res, fname, context){
 };
 
 app.get('/', async (req, res) => {
-  let context = {};
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'home', context);
+});
+
+app.get('/logout', async (req, res) => {
+  req.session.userid = null;
+  let context = {
+    session:req.session
+  };
   htmlrender(req, res, 'home', context);
 });
 
@@ -321,7 +331,7 @@ app.post('/process/login', async (req, res) => {
         //사용자 로그인 성공
         let context = {
           success:'login successful',
-          univ: docs[0]._doc.univ
+          univ: docs[0]._doc.univ,
         };
         res.send(context);
         return;
@@ -344,22 +354,22 @@ app.post('/process/login', async (req, res) => {
 
 // vote 관련 router
 app.get('/queryallpage', async (req, res) => {
-  let context = {};
+  let context = {session:req.session};
   htmlrender(req, res, 'queryall', context);
 });
 
 app.get('/querybytype', async (req, res) => {
-  let context = {};
+  let context = {session:req.session};
   htmlrender(req, res, 'querybytype', context);
 });
 
 app.get('/querybykey', async (req, res) => {
-  let context = {};
+  let context = {session:req.session};
   htmlrender(req, res, 'querybykey', context);
 });
 
 app.get('/checkrating', async (req, res) => {
-  let context = {};
+  let context = {session:req.session};
   htmlrender(req, res, 'checkrating', context);
 });
 
@@ -462,7 +472,8 @@ app.get('/castBallot/:electId', async (req, res) => {
 
 app.get('/personalAgree', async (req, res) => {
   let context = {
-    voterId:req.session.userid
+    voterId:req.session.userid,
+    session:req.session
   };
   htmlrender(req, res, 'personalAgree', context);
 });

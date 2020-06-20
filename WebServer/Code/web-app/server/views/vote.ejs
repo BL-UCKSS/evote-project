@@ -59,6 +59,9 @@
 
 <body>
     <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } %>
     <div class="posts">
         <div class="banner">
             <h1>2020학년도 총학생회 재선거 투표</h1>
