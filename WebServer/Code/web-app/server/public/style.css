@@ -23,8 +23,9 @@
 }
 
 .chart-wrapper {
-    position: fixed;
-    padding-left: 32%;
+    position: relative;
+    /*position: fixed;*/
+    /*padding-left: 32%;*/
 }
 
 .v-spinner .v-beat {

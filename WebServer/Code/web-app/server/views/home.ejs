@@ -7,19 +7,18 @@
 <body style="text-align: center;">
     <%- include('header.ejs'); %>
     <div class="posts">
-        <h1>2020 Presidential Election</h1>
-        <h3>If you are a registered voter, enter your Student Number below</h3>
-        <input id="voterId" type="text" placeholder="Enter Student Number"><br>
-        <input id="pwd" type="password" name="password" placeholder="Enter Password"><br>
-        <button onclick="login()">Login</button><br><br>
+        <h1>로그인</h1>
+        <input id="voterId" type="text" placeholder="학번을 입력하세요"><br>
+        <input id="pwd" type="password" name="password" placeholder="비밀번호를 입력하세요"><br>
+        <button onclick="login()">로그인</button><br><br>
         <span id="validateVoter"><b></b></span><br>
-        <br>
-        <h3>Otherwise, fill out the form below to register!</h3>
-            <input id="voterId2" type="text" placeholder="Enter Drivers License"><br>
-            <input id="registrarId" type="text" placeholder="Enter Registrar ID"><br>
-            <input id="firstName" type="text" placeholder="Enter first name"><br>
-            <input id="lastName" type="text" placeholder="Enter last name"><br>
-            <button onclick="register()">Register</button>
+        <hr>
+        <h3>관리자 전용 - Wallet에 계정 등록</h3>
+            <input id="voterId2" type="text" placeholder="학번을 입력하세요"><br>
+            <button onclick="register()">등록</button>
+            <input id="registrarId" type="hidden" placeholder="Enter Registrar ID" value="Seoul"><br>
+            <input id="firstName" type="hidden" placeholder="Enter first name" value="Hong"><br>
+            <input id="lastName" type="hidden" placeholder="Enter last name" value="Gildong"><br>
         <br>
         <span id="registerVoter"><b></b></span><br>
         <!---->
@@ -49,10 +48,16 @@
                     if(data.success){
                         $.ajax({
                             type: "POST",
-                            url: '/validateVoter',
+                            url: '/process/checkagree',
                             data: { 'voterId': voterId },
                             success: function (data) {
-                                location.replace('/castBallot');
+                                console.log(data);
+                                if(data.votable){
+                                    location.replace('/personalAgree');
+                                }
+                                else{
+                                    $('#validateVoter > b').html('already voted');
+                                }
                             }
                         });
                     }else{

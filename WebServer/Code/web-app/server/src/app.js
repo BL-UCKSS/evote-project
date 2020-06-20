@@ -21,7 +21,11 @@ let mongoose = require('mongoose');
 
 let database;
 let UserSchema;
+let PersonalAgreeSchema;
+let CandidateSchema;
 let UserModel;
+let PersonalAgreeModel;
+let CandidateModel;
 
 function connectDB() {
   let databaseUrl = 'mongodb://localhost:27017/local';
@@ -44,6 +48,33 @@ function connectDB() {
       email: {type:String, required:true},
     });
     console.log('UserSchema 정의함.');
+
+    PersonalAgreeSchema = mongoose.Schema({
+      stdno: {type:String, required:true, unique:true},
+      name: {type:String, index:'hashed', required:false},
+      dept: {type:String, required:false},
+      univ: {type:String, required:false},
+      agree: {type:Boolean, required:true},
+    });
+    console.log('UserSchema 정의함.');
+
+    CandidateSchema = mongoose.Schema({
+      no: {type:Number, required:true, unique:true},
+      hakbun1: {type:Number, required:true},
+      hakbun2: {type:Number, required:true},
+      name1: {type:String, index:'hashed', required:true},
+      name2: {type:String, index:'hashed', required:true},
+      dept1: {type:String, required:true},
+      dept2: {type:String, required:true},
+      grade1: {type:Number, required:true},
+      grade2: {type:Number, required:true},
+      profile1: {type:String, required:true},
+      profile2: {type:String, required:true},
+      hname: {type:String, required:true},
+      icon: {type:String, required:true},
+      link: {type:String, required:false},
+    });
+    console.log('CandidateSchema 정의함.');
       
     //함수 등록(이후 모델 객체에서 사용가능)
     UserSchema.static('findById', function(stdno, callback) {
@@ -53,10 +84,31 @@ function connectDB() {
     UserSchema.static('findAll', function(callback){
       return this.find({}, callback);        
     });
+
+    PersonalAgreeSchema.static('findById', function(stdno, callback){
+      return this.find({stdno:stdno}, callback);
+    });
+
+    PersonalAgreeSchema.static('findAll', function(callback){
+      return this.find({}, callback);        
+    });
+
+    CandidateSchema.static('findById', function(no, callback){
+      return this.find({no:no}, callback);
+    });
+
+    CandidateSchema.static('findAll', function(callback){
+      return this.find({}, callback);        
+    });
           
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
+
+    PersonalAgreeModel = mongoose.model('personalagree', PersonalAgreeSchema);
+    console.log('PersonalAgreeSchema 정의함.');
       
+    CandidateModel = mongoose.model('candidates', CandidateSchema);
+    console.log('CandidateModel 정의함.');
   });
   
   database.on('disconnected', function(){
@@ -119,7 +171,7 @@ let authUser = function(database, stdno, password, callback) {
       callback(err, null);
       return;
     }
-    console.log('아이디 %s로 검색됨.');
+    console.log('아이디 %s로 검색됨.', stdno);
     if(result.length > 0){
       if(result[0]._doc.password === password) {
         console.log('비밀번호 일치함.');
@@ -135,6 +187,113 @@ let authUser = function(database, stdno, password, callback) {
   });
   
 };
+
+//personalAgree function
+let personalAgree = function(database, stdno, agree, callback) {
+  console.log('personalAgree 호출됨 : ' + stdno + ', ' + agree);
+  
+  let pAgree = new PersonalAgreeModel({stdno:stdno,agree:agree});
+  
+  pAgree.save(function(err) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    console.log('개인정보처리동의 데이터 추가함.');
+    callback(null, pAgree);
+  });
+};
+
+let checkAgree = function(database, stdno, callback){
+  console.log('checkAgree 호출됨 : ' + stdno);
+
+  PersonalAgreeModel.findById(stdno, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    console.log('학번 %s로 검색됨.', stdno);
+    if(result.length > 0){
+      callback(null, result);
+    }else{
+      console.log('학번 일치하는 사용자 없음.');
+      callback(null, {error:'no user'});
+    }
+  });
+};
+
+app.post('/process/personalagree', async (req, res) => {
+  console.log('/process/personalagree 라우팅 함수 호출됨.');
+
+  let paramStdno = req.body.voterId || req.query.voterId;
+  let paramAgree = req.body.agree || req.query.agree;
+  console.log('요청 파라미터 : ' + paramStdno + ', ' + paramAgree);    
+  
+  if (database) {
+    personalAgree(database, paramStdno, paramAgree, function(err, docs) {
+      if(err){
+        console.log(err);
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+                  
+      if(docs){
+        //console.dir(docs);
+        //사용자 개인정보처리동의 성공
+        let context = {success:'agree successful'};
+        res.send(context);
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+});
+
+app.post('/process/checkagree', async (req, res) => {
+  console.log('/process/checkagree 라우팅 함수 호출됨.');
+
+  let paramStdno = req.body.voterId || req.query.voterId;
+  console.log('요청 파라미터 : ' + paramStdno);    
+  
+  if (database) {
+    checkAgree(database, paramStdno, function(err, docs) {
+      if(err){
+        console.log(err);
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+                  
+      if(docs){
+        let context = {votable:true};
+        if(!docs.error){
+          //이미 개인정보처리동의함
+          context = {votable:false};
+        }
+        //console.dir(docs);
+        
+        res.send(context);
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+});
 
 app.post('/process/login', async (req, res) => {
   console.log('/process/login 라우팅 함수 호출됨.');
@@ -154,7 +313,10 @@ app.post('/process/login', async (req, res) => {
       }
                   
       if(docs){
-        console.dir(docs);
+        //console.dir(docs);
+        req.session.userid = paramStdno;
+        req.session.save();
+        //console.log(req.session.userid);
         //사용자 로그인 성공
         let context = {success:'login successful'};
         res.send(context);
@@ -197,9 +359,84 @@ app.get('/checkrating', async (req, res) => {
   htmlrender(req, res, 'checkrating', context);
 });
 
+let loadCandidate = function(database, no, callback) {
+  console.log('loadCandidate 호출됨 : ' + no);
+  
+  CandidateModel.findById(no, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    if(result.length > 0){
+      callback(null, result);
+    }else{
+      console.log('일치하는 기호 없음.');
+      callback(null, null);
+    }
+  });
+  
+};
 app.get('/castBallot', async (req, res) => {
+  let num = 1;
   let context = {};
-  htmlrender(req, res, 'vote', context);
+  if (database) {
+    loadCandidate(database, num, function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+                  
+      if(docs){
+        //console.dir(docs);
+        context = {
+          no: num,
+          hakbun1: docs[0]._doc.hakbun1,
+          hakbun2: docs[0]._doc.hakbun2,
+          name1: docs[0]._doc.name1,
+          name2: docs[0]._doc.name2,
+          dept1: docs[0]._doc.dept1,
+          dept2: docs[0]._doc.dept2,
+          grade1: docs[0]._doc.grade1,
+          grade2: docs[0]._doc.grade2,
+          profile1: docs[0]._doc.profile1,
+          profile2: docs[0]._doc.profile2,
+          hname: docs[0]._doc.hname,
+          icon: docs[0]._doc.icon,
+          link: docs[0]._doc.link,
+        };
+        htmlrender(req, res, 'vote', context);
+      }else{
+        console.log('에러 발생.');
+        //사용자 데이터 조회 안됨
+        let context = {error:'기호 없음'};
+        res.send(context);
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+  
+});
+
+app.get('/personalAgree', async (req, res) => {
+  let context = {
+    voterId:req.session.userid
+  };
+  htmlrender(req, res, 'personalAgree', context);
+});
+
+app.get('/getDate', async (req, res) => {
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryAll', '');
+  let parsedResponse = await JSON.parse(response);
+  res.send(parsedResponse);
 });
 
 //get all assets in world state
@@ -245,8 +482,9 @@ app.post('/castBallot', async (req, res) => {
 
 //query for certain objects within the world state
 app.post('/queryWithQueryString', async (req, res) => {
+  let selected = req.query.selected || req.body.selected;
   let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', req.query.selected);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', selected);
   let parsedResponse = await JSON.parse(response);
   res.send(parsedResponse);
 
