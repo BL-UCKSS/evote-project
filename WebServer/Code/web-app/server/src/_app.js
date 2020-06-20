@@ -59,8 +59,7 @@ function connectDB() {
     console.log('UserSchema 정의함.');
 
     CandidateSchema = mongoose.Schema({
-      no: {type:Number, required:true},
-      electionid: {type:String, required:true},
+      no: {type:Number, required:true, unique:true},
       hakbun1: {type:Number, required:true},
       hakbun2: {type:Number, required:true},
       name1: {type:String, index:'hashed', required:true},
@@ -98,8 +97,8 @@ function connectDB() {
       return this.find({no:no}, callback);
     });
 
-    CandidateSchema.static('findByElectId', function(electId,callback){
-      return this.find({electionid:electId}, callback);        
+    CandidateSchema.static('findAll', function(callback){
+      return this.find({}, callback);        
     });
           
     UserModel = mongoose.model('ssousers', UserSchema);
@@ -319,10 +318,7 @@ app.post('/process/login', async (req, res) => {
         req.session.save();
         //console.log(req.session.userid);
         //사용자 로그인 성공
-        let context = {
-          success:'login successful',
-          univ: docs[0]._doc.univ
-        };
+        let context = {success:'login successful'};
         res.send(context);
         return;
       }else{
@@ -380,34 +376,11 @@ let loadCandidate = function(database, no, callback) {
   });
   
 };
-let loadCandidateByElectId = function(database, electId, callback) {
-  console.log('loadCandidateByElectId 호출됨 : ' + electId);
-  
-  CandidateModel.findByElectId(electId, function(err, result) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-    if(result.length > 0){
-      callback(null, result);
-    }else{
-      console.log('일치하는 기호 없음.');
-      callback(null, null);
-    }
-  });
-  
-};
-app.get('/castBallot/:electId', async (req, res) => {
-
-  let array = new Array();
-  let context;
-  let data;
-  let electId;
+app.get('/castBallot', async (req, res) => {
+  let num = 1;
+  let context = {};
   if (database) {
-    //electId 조회
-    electId = req.params.electId;
-    // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-    loadCandidateByElectId(database, electId, function(err, docs) {
+    loadCandidate(database, num, function(err, docs) {
       if(err){
         console.log('에러 발생.');
         let context = {error:'Error is occured'};
@@ -416,30 +389,23 @@ app.get('/castBallot/:electId', async (req, res) => {
       }
                   
       if(docs){
-        // console.dir(docs);
-        for(let i=0; i<docs.length; i++){
-          data = {
-            no: i+1,
-            hakbun1: docs[i]._doc.hakbun1,
-            hakbun2: docs[i]._doc.hakbun2,
-            name1: docs[i]._doc.name1,
-            name2: docs[i]._doc.name2,
-            dept1: docs[i]._doc.dept1,
-            dept2: docs[i]._doc.dept2,
-            grade1: docs[i]._doc.grade1,
-            grade2: docs[i]._doc.grade2,
-            profile1: docs[i]._doc.profile1,
-            profile2: docs[i]._doc.profile2,
-            hname: docs[i]._doc.hname,
-            icon: docs[i]._doc.icon,
-            link: docs[i]._doc.link,
-          };
-          array.push(data);
-        }
+        //console.dir(docs);
         context = {
-          contents: array
+          no: num,
+          hakbun1: docs[0]._doc.hakbun1,
+          hakbun2: docs[0]._doc.hakbun2,
+          name1: docs[0]._doc.name1,
+          name2: docs[0]._doc.name2,
+          dept1: docs[0]._doc.dept1,
+          dept2: docs[0]._doc.dept2,
+          grade1: docs[0]._doc.grade1,
+          grade2: docs[0]._doc.grade2,
+          profile1: docs[0]._doc.profile1,
+          profile2: docs[0]._doc.profile2,
+          hname: docs[0]._doc.hname,
+          icon: docs[0]._doc.icon,
+          link: docs[0]._doc.link,
         };
-        console.log(context);
         htmlrender(req, res, 'vote', context);
       }else{
         console.log('에러 발생.');
@@ -448,8 +414,7 @@ app.get('/castBallot/:electId', async (req, res) => {
         res.send(context);
         return;
       }
-    });
-    
+    });  
   }else {
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
@@ -532,17 +497,17 @@ app.post('/registerVoter', async (req, res) => {
   let voterId = req.body.voterId;
 
   //first create the identity for the voter and add to wallet
-  let response = await network.registerVoter(voterId);
-  console.log('response from registerVoter: ');
-  console.log(response);
+  let response = await network.registerVoter(voterId, req.body.registrarId, req.body.firstName, req.body.lastName);
+  ////console.log('response from registerVoter: ');
+  ////console.log(response);
   if (response.error) {
     res.send(response.error);
   } else {
-    console.log('req.body.voterId');
-    console.log(req.body.voterId);
+    ////console.log('req.body.voterId');
+    ////console.log(req.body.voterId);
     let networkObj = await network.connectToNetwork(voterId);
-    console.log('networkobj: ');
-    console.log(networkObj);
+    ////console.log('networkobj: ');
+    ////console.log(networkObj);
 
     if (networkObj.error) {
       res.send(networkObj.error);

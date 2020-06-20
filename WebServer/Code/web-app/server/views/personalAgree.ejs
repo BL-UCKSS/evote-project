@@ -52,43 +52,20 @@
         if(agree != 0 && agree != 1){
             alert("항목을 선택해주세요.");
         }else{
-            $.ajax({
-                type: "POST",
-                url: '/process/personalagree',
-                data: {'voterId':voterId,
-                        'agree':agree},
-                success: function(data){
-                    if(agree == 0){
-                        $.ajax({
-                            type: "POST",
-                            url: '/validateVoter',
-                            data: { 'voterId': voterId },
-                            success: function (data) {
-                                //동의안하면 그냥 홈으로 돌아간다
-                                location.replace('/');
-                            }
-                        });
-                    }else{
-                        if(data.success){
-                            if(data.error){
-                                alert("이미 투표했습니다.");
-                            }else{
-                                $.ajax({
-                                    type: "POST",
-                                    url: '/validateVoter',
-                                    data: { 'voterId': voterId },
-                                    success: function (data) {
-                                        location.replace('/castBallot');
-                                    }
-                                });
-                            }
-                        }else{
-                            $('#validateVoter > b').html('There is no user');
-                        }
+            if(agree == 1){
+                $.ajax({
+                    type: "POST",
+                    url: '/validateVoter',
+                    data: { 'voterId': voterId },
+                    success: function (data) {
+                        location.replace('/castBallot/'+'m1xagvyp8re9taxvr52f');
                     }
-                    
-                }
-            });
+                });
+            }else if(agree == 0){
+                location.replace('/');
+            }
+            
+            
         }
         
     }

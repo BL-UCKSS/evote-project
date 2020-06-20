@@ -45,6 +45,8 @@
                 data: {'voterId':voterId,
                         'password':pwd},
                 success: function(data){
+                    // univ의 선거가 있는지 확인하기
+                    // console.log(data.univ); //융공대출력됨
                     // 첫 로그인 시 계정 등록
                     if(data.error){
                         $('#validateVoter > b').html(data.error);
@@ -53,10 +55,7 @@
                         $.ajax({
                             type: "POST",
                             url: '/registerVoter',
-                            data: { 'voterId': voterId,
-                                    'registrarId': 'Seoul',
-                                    'firstName': 'Hong',
-                                    'lastName': 'Gildong' },
+                            data: { 'voterId': voterId },
                             success: function (data) {
                                 //이미 wallet에 계정이 있을 경우
                                 $.ajax({
@@ -81,30 +80,7 @@
             
         }
     }
-    /*var register = function () {
-        var voterId = $('#voterId2').val();
-        var registrarId = $('#registrarId').val();
-        var firstName = $('#firstName').val();
-        var lastName = $('#lastName').val();
-        if (voterId.length != 0 ||
-        registrarId.length != 0 ||
-        firstName.length != 0 ||
-        lastName.length != 0) {
-            $.ajax({
-                type: "POST",
-                url: '/registerVoter',
-                data: { 'voterId': voterId,
-                        'registrarId': registrarId,
-                        'firstName': firstName,
-                        'lastName': lastName },
-                success: function (data) {
-                    $('#registerVoter > b').html(JSON.stringify(data, undefined, 4));
-                }
-            })
-        }else{
-            $('#registerVoter > b').html('Error! You need to fill all fields before you can register!');
-        }
-    }*/
+    
 </script>
 
 </html>
