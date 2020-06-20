@@ -44,17 +44,7 @@
             data: { 'voterId': voterId },
             success: function (data) {
                 if(!data.error){
-                    //이미 wallet에 계정이 있을 경우
-                    $.ajax({
-                        type: "POST",
-                        url: '/process/checkagree',
-                        data: { 'voterId': voterId },
-                        success: function (data) {
-                            if(data.votable){
-                                location.replace('/personalAgree');
-                            }
-                        }
-                    });
+                    location.replace('/personalAgree');
                 }else{
                     $('#validateVoter > b').html('already voted');
                 }
@@ -80,33 +70,15 @@
                 data: {'voterId':voterId,
                         'password':pwd},
                 success: function(data){
-                    // univ의 선거가 있는지 확인하기
-                    // console.log(data.univ); //융공대출력됨
-                    // 첫 로그인 시 계정 등록
                     if(data.error){
-                        $('#validateVoter > b').html(data.error);
-                    }
-                    else{
+                        $('#validateVoter > b').html('없는 유저입니다.');
+                    }else{
                         $.ajax({
                             type: "POST",
                             url: '/registerVoter',
                             data: { 'voterId': voterId },
                             success: function (data) {
-                                //이미 wallet에 계정이 있을 경우
-                                $.ajax({
-                                    type: "POST",
-                                    url: '/process/checkagree',
-                                    data: { 'voterId': voterId },
-                                    success: function (data) {
-                                        console.log(data);
-                                        if(data.votable){
-                                            location.replace('/personalAgree');
-                                        }
-                                        else{
-                                            $('#validateVoter > b').html('already voted');
-                                        }
-                                    }
-                                });
+                                location.replace('/');
                             }
                         });
                     }

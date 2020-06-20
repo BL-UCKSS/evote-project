@@ -447,7 +447,8 @@ app.get('/castBallot/:electId', async (req, res) => {
           array.push(data);
         }
         context = {
-          contents: array
+          contents: array,
+          session:req.session
         };
         console.log(context);
         htmlrender(req, res, 'vote', context);
@@ -498,7 +499,7 @@ app.get('/queryAll', async (req, res) => {
 app.get('/getCurrentStanding', async (req, res) => {
 
   let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'voter');
   let parsedResponse = await JSON.parse(response);
   ////console.log(parsedResponse);
   res.send(parsedResponse);

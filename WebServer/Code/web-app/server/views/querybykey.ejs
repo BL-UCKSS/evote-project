@@ -13,8 +13,8 @@
     <% } %>
     <div class="posts">
             <h1>Query By Key</h1>
-            <input type="text" id="key" placeholder="Enter Key to Query"><br>
-            <button onclick="querybykey()">Query</button><br>
+            <!--input type="text" id="key" placeholder="Enter Key to Query"><br-->
+            <!--button onclick="querybykey()">Query</button><br-->
             <div id="querybykey"><b></b></div><br>
             <!---->
     </div>
@@ -23,8 +23,11 @@
 </body>
 
 <script type="text/javascript">
+    $(function(){
+        querybykey();
+    })
     var querybykey = function () {
-        var key = $('#key').val();
+        var key = '<%=session.userid%>';
         if (key != '' || key  != undefined ) {
             $.ajax({
                 type: "POST",

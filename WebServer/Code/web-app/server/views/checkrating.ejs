@@ -13,15 +13,17 @@
     <% } %>
     <div class="posts">
         <h1>Get the Current Poll Standings</h1>
-        <button onclick="checkpoll()">Check Poll</button>
-        <br><!----><br><!---->
-        <div class="chart-wrapper" style="width:400px;height:400px;margin:0 auto;">
-            <canvas id="myChart" width="400" height="400"></canvas>
-        </div>
+        <!--button onclick="checkpoll()">Check Poll</button-->
+        <label>투표율<div id="test" style="font-size:50px;"></div></label>
     </div>
 </div>
 
 <script type="text/javascript">
+    $(function(){
+        checkpoll();
+    })
+    var cnt = 0;
+    var total = 10; //총 학생수
     var checkpoll = function(){
         $.ajax({
             url:'/getCurrentStanding',
@@ -30,25 +32,12 @@
                     "jsonarray": JSON.parse(data)
                 };
                 var labels = jsonfile.jsonarray.map(function(e) {
-                    return e.Key;
+                    console.log(e.Key);
+                    if(e.Record.ballotCast){
+                        cnt++;
+                    }
                 });
-                var data = jsonfile.jsonarray.map(function(e) {
-                    return e.Record.count;
-                });;
-                var ctx = $('#myChart');
-                var config = {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Graph Bar',
-                        data: data,
-                        backgroundColor: 'rgba(0, 119, 204, 0.3)'
-                    }]
-                }
-                };
-
-                var chart = new Chart(ctx, config);
+                $('#test').html(cnt/total * 100 + '%');   
             }
         })
     }
