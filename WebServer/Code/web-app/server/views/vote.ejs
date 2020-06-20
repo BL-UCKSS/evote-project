@@ -68,53 +68,45 @@
         </div>
         <hr/><br><br>
         <div class="content">
+            <!-- 반복문 -->
+            <% for(var i=0;i<contents.length;i++){ %>
             <span style="color:red">* 필수 질문</span><br><br>
             <b>2020학년도 총학생회 선거 투표</b><br><br>
             * 총학생회 선거운동본부 기호1번<br>
-            &nbsp;&nbsp;1. 선거운동본부명칭 : <%=hname%><br>
-            &nbsp;&nbsp;2. 정후보 : <%=name1%>(<%=dept1%> <%=grade1%>학년)<br>
-            &nbsp;&nbsp;3. 부후보 : <%=name2%>(<%=dept2%> <%=grade2%>학년)<br>
-            <a href="<%=link%>" target="_blank">소견문 링크</a>
+            &nbsp;&nbsp;1. 선거운동본부명칭 : <%=contents[i].hname%><br>
+            &nbsp;&nbsp;2. 정후보 : <%=contents[i].name1%>(<%=contents[i].dept1%> <%=contents[i].grade1%>학년)<br>
+            &nbsp;&nbsp;3. 부후보 : <%=contents[i].name2%>(<%=contents[i].dept2%> <%=contents[i].grade2%>학년)<br>
+            <a href="<%=contents[i].link%>" target="_blank">소견문 링크</a>
             <br>
             <p>* 최종 선택 후(제출 완료)에는 변경하실 수 없습니다.</p>
             <div style="font-size:10px;text-align:center;">
-                [총학생회 선거운동본부 기호 <%=no%>번 <%=hname%>]
+                [총학생회 선거운동본부 기호 <%=contents[i].no%>번 <%=contents[i].hname%>]
             </div>
-            <div style="text-align: center;" ><img src="/public/img/<%=icon%>" alt="이미지 없음"></div>
+            <div style="text-align: center;" ><img src="/public/img/<%=contents[i].icon%>" alt="이미지 없음"></div>
             <table class="hubos">
                 <tr>
                     <td>
                         <ul>
-                            <li><img class="hubo-img" src="/public/img/<%=profile1%>" alt="이미지 없음"></li>
+                            <li><img class="hubo-img" src="/public/img/<%=contents[i].profile1%>" alt="이미지 없음"></li>
                             <li><span class="hubo-title">정후보</span></li>
-                            <li><span class="hubo-desc"><%=dept1%> <%=grade1%>학년 <%=hakbun1%>학번<br><%=name1%></span></li>
+                            <li><span class="hubo-desc"><%=contents[i].dept1%> <%=contents[i].grade1%>학년 <%=contents[i].hakbun1%>학번<br><%=contents[i].name1%></span></li>
                         </ul>
                     </td>
                     <td>
                         <ul>
-                            <li><img class="hubo-img" src="/public/img/<%=profile2%>" alt="이미지 없음"></li>
+                            <li><img class="hubo-img" src="/public/img/<%=contents[i].profile2%>" alt="이미지 없음"></li>
                             <li><span class="hubo-title">부후보</span></li>
-                            <li><span class="hubo-desc"><%=dept2%> <%=grade2%>학년 <%=hakbun2%>학번<br><%=name2%></span></li>
+                            <li><span class="hubo-desc"><%=contents[i].dept2%> <%=contents[i].grade2%>학년 <%=contents[i].hakbun2%>학번<br><%=contents[i].name2%></span></li>
                         </ul>
                     </td>
                 </tr>
-                </table>
+            </table>
+            <!-- 반복문 끝 -->
+            <% } %>
             </div>
         </div>
-        <!--
-        <input type="radio" id="one" name="ballot" value="Republican">
-        <label for="one">Donald Trump (Republican)</label><br>
-        <input type="radio" id="two" name="ballot" value="Democrat">
-        <label for="two">TBA (Democratic)</label><br>
-        <input type="radio" id="three" name="ballot" value="Green">
-        <label for="three">TBA (Green Party)</label><br>
-        <input type="radio" id="four" name="ballot" value="Independent">
-        <label for="four">TBA (Independent)</label><br>
-        <input type="radio" id="five" name="ballot" value="Libertarian">
-        <label for="five">TBA (Libertarian)</label><br>
-        <input type="radio" id="six" name="ballot" value="blank">
-        <label for="six">기권</label><br>
-        -->
+        <!-- 조건문 -->
+        <% if(contents.length == 1) { %>
         <div class="voteItems">
             <input type="radio" id="agree" name="ballot" value="agree">
             <label for="agree">찬성</label><br>
@@ -123,6 +115,19 @@
             <input type="radio" id="blank" name="ballot" value="blank">
             <label for="blank">기권</label>
         </div>
+        <% } else { %>
+        <div class="voteItems">
+            <!-- 반복문 -->
+            <% for(var i=0;i<contents.length;i++) { %>
+            <input type="radio" id="no<%=contents[i].no%>" name="ballot" value="<%=contents[i].hname%>">
+            <label for="no<%=contents[i].no%>">기호 <%=contents[i].no%>번 : <%=contents[i].hname%></label><br>
+            <% } %>
+            <!-- 반복문 끝 -->
+            <input type="radio" id="blank" name="ballot" value="blank">
+            <label for="blank">기권</label>
+        </div>
+        <% } %>
+        <!-- 조건문 끝 -->
         <br>
         <span id="picked"></span><br><br>
         <input type="text" id="voterId" placeholder="Enter VoterId" value=""><br>
@@ -162,7 +167,7 @@
                     electionId = json_data[0].Key;
                     // electionId = JSON.stringify(electionId);
                     if(picked == 'agree'){
-                        picked = '<%=hname%>';
+                        picked = '<%=contents.hname%>';
                     }
                     $.ajax({
                         type: "POST",
@@ -178,6 +183,15 @@
                             else{
                                 if(d.ballotCast){
                                     $('#castBallot > b').html('vote finished');
+                                    $.ajax({
+                                        type: "POST",
+                                        url: '/process/personalagree',
+                                        data: {'voterId':voterId,
+                                                'agree':true},
+                                        success: function(data){
+                                            console.log('개인정보동의됨');
+                                        }
+                                    });
                                 }else{
                                     $('#castBallot > b').html(JSON.stringify(data, undefined, 4));
                                 }
