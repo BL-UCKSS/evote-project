@@ -377,44 +377,50 @@ let loadCandidate = function(database, no, callback) {
   
 };
 app.get('/castBallot', async (req, res) => {
-  let num = 1;
-  let context = {};
+
+  let arr = new Array();
+  let context = new Object();
+  
   if (database) {
-    loadCandidate(database, num, function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-                  
-      if(docs){
-        //console.dir(docs);
-        context = {
-          no: num,
-          hakbun1: docs[0]._doc.hakbun1,
-          hakbun2: docs[0]._doc.hakbun2,
-          name1: docs[0]._doc.name1,
-          name2: docs[0]._doc.name2,
-          dept1: docs[0]._doc.dept1,
-          dept2: docs[0]._doc.dept2,
-          grade1: docs[0]._doc.grade1,
-          grade2: docs[0]._doc.grade2,
-          profile1: docs[0]._doc.profile1,
-          profile2: docs[0]._doc.profile2,
-          hname: docs[0]._doc.hname,
-          icon: docs[0]._doc.icon,
-          link: docs[0]._doc.link,
-        };
-        htmlrender(req, res, 'vote', context);
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'기호 없음'};
-        res.send(context);
-        return;
-      }
-    });  
+    for (let i = 0; i <2; i++){
+      loadCandidate(database, i+1, function(err, docs) {
+        if(err){
+          console.log('에러 발생.');
+          let context = {error:'Error is occured'};
+          res.send(context);
+          return;
+        }
+                    
+        if(docs){
+          // console.dir(docs);
+          context.no = i+1,
+          context.hakbun1 = docs[0]._doc.hakbun1;
+          context.hakbun2 = docs[0]._doc.hakbun2;
+          context.name1 = docs[0]._doc.name1;
+          context.name2 = docs[0]._doc.name2;
+          context.dept1 = docs[0]._doc.dept1;
+          context.dept2 = docs[0]._doc.dept2;
+          context.grade1 = docs[0]._doc.grade1;
+          context.grade2 = docs[0]._doc.grade2;
+          context.profile1 = docs[0]._doc.profile1;
+          context.profile2 = docs[0]._doc.profile2;
+          context.hname = docs[0]._doc.hname;
+          context.icon = docs[0]._doc.icon;
+          context.link = docs[0]._doc.link;
+          console.log(context);
+          arr.push(context);
+
+        }else{
+          console.log('에러 발생.');
+          //사용자 데이터 조회 안됨
+          let context = {error:'기호 없음'};
+          res.send(context);
+          return;
+        }
+      });
+    }  
+    console.log(JSON.stringify(arr));
+    htmlrender(req, res, 'vote', JSON.stringify(arr));
   }else {
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
@@ -498,16 +504,16 @@ app.post('/registerVoter', async (req, res) => {
 
   //first create the identity for the voter and add to wallet
   let response = await network.registerVoter(voterId, req.body.registrarId, req.body.firstName, req.body.lastName);
-  ////console.log('response from registerVoter: ');
-  ////console.log(response);
+  console.log('response from registerVoter: ');
+  console.log(response);
   if (response.error) {
     res.send(response.error);
   } else {
-    ////console.log('req.body.voterId');
-    ////console.log(req.body.voterId);
+    console.log('req.body.voterId');
+    console.log(req.body.voterId);
     let networkObj = await network.connectToNetwork(voterId);
-    ////console.log('networkobj: ');
-    ////console.log(networkObj);
+    console.log('networkobj: ');
+    console.log(networkObj);
 
     if (networkObj.error) {
       res.send(networkObj.error);
