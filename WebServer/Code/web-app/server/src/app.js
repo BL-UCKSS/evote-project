@@ -542,7 +542,7 @@ app.post('/registerVoter', async (req, res) => {
   ////console.log('req.body: ');
   ////console.log(req.body);
   let voterId = req.body.voterId;
-
+  console.log(voterId);
   //first create the identity for the voter and add to wallet
   let response = await network.registerVoter(voterId);
   console.log('response from registerVoter: ');

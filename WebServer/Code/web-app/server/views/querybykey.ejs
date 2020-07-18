@@ -39,7 +39,11 @@
                     if(picked == 'blank'){
                         picked = '기권';
                     }
+                    if(picked == undefined){
+                        picked = '투표안함';    
+                    }
                     var str = '<h3>내 학번 : '+data.voterId+'</h3><h3>투표 : '+picked+'</h3>';
+                    
                     $('#querybykey > b').html(str);
                 }
             })

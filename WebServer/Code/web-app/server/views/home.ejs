@@ -46,7 +46,7 @@
                 if(!data.error){
                     location.replace('/personalAgree');
                 }else{
-                    $('#validateVoter > b').html('already voted');
+                    $('#validateVoter > b').html(data.error);
                 }
                 
             }
@@ -64,12 +64,14 @@
             return;
         }
         else {
+            console.log('hello');
             $.ajax({
                 type: "POST",
                 url: '/process/login',
                 data: {'voterId':voterId,
                         'password':pwd},
                 success: function(data){
+                    console.log(data);
                     if(data.error){
                         $('#validateVoter > b').html('없는 유저입니다.');
                     }else{
@@ -87,7 +89,18 @@
             
         }
     }
-    
+    var register = function() {
+        var voterId = '<%=session.userid%>';
+        $.ajax({
+            type: "POST",
+            url: '/registerVoter',
+            data: { 'voterId': voterId },
+            success: function (data) {
+                console.log(data);
+                //location.replace('/');
+            }
+        });
+    }
 </script>
 
 </html>
