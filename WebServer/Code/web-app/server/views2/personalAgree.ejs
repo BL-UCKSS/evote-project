@@ -1,0 +1,77 @@
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+</head>
+
+<body>
+    <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } %>
+    <h1>2020 Presidential Election</h1>
+    <div style="text-align: left;width:700px;margin:0 auto;">
+        <span><font color="red">* 필수 질문</font></span>
+        <span><b>개인정보의 제공 및 수집(이용)에 동의하십니까?</b></span>
+        <p>중앙선거관리위원회에서는 "2020학년도 상명대학교 서울캠퍼스 총학생회 및 단과대학생회" 온라인(전산)투표의 원활한 진행을 위해 개인정보를 수집 및 이용하고자 합니다. 내용을 자세히 읽으신 후 동의 여부를 결정하여 주십시오.</p>
+        <p>* [필수정보] 개인정보 수집 및 이용 내역<br>&nbsp;&nbsp;가.수집 및 이용하는 개인정보 항목 : 이름,학번,소속대학,소속학과<br>&nbsp;&nbsp;나.수집 및 이용목적 : 2020학년도 상명대학교 서울캠퍼스 총학생회 및 단과대학생회 재선거 관련 본인확인,투표진행,투표결과 확인 및 통계<br>&nbsp;&nbsp;다.보유 및 이용기간 : 2020.04.30.까지</p>
+        <p>* 위의 내용에 대하여 동의하지 않을 권리가 있습니다.<br>&nbsp;&nbsp;단, 동의하지 않을 경우 투표 참여가 제한됩니다(투표율에 포함되지 않음).</p>
+        <br>
+        <div style="text-align: center;">
+            <b>개인정보 처리 동의에 관한 안내</b>
+            <p style="font-size:9px;">&nbsp;&nbsp;중앙선거관리위원회에서는 2020학년도 총학생회, 단고대 학생회 온라인(전산)투표의 원활한 진행을 위해 아래와 같이 개인정보를 수집 이용하고자 합니다. 내용을 자세히 읽으신 후 동의 여부를 결정하여 주십시오.</p>
+            <br>
+            <p style="font-size:9px;">-&nbsp;아&nbsp;&nbsp;&nbsp;&nbsp;래&nbsp;-</p>
+        </div>
+        <p style="font-size:9px;">[필수] 개인정보 수집 이용 내역</p>
+        <table border=1 style="text-align: center;">
+            <tr>
+                <td>수집 및 이용하는 개인정보 항목</td>
+                <td>수집 및 이용 목적</td>
+                <td>보유 및 이용 기간</td>
+            </tr>
+            <tr>
+                <td>이름, 학번, 소속대학, 소속학과</td>
+                <td>2020학년도 총학생회, 단과대 학생회 온라인 재선거를 위한 본인 확인 및 투표 진행, 투표 결과 확인 및 통계</td>
+                <td>2020년 4월 30일까지</td>
+            </tr>
+        </table>
+        <p>&#x25C8; 위의 내용에 대하여 동의하지 않을 권리가 있습니다.<br>&nbsp;&nbsp;&nbsp;단, 동의하지 않는 경우 투표 참여가 제한됩니다(투표율에 포함되지 않음).</p>
+        <input type="radio" name="agree" value="1"> <b>동의함</b><br>
+        <p style="color:red;">[이 항목 선택 시 투표 항목으로 이동 합니다.]</p>
+        <input type="radio" name="agree" value="0"> <b>동의하지 않음</b><br>
+        <p style="color:red;">[이 항목 선택 시 종료 합니다.]</p>
+        <div style="text-align:center;"><button onclick="personalAgree()">다음페이지</button></div>
+        <input type="hidden" name="voterId" value="<%= voterId %>">
+    </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    var personalAgree = function () {
+        var voterId = $('input[name=voterId]').val();
+        var agree = $('input[name=agree]:checked').val();
+        
+        if(agree != 0 && agree != 1){
+            alert("항목을 선택해주세요.");
+        }else{
+            if(agree == 1){
+                $.ajax({
+                    type: "POST",
+                    url: '/validateVoter',
+                    data: { 'voterId': voterId },
+                    success: function (data) {
+                        location.replace('/castBallot/'+'m1xagvyp8re9taxvr52f');
+                    }
+                });
+            }else if(agree == 0){
+                location.replace('/');
+            }
+            
+            
+        }
+        
+    }
+</script>
+
+</html>

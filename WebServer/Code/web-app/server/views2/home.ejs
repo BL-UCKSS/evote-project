@@ -1,0 +1,106 @@
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+</head>
+
+<body style="text-align: center;">
+    <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } %>
+    <div class="posts">
+        <% if(session.userid) { %>
+            <h1>환영합니다. <%=session.userid%>님</h1>
+            <button onclick="vote()">투표하기</button><br><br>
+            <span id="validateVoter"><b></b></span><br>
+        <% } else { %>
+        <h1>로그인</h1>
+        <input id="voterId" type="text" placeholder="학번을 입력하세요"><br>
+        <input id="pwd" type="password" name="password" placeholder="비밀번호를 입력하세요"><br>
+        <button onclick="login()">로그인</button><br><br>
+        <span id="validateVoter"><b></b></span><br>
+        <% } %>
+        <!--hr>
+        <h3>관리자 전용 - Wallet에 계정 등록</h3>
+            <input id="voterId2" type="text" placeholder="학번을 입력하세요"><br>
+            <button onclick="register()">등록</button>
+            <input id="registrarId" type="hidden" placeholder="Enter Registrar ID" value="Seoul"><br>
+            <input id="firstName" type="hidden" placeholder="Enter first name" value="Hong"><br>
+            <input id="lastName" type="hidden" placeholder="Enter last name" value="Gildong"><br>
+        <br>
+        <span id="registerVoter"><b></b></span><br-->
+        <!---->
+    </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    var vote = function() {
+        var voterId = '<%=session.userid%>';
+        $.ajax({
+            type: "POST",
+            url: '/validateVoter',
+            data: { 'voterId': voterId },
+            success: function (data) {
+                if(!data.error){
+                    location.replace('/personalAgree');
+                }else{
+                    $('#validateVoter > b').html(data.error);
+                }
+                
+            }
+        });
+    }
+    var login = function () {
+        var voterId = $('#voterId').val(); //학번
+        var pwd = $('#pwd').val(); //비번
+        
+        if (voterId.length == 0 || voterId == undefined || voterId == '') {
+            $('#validateVoter > b').html('Please enter a Student Number');
+            return;
+        }else if(pwd.length == 0 || pwd == undefined || pwd == ''){
+            $('#validateVoter > b').html('Please enter a Password');
+            return;
+        }
+        else {
+            console.log('hello');
+            $.ajax({
+                type: "POST",
+                url: '/process/login',
+                data: {'voterId':voterId,
+                        'password':pwd},
+                success: function(data){
+                    console.log(data);
+                    if(data.error){
+                        $('#validateVoter > b').html('없는 유저입니다.');
+                    }else{
+                        $.ajax({
+                            type: "POST",
+                            url: '/registerVoter',
+                            data: { 'voterId': voterId },
+                            success: function (data) {
+                                location.replace('/');
+                            }
+                        });
+                    }
+                }
+            });
+            
+        }
+    }
+    var register = function() {
+        var voterId = '<%=session.userid%>';
+        $.ajax({
+            type: "POST",
+            url: '/registerVoter',
+            data: { 'voterId': voterId },
+            success: function (data) {
+                console.log(data);
+                //location.replace('/');
+            }
+        });
+    }
+</script>
+
+</html>

@@ -1,3 +1,5 @@
+/* eslint-disable no-mixed-spaces-and-tabs */
+/* eslint-disable no-tabs */
 /* eslint-disable require-atomic-updates */
 'use strict';
 
@@ -165,6 +167,13 @@ app.get('/', async (req, res) => {
   htmlrender(req, res, 'home', context);
 });
 
+app.get('/login', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'login', context);
+});
+
 app.get('/logout', async (req, res) => {
   req.session.userid = null;
   let context = {
@@ -306,6 +315,34 @@ app.post('/process/checkagree', async (req, res) => {
   }
 });
 
+async function registerVoter(voterId){
+  let response = await network.registerVoter(voterId);
+  if (response.error) {
+	    // eslint-disable-next-line no-mixed-spaces-and-tabs
+	    console.log(response.error);
+  } else {
+	    let networkObj = await network.connectToNetwork(voterId);
+	    if (networkObj.error) {
+	        console.log(networkObj.error);
+	    }
+	    let argument = JSON.stringify({voterId:voterId, registrarId:voterId, firstName:'no', lastName:'no'});
+	    let args = [argument];
+	    //connect to network and update the state with voterId  
+	    let invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
+
+	    if (invokeResponse.error) {
+      console.log(invokeResponse.error);
+	    } else {
+	        //console.log('after network.invoke ');
+	        let parsedResponse = JSON.parse(invokeResponse);
+	        parsedResponse += '. Use voterId to login above.';
+	        console.log(parsedResponse);
+
+	    }
+
+  }
+}
+
 app.post('/process/login', async (req, res) => {
   console.log('/process/login 라우팅 함수 호출됨.');
       
@@ -333,13 +370,18 @@ app.post('/process/login', async (req, res) => {
           success:'login successful',
           univ: docs[0]._doc.univ,
         };
+
+        //registerVoter
+        registerVoter(paramStdno);
+
         res.send(context);
         return;
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
         let context = {error:'no user'};
-        res.send(context);
+        console.log(context);
+        res.redirect('/voterMain');
         return;
       }
     });  
@@ -536,6 +578,7 @@ app.post('/queryWithQueryString', async (req, res) => {
   res.send(parsedResponse);
 
 });
+
 
 //get voter info, create voter object, and update state with their voterId
 app.post('/registerVoter', async (req, res) => {

@@ -1,0 +1,31 @@
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+</head>
+
+<body style="text-align: center;">
+    <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } %>
+        <div class="posts">
+            <h1>Current State: All Key-Value Pairs in World State</h1>
+            <button onclick="queryall()">Query All Assets</button><!---->
+        </div>
+        <div id="queryall"></div>
+    </div>
+
+</body>
+
+<script type="text/JavaScript">
+    var queryall = function(){
+        $.ajax({
+            url:'/queryAll',
+            success:function(data){
+                $('#queryall').html(data);
+            }
+        })
+    }
+</script>
+</html>

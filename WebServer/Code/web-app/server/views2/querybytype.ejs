@@ -1,0 +1,43 @@
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+</head>
+
+<body style="text-align: center;">
+    <%- include('header.ejs'); %>
+    <% if(session.userid) { %>
+        <a href="/logout" class="">로그아웃</a>&nbsp;
+    <% } %>
+    <div class="posts">
+        <h1>Select the type of object to query for</h1>
+        <select>
+            <option disabled="disabled" value="">Please select one</option>
+            <option>ballot</option>
+            <option>election</option>
+            <option>votableItem</option>
+            <option>voter</option>
+        </select><br><br>
+        <button onclick="querybytype()">Query the world State</button>
+        <br><br><br><!----><br><!---->
+    </div>
+    <div id="querybytype"></div>
+    </div>
+
+</body>
+<script type="text/javascript">
+    var querybytype = function(){
+        var selected = $('select option:selected').val();
+        if(selected){
+            $.ajax({
+                type: "POST",
+                url:'/queryWithQueryString',
+                data: {'selected':selected},
+                success:function(data){
+                    $('#querybytype').html(data);
+                }
+            })
+        }
+    }
+</script>
+</html>
