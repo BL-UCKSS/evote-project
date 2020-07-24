@@ -23,8 +23,8 @@
     		<div class="register-box">
 	    		<div class="in-register-box"> 
 	    			<p class="registertext">선거 이름</p>
-	    			<div class="form-group">
-					    <input type="text" class="form-control" id="electionid" placeholder="선거명을 입력해 주세요." required autofocus>
+	    			<div class="form-group" style="text-align: left;">
+					    <span style="font-size:medium;font-weight:bold;">2020 상명대학교 사범대 학생회 선거</span>
 					</div>
 	    			<p class="registertext">시작 날짜 선택</p>
 					<form>
@@ -153,30 +153,13 @@
 					  </div>
 					</form>
 	    		</div>
-	    		<div class="registervotebtns">
-	    		<button data-toggle="modal" data-target="#cancelRegisterVoteModal" class="nregisterbtn btn">취소</button>
-	    		<button class="registerbtn btn" type="submit">다음</button>
+	    		<div class="signbtns">
+	    		<a href="./adminManage.html" class="btn btn-secondary signbtns-cancel">취소</a>
+	    		<a href="./adminManage.html" class="btn btn-primary signbtns-modify" onclick="alert('수정되었습니다.');">수정</a>
 	    		</div>
     		</div>
     	</form>
     </div>
-
-    <!-- Modal -->
-	<div class="modal fade" id="cancelRegisterVoteModal" tabindex="-1" role="dialog" aria-labelledby="cancelRegisterVoteModalLabel" aria-hidden="true">
-	  <div class="modal-dialog modal-dialog-centered" role="document">
-	    <div class="modal-content small-modal-content vote-modal">
-	      <div class="modal-body" style="text-align: center;">
-	        <p class="mb1">정말로 취소하시겠습니까?</p>
-	        <p class="mb2">(입력하신 정보는 저장되지 않습니다.)</p>
-	      </div>
-	      <div class="vote-modal-footer modal-footer">
-	        <button type="button" class="cancel-vote btn btn-primary" data-dismiss="modal">취소</button>
-	        <button type="button" class="confirm-vote btn btn-primary" onclick="document.location.href='./adminMain.html'">확인</button>
-	      </div>
-	    </div>
-	  </div>
-	</div>
-
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
