@@ -248,6 +248,7 @@ app.get('/myvote', async (req, res) => {
     res.send(context);
     return;    
   }
+});
 
 app.get('/sign', async (req, res) => {
   let context = {
