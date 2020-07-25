@@ -248,6 +248,33 @@ app.get('/myvote', async (req, res) => {
     res.send(context);
     return;    
   }
+
+app.get('/sign', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'sign', context);
+});
+
+app.get('/vote', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'vote', context);
+});
+
+app.get('/vote2', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'vote2', context);
+});
+
+app.get('/help', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'help', context);
 });
 
 app.get('/logout', async (req, res) => {
