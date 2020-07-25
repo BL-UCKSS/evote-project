@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <%- include('head.ejs'); %>
+    <title>Help Page</title>
+  </head>
+<% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+<% } else { %>
+  <body class="loginbody">
+    <div class="text-center">
+    	<div class="main-header">
+    		<a href="/main"><img class="mb-4" src="/img/smulogo4.png" alt width="150" height="47"></a>
+    		<a href="/help"><img class="help mb-4" src="/img/suggestion.png" alt width="45" height="40"></a>
+    		<a href="javascript:if(confirm('로그아웃하시겠습니까?'))document.location.href='/login';"><img class="sidemenu mb-4" src="/img/logout.png" alt width="45" height="40"></a>
+    	</div>
+
+		<div class="myvote-cards">
+			<% for %>
+			<div class="myvote-card">
+				<span class="myvote-card-title">
+					2020 상명대학교 총학생회 선거
+				</span>
+				<span class="myvote-card-content">
+					기호 1번 S.Catch
+				</span>
+			</div>
+			<% endfor %>
+		</div>
+    	
+    </div>
+
+    <%- include('foot.ejs'); %>
+  </body>
+<% } %>
+</html>

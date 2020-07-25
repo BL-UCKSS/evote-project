@@ -11,6 +11,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const servestatic = require('serve-static');
+const crypto = require('crypto');
 
 // sso user login 세션 관리용
 const cookieParser = require('cookie-parser');
@@ -174,6 +175,81 @@ app.get('/login', async (req, res) => {
   htmlrender(req, res, 'login', context);
 });
 
+app.get('/main', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'main', context);
+});
+
+let getHashPw = function(database, stdno, callback) {
+  console.log('getHashPw 호출됨 : ' + stdno);
+  
+  UserModel.findById(stdno, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    console.log('아이디 %s로 검색됨.', stdno);
+    if(result.length > 0){
+      callback(null, result[0].password);
+    }else{
+      console.log('아이디 일치하는 사용자 없음.');
+      callback(null, null);
+    }
+  });
+};
+
+app.get('/myvote', async (req, res) => {
+  let userid = req.session.userid;
+  let pw = ''; //pw from db
+  if (database) {
+    getHashPw(database, userid, function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+      if(docs){
+        pw = docs;
+        let useridpw = userid + pw;
+        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+        res.end('<p>userid : '+userid+'</p><p>pw : '+pw+'</p><p>useridpw : '+useridpw+'</p><p>walletid : '+walletid+'</p>')
+        /*
+        let networkObj = await network.connectToNetwork(appAdmin);
+        let response = await network.invoke(networkObj, true, 'queryByWalletid', walletid); //walletid만 넘기겠음
+        response = JSON.parse(response);
+        if (response.error) {
+          res.send(response.error);
+        } else {
+          res.send(response);
+        }
+        let context = {
+          session:req.session,
+          data:response
+        };
+        */
+        //htmlrender(req, res, 'myvote', context);
+      }else{
+        console.log('에러 발생.');
+        //사용자 데이터 조회 안됨
+        let context = {error:'no user'};
+        console.log(context);
+        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'에러!\');document.location.href=\'/main\';</script>');
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+});
+
 app.get('/logout', async (req, res) => {
   req.session.userid = null;
   let context = {
@@ -205,7 +281,6 @@ let authUser = function(database, stdno, password, callback) {
       callback(null, null);
     }
   });
-  
 };
 
 //personalAgree function
@@ -348,7 +423,8 @@ app.post('/process/login', async (req, res) => {
       
   let paramStdno = req.body.voterId || req.query.voterId;
   let paramPassword = req.body.password || req.query.password;
-  console.log('요청 파라미터 : ' + paramStdno + ', ' + paramPassword);    
+  let hashPw = crypto.createHash('sha256').update(paramPassword).digest('base64');
+  console.log('요청 파라미터 : ' + paramStdno + ', ' + hashPw);    
   
   if (database) {
     authUser(database, paramStdno, paramPassword, function(err, docs) {
@@ -363,25 +439,25 @@ app.post('/process/login', async (req, res) => {
       if(docs){
         //console.dir(docs);
         req.session.userid = paramStdno;
+        req.session.univ = docs[0]._doc.univ;
         req.session.save();
         //console.log(req.session.userid);
         //사용자 로그인 성공
         let context = {
-          success:'login successful',
-          univ: docs[0]._doc.univ,
+          session: req.session
         };
 
         //registerVoter
         registerVoter(paramStdno);
 
-        res.send(context);
+        htmlrender(req, res, 'main', context);
         return;
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
         let context = {error:'no user'};
         console.log(context);
-        res.redirect('/voterMain');
+        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
         return;
       }
     });  
