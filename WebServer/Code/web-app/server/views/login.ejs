@@ -3,12 +3,12 @@
 
 <head>
     <%- include('head.ejs'); %>
+    <title>Login Page</title>
 </head>
-
+<% if(session.userid) { %>
+    <script>document.location.href="/main";</script>
+<% } else { %>
 <body class="loginbody">
-    <% if(session.userid) { %>
-    <script>document.location.href="/voterMain";</script>
-    <% } else { %>
     <div class="text-center">
         <form class="form-signin" action="/process/login" method="post">
             <img class="mb-4" src="/img/smulogo3.png" alt width="307" height="95" onclick="document.location.href='/adminMain';">
@@ -42,8 +42,7 @@
             </div>
         </form>
     </div>
-    <% } %>
     <%- include('foot.ejs'); %>
 </body>
-
+<% } %>
 </html>

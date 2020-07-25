@@ -174,6 +174,41 @@ app.get('/login', async (req, res) => {
   htmlrender(req, res, 'login', context);
 });
 
+app.get('/main', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'main', context);
+});
+
+app.get('/sign', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'sign', context);
+});
+
+app.get('/vote', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'vote', context);
+});
+
+app.get('/vote2', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'vote2', context);
+});
+
+app.get('/help', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'help', context);
+});
+
 app.get('/logout', async (req, res) => {
   req.session.userid = null;
   let context = {
@@ -204,8 +239,7 @@ let authUser = function(database, stdno, password, callback) {
       console.log('아이디 일치하는 사용자 없음.');
       callback(null, null);
     }
-  });
-  
+  });  
 };
 
 //personalAgree function
@@ -363,25 +397,25 @@ app.post('/process/login', async (req, res) => {
       if(docs){
         //console.dir(docs);
         req.session.userid = paramStdno;
+        req.session.univ = docs[0]._doc.univ;
         req.session.save();
         //console.log(req.session.userid);
         //사용자 로그인 성공
         let context = {
-          success:'login successful',
-          univ: docs[0]._doc.univ,
+          session: req.session
         };
 
         //registerVoter
         registerVoter(paramStdno);
 
-        res.send(context);
+        htmlrender(req, res, 'main', context);
         return;
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
         let context = {error:'no user'};
         console.log(context);
-        res.redirect('/voterMain');
+        res.end("<head><meta charset='utf-8'></head><script>alert('아이디 또는 비밀번호가 틀렸습니다.');document.location.href='/login';</script>");
         return;
       }
     });  
