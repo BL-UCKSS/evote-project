@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <%- include('head.ejs'); %>
+    <title>Help Page</title>
+  </head>
+  <% if(session.userid != 'admin' && session.g != 'Y') { %>
+  <script>document.location.href="/login";</script>
+  <% } else { %>
+  <body class="loginbody">
+    <div class="text-center">
+    	<%- include('header2.ejs'); %>
+
+    	<div class="help-box">
+        <form action="/help" method="post" name="frm">
+          <input type="text" class="form-control" placeholder="연락처를 입력하세요." aria-label="contact" name="email" aria-describedby="addon-wrapping" value="<%= email %>">
+          <div class="help-box-btns">
+              <button onclick="document.location.href='/adminMain'" class="help-box-btn btn">취소</button>
+              <button onclick="document.frm.submit();" class="help-box-btn btn">수정</button>
+          </div>
+        </form>
+    	</div>
+    </div>
+
+    <%- include('foot.ejs'); %>
+  </body>
+  <% } %>
+</html>

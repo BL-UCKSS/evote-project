@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+    <title>Admin Page</title>
+</head>
+<% if(session.userid != 'admin' && session.g != 'Y') { %>
+	<script>document.location.href="/login";</script>
+<% } else { %>
+<body class="loginbody">
+    <div class="text-center">
+        <%- include('header2.ejs'); %>
+        <!-- title -->
+        <div class="now-title">
+            <div>진행 중인 선거</div>
+        </div>
+        <!-- title end -->
+        <!-- content -->
+        <div class="now-content">
+            <div>
+                <span class="now-content-span">2020 상명대학교 사범대 학생회 선거</span>
+                <span class="now-content-span2">~ 20.07.18</span>
+            </div>
+            <div class="now-content-result"><input type="text" readonly value="총 투표율 <%= avg %>%"></div>
+        </div>
+        <!-- content end -->
+    </div>
+    <%- include('foot.ejs'); %>
+</body>
+<% } %>
+</html>
