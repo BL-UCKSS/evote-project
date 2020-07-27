@@ -115,8 +115,8 @@ function connectDB() {
       return this.find({electionid:electId}, callback);        
     });
 
-    AdminSchema.static('findById', function(stdno, callback) {
-      return this.find({stdno:stdno}, callback);        
+    AdminSchema.static('findById', function(adminid, callback) {
+      return this.find({id:adminid}, callback);        
     });
           
     UserModel = mongoose.model('ssousers', UserSchema);
@@ -128,7 +128,7 @@ function connectDB() {
     CandidateModel = mongoose.model('candidates', CandidateSchema);
     console.log('CandidateModel 정의함.');
 
-    AdminModel = mongoose.model('adminusers', UserSchema);
+    AdminModel = mongoose.model('adminusers', AdminSchema);
     console.log('AdminModel 정의함.');
   });
   
@@ -290,11 +290,41 @@ app.get('/vote2', async (req, res) => {
   htmlrender(req, res, 'vote2', context);
 });
 
+let adminEmail = function(database, callback) {
+  console.log('adminEmail 호출됨');
+  
+  AdminModel.findById('admin', function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    if(result.length > 0){
+      callback(null, result[0]._doc.email);
+    }else{
+      console.log('아이디 일치하는 관리자 없음.');
+      callback(null, null);
+    }
+  });
+};
+
 app.get('/help', async (req, res) => {
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'help', context);
+  let id = 'admin';
+  if(database){
+    adminEmail(database, function(err, email){
+      console.log('관리자 이메일 : ' + email);
+      let context = {
+        session:req.session,
+        email:email
+      };
+      htmlrender(req, res, 'help', context);
+    })
+  }else{
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
 });
 
 app.get('/logout', async (req, res) => {
@@ -471,13 +501,16 @@ async function registerUser(walletId, gubun){
 	    }
 	    let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
 	    let args = [argument];
-      //connect to network and update the state with voterId
-      let invokeResponse;
-      if (gubun === 'user'){
+    //connect to network and update the state with voterId
+    let invokeResponse;
+    if (gubun === 'user'){
 	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
-      }else if(gubun == 'admin'){
-        //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
-      }
+    }else if(gubun == 'admin'){
+      //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
+    }else{
+      console.log('error');
+      return;
+    }
 
 	    if (invokeResponse.error) {
       console.log(invokeResponse.error);
@@ -500,7 +533,7 @@ app.post('/process/login', async (req, res) => {
   let hashPw = crypto.createHash('sha256').update(paramPassword).digest('base64');
   console.log('요청 파라미터 : ' + paramStdno + ', ' + hashPw);    
   
-  if (paramStdno === 'admin'){ // if admin
+  if (paramStdno === 'admin'){ // if admin, 임시로 id가 admin일때로 고정(실제론 adminusers 컬렉션에서 admin id가 맞는지 확인해야함)
     if(database){
       authAdmin(database, paramStdno, hashPw, function(err, docs){
         if(err){
@@ -532,7 +565,15 @@ app.post('/process/login', async (req, res) => {
             res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
             return;
           }
-      })
+        }else{
+          console.log('에러 발생.');
+          //사용자 데이터 조회 안됨
+          let context = {error:'no user'};
+          console.log(context);
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
+          return;
+        }
+      });
     }else{
       console.log('에러 발생.');
       //데이터베이스 연결 안됨
