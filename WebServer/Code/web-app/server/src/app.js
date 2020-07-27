@@ -21,6 +21,7 @@ let network = require('./fabric/network.js');
 
 // mongoose 모듈 사용
 let mongoose = require('mongoose');
+const session = require('express-session');
 
 let database;
 let UserSchema;
@@ -118,7 +119,11 @@ function connectDB() {
     AdminSchema.static('findById', function(adminid, callback) {
       return this.find({id:adminid}, callback);        
     });
-          
+
+    AdminSchema.static('updateById', function(adminid, _email) {
+      return this.update({id:adminid}, {$set : {email:_email}});
+    });
+  
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
 
@@ -179,10 +184,7 @@ const htmlrender = function(req, res, fname, context){
 };
 
 app.get('/', async (req, res) => {
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'home', context);
+  res.redirect('/login');
 });
 
 app.get('/login', async (req, res) => {
@@ -197,6 +199,13 @@ app.get('/main', async (req, res) => {
     session:req.session
   };
   htmlrender(req, res, 'main', context);
+});
+
+app.get('/adminMain', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'adminMain', context);
 });
 
 let getHashPw = function(database, stdno, callback) {
@@ -307,7 +316,13 @@ let adminEmail = function(database, callback) {
   });
 };
 
+let updateAdminEmail = async function(database, id, email) {
+  console.log('updateAdminEmail 호출됨');
+  await AdminModel.updateById(id, email);
+};
+
 app.get('/help', async (req, res) => {
+  let mode = req.query.mode;
   if(database){
     adminEmail(database, function(err, email){
       console.log('관리자 이메일 : ' + email);
@@ -315,7 +330,11 @@ app.get('/help', async (req, res) => {
         session:req.session,
         email:email
       };
-      htmlrender(req, res, 'help', context);
+      if(mode === 'admin'){
+        htmlrender(req, res, 'suggestion', context);
+      }else{
+        htmlrender(req, res, 'help', context);
+      }
     });
   }else{
     console.log('에러 발생.');
@@ -324,6 +343,16 @@ app.get('/help', async (req, res) => {
     res.send(context);
     return;    
   }
+});
+
+app.post('/help', async (req, res) => {
+  let email = req.body.email || req.query.email;
+  await updateAdminEmail(database, 'admin', email);
+  let context = {
+    session:req.session,
+    email:email
+  }
+  htmlrender(req, res, 'suggestion', context);
 });
 
 app.get('/logout', async (req, res) => {
