@@ -59,9 +59,8 @@ function connectDB() {
       name: {type:String, index:'hashed', required:false},
       dept: {type:String, required:false},
       univ: {type:String, required:false},
-      agree: {type:Boolean, required:true},
     });
-    console.log('UserSchema 정의함.');
+    console.log('PersonalAgreeSchema 정의함.');
 
     CandidateSchema = mongoose.Schema({
       no: {type:Number, required:true},
@@ -329,7 +328,7 @@ app.get('/help', async (req, res) => {
 app.get('/logout', async (req, res) => {
   req.session.destroy(function(){
     req.session;
-  });
+  })
   res.redirect('/login');
 });
 
@@ -381,22 +380,23 @@ let authAdmin = function(database, id, pw, callback) {
   });
 };
 
-//personalAgree function
-let personalAgree = function(database, stdno, agree, callback) {
-  console.log('personalAgree 호출됨 : ' + stdno + ', ' + agree);
+//사용자가 개인정보처리에 동의하여 DB에 추가 (★★★★수정하는 중★★★★)
+let personalAgree = function(database, stdno, callback) {
   
-  let pAgree = new PersonalAgreeModel({stdno:stdno,agree:agree});
+  let pAgree = new PersonalAgreeModel({stdno:stdno});
+  console.log('personalAgree 호출됨 : ' + stdno);
   
   pAgree.save(function(err) {
     if(err) {
       callback(err, null);
       return;
     }
-    console.log('개인정보처리동의 데이터 추가함.');
+    console.log('('+ stdno +') 개인정보처리동의 데이터 추가함.');
     callback(null, pAgree);
   });
 };
 
+//사용자가 개인정보처리에 동의했는지 확인 (★★★★수정하는 중★★★★)
 let checkAgree = function(database, stdno, callback){
   console.log('checkAgree 호출됨 : ' + stdno);
 
@@ -405,25 +405,29 @@ let checkAgree = function(database, stdno, callback){
       callback(err, null);
       return;
     }
+
     console.log('학번 %s로 검색됨.', stdno);
-    if(result.length > 0){
+    console.log(result);
+    
+    if(result.length > 0){      //사용자가 동의 함
       callback(null, result);
-    }else{
+    }else{  //personalAgree 호출해야 함
       console.log('학번 일치하는 사용자 없음.');
-      callback(null, {error:'no user'});
+      // callback(null, {error:'no user'});
     }
   });
 };
 
+// (★★★★수정하는 중★★★★)
 app.post('/process/personalagree', async (req, res) => {
   console.log('/process/personalagree 라우팅 함수 호출됨.');
 
   let paramStdno = req.session.userid;
-  let paramAgree = true;
-  console.log('요청 파라미터 : ' + paramStdno + ', ' + paramAgree);    
+  // let paramAgree = true;
+  console.log('요청 파라미터 : ' + paramStdno);    
   
   if (database) {
-    personalAgree(database, paramStdno, paramAgree, function(err, docs) {
+    personalAgree(database, paramStdno, function(err, docs) {
       if(err){
         console.log(err);
         console.log('에러 발생.');
@@ -431,13 +435,15 @@ app.post('/process/personalagree', async (req, res) => {
         let context = {error:'Error is occured'};
         res.send(context);
         return;
-      }
-                  
+      }                  
       if(docs){
         //console.dir(docs);
         //사용자 개인정보처리동의 성공
         let context = {success:'agree successful'};
         res.send(context);
+
+        // htmlrender(req, res, 'vote', context);
+
         return;
       }
     });  
@@ -450,6 +456,7 @@ app.post('/process/personalagree', async (req, res) => {
   }
 });
 
+//(★★★★수정하는 중★★★★)
 app.post('/process/checkagree', async (req, res) => {
   console.log('/process/checkagree 라우팅 함수 호출됨.');
 
@@ -470,12 +477,9 @@ app.post('/process/checkagree', async (req, res) => {
       if(docs){
         let context = {votable:true};
         if(!docs.error){
-          //이미 개인정보처리동의함
           context = {votable:false};
         }
-        //console.dir(docs);
-        
-        res.send(context);
+        res.send(context);        
         return;
       }
     });  
@@ -491,19 +495,19 @@ app.post('/process/checkagree', async (req, res) => {
 async function registerUser(walletId, gubun){
   let response = await network.registerVoter(walletId);
   if (response.error) {
-	    // eslint-disable-next-line no-mixed-spaces-and-tabs
-	    console.log(response.error);
+      // eslint-disable-next-line no-mixed-spaces-and-tabs
+      console.log(response.error);
   } else {
-	    let networkObj = await network.connectToNetwork(walletId);
-	    if (networkObj.error) {
-	        console.log(networkObj.error);
-	    }
-	    let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
-	    let args = [argument];
+      let networkObj = await network.connectToNetwork(walletId);
+      if (networkObj.error) {
+          console.log(networkObj.error);
+      }
+      let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
+      let args = [argument];
     //connect to network and update the state with voterId
     let invokeResponse;
     if (gubun === 'user'){
-	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
+        invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
     }else if(gubun === 'admin'){
       //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
     }else{
