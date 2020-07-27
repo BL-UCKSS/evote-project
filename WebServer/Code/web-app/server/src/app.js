@@ -21,7 +21,6 @@ let network = require('./fabric/network.js');
 
 // mongoose 모듈 사용
 let mongoose = require('mongoose');
-const session = require('express-session');
 
 let database;
 let UserSchema;
@@ -208,6 +207,28 @@ app.get('/adminMain', async (req, res) => {
   htmlrender(req, res, 'adminMain', context);
 });
 
+app.get('/adminNow', async (req, res) => {
+  let count = 0;
+  let total = 10;
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'voter');
+  let parsedResponse = await JSON.parse(response);
+  parsedResponse = await JSON.parse(parsedResponse);
+  
+  for (let key in parsedResponse){
+    if(parsedResponse[key].Record.ballotCast){
+      count += 1;
+    }
+  }
+  let avg = count / total * 100;
+  let context = {
+    session:req.session,
+    avg:avg
+  };
+
+  htmlrender(req, res, 'adminNow', context);
+});
+
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
@@ -351,7 +372,7 @@ app.post('/help', async (req, res) => {
   let context = {
     session:req.session,
     email:email
-  }
+  };
   htmlrender(req, res, 'suggestion', context);
 });
 
