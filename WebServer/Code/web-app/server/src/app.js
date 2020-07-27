@@ -29,6 +29,8 @@ let CandidateSchema;
 let UserModel;
 let PersonalAgreeModel;
 let CandidateModel;
+let AdminSchema;
+let AdminModel;
 
 function connectDB() {
   let databaseUrl = 'mongodb://localhost:27017/local';
@@ -79,6 +81,14 @@ function connectDB() {
       link: {type:String, required:false},
     });
     console.log('CandidateSchema 정의함.');
+
+    AdminSchema = mongoose.Schema({
+      id: {type:String, required:true, unique:true},
+      pw: {type:String, required:true},
+      name: {type:String, index:'hashed'},
+      email: {type:String, required:true},
+    });
+    console.log('AdminSchema 정의함.');
       
     //함수 등록(이후 모델 객체에서 사용가능)
     UserSchema.static('findById', function(stdno, callback) {
@@ -104,6 +114,10 @@ function connectDB() {
     CandidateSchema.static('findByElectId', function(electId,callback){
       return this.find({electionid:electId}, callback);        
     });
+
+    AdminSchema.static('findById', function(stdno, callback) {
+      return this.find({stdno:stdno}, callback);        
+    });
           
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
@@ -113,6 +127,9 @@ function connectDB() {
       
     CandidateModel = mongoose.model('candidates', CandidateSchema);
     console.log('CandidateModel 정의함.');
+
+    AdminModel = mongoose.model('adminusers', UserSchema);
+    console.log('AdminModel 정의함.');
   });
   
   database.on('disconnected', function(){
@@ -216,7 +233,9 @@ app.get('/myvote', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        res.end('<p>userid : '+userid+'</p><p>pw : '+pw+'</p><p>useridpw : '+useridpw+'</p><p>walletid : '+walletid+'</p>')
+        //임시로 출력
+        res.end('<p>userid : '+userid+'</p><p>pw : '+pw+'</p><p>useridpw : '+useridpw+'</p><p>walletid : '+walletid+'</p>');
+        // 아직 queryByWalletId 컨트랙이 완성되지 않음.
         /*
         let networkObj = await network.connectToNetwork(appAdmin);
         let response = await network.invoke(networkObj, true, 'queryByWalletid', walletid); //walletid만 넘기겠음
@@ -305,6 +324,29 @@ let authUser = function(database, stdno, password, callback) {
       }
     }else{
       console.log('아이디 일치하는 사용자 없음.');
+      callback(null, null);
+    }
+  });
+};
+let authAdmin = function(database, id, pw, callback) {
+  console.log('authAdmin 호출됨 : ' + id + ', ' + pw);
+  
+  AdminModel.findById(id, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    console.log('관리자 아이디 %s로 검색됨.', id);
+    if(result.length > 0){
+      if(result[0]._doc.pw === pw) {
+        console.log('비밀번호 일치함.');
+        callback(null, result);
+      } else {
+        console.log('비밀번호 일치하지 않음.');
+        callback(null, null);
+      }
+    }else{
+      console.log('아이디 일치하는 관리자 없음.');
       callback(null, null);
     }
   });
@@ -417,7 +459,7 @@ app.post('/process/checkagree', async (req, res) => {
   }
 });
 
-async function registerUser(walletId){
+async function registerUser(walletId, gubun){
   let response = await network.registerVoter(walletId);
   if (response.error) {
 	    // eslint-disable-next-line no-mixed-spaces-and-tabs
@@ -429,8 +471,13 @@ async function registerUser(walletId){
 	    }
 	    let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
 	    let args = [argument];
-	    //connect to network and update the state with voterId  
-	    let invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
+      //connect to network and update the state with voterId
+      let invokeResponse;
+      if (gubun === 'user'){
+	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
+      }else if(gubun == 'admin'){
+        //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
+      }
 
 	    if (invokeResponse.error) {
       console.log(invokeResponse.error);
@@ -453,54 +500,97 @@ app.post('/process/login', async (req, res) => {
   let hashPw = crypto.createHash('sha256').update(paramPassword).digest('base64');
   console.log('요청 파라미터 : ' + paramStdno + ', ' + hashPw);    
   
-  if (database) {
-    authUser(database, paramStdno, hashPw, function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-                  
-      if(docs){
-        if(docs[0]._doc.password === hashPw){
-          //console.dir(docs);
-          req.session.userid = paramStdno;
-          req.session.univ = docs[0]._doc.univ;
-          req.session.save();
-          //console.log(req.session.userid);
-          //사용자 로그인 성공
-          let context = {
-            session: req.session
-          };
-          //registerUser(paramStdno);
-          // wallet은 walletid로 등록
-          let useridpw = paramStdno + hashPw;
-          let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-          registerUser(walletid);
-
-          htmlrender(req, res, 'main', context);
+  if (paramStdno === 'admin'){ // if admin
+    if(database){
+      authAdmin(database, paramStdno, hashPw, function(err, docs){
+        if(err){
+          console.log('에러 발생.');
+          let context = {error:'Error is occured'};
+          res.send(context);
           return;
+        }
+                    
+        if(docs){
+          if(docs[0]._doc.password === hashPw){
+            //관리자 로그인 성공
+            req.session.userid = paramStdno;
+            req.session.univ = docs[0]._doc.univ;
+            req.session.admin = 'Y'; //admin
+            req.session.save();
+            let context = {
+              session: req.session
+            };
+            //registerUser(paramStdno);
+            // wallet은 walletid로 등록
+            let useridpw = paramStdno + hashPw;
+            let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+            registerUser(walletid, 'admin');
+  
+            htmlrender(req, res, 'adminMain', context);
+            return;
+          }else{
+            res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
+            return;
+          }
+      })
+    }else{
+      console.log('에러 발생.');
+      //데이터베이스 연결 안됨
+      let context = {error:'Database is not connected'};
+      res.send(context);
+      return;    
+    }
+  }else{ // if not admin
+    if (database) {
+      authUser(database, paramStdno, hashPw, function(err, docs) {
+        if(err){
+          console.log('에러 발생.');
+          //에러발생
+          let context = {error:'Error is occured'};
+          res.send(context);
+          return;
+        }
+                    
+        if(docs){
+          if(docs[0]._doc.password === hashPw){
+            //console.dir(docs);
+            req.session.userid = paramStdno;
+            req.session.univ = docs[0]._doc.univ;
+            req.session.save();
+            //console.log(req.session.userid);
+            //사용자 로그인 성공
+            let context = {
+              session: req.session
+            };
+            //registerUser(paramStdno);
+            // wallet은 walletid로 등록
+            let useridpw = paramStdno + hashPw;
+            let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+            registerUser(walletid, 'user');
+  
+            htmlrender(req, res, 'main', context);
+            return;
+          }else{
+            res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
+            return;
+          }
         }else{
+          console.log('에러 발생.');
+          //사용자 데이터 조회 안됨
+          let context = {error:'no user'};
+          console.log(context);
           res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
           return;
         }
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'no user'};
-        console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
-        return;
-      }
-    });  
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+      });
+  
+    }else {
+      console.log('에러 발생.');
+      //데이터베이스 연결 안됨
+      let context = {error:'Database is not connected'};
+      res.send(context);
+      return;    
+    }
   }
 });
 
