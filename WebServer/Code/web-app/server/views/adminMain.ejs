@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <%- include('head.ejs'); %>
+    <title>Admin Main Page</title>
+  </head>
+  <body class="loginbody">
+    <div class="text-center">
+    	<%- include('header.ejs'); %>
+    	
+    	<div class="vote-container">
+    		<a href="/registervote"><span class="myvote registervote">
+    			<img class="txtimg" src="/img/registerVoteIcon.png">
+    			<div class="txt1">
+	    			<span id="txt_1" class="txt font-weight-bolder">선거 등록하기</span>
+	    			<span id="txtln_1">선거 정보를 등록할 수 있습니다.</span>
+	    		</div>
+    		</span></a>
+    		<a href="#" onclick="noElection('manage')"><span class="myvote managevote">
+    			<img class="txtimg" src="/img/manageVoteIcon.png">
+    			<div class="txt1">
+	    			<span id="txt_2" class="txt font-weight-bolder">선거 관리하기</span>
+	    			<span id="txtln_2">등록된 선거를 관리할 수 있습니다.</span>
+	    		</div>
+    		</span></a>
+            <a href="#" onclick="noElection('count')"><span class="myvote countvote">
+    			<img class="txtimg" src="/img/checkVoteRateIcon.png">
+    			<div class="txt1">
+	    			<span id="txt_3" class="txt font-weight-bolder">투표율 확인</span>
+	    			<span id="txtln_3">실시간 투표율을 확인할 수 있습니다.</span>
+	    		</div>
+    		</span></a>
+    	</div>
+    </div>
+    <!-- Modal -->
+	<div class="modal fade" id="noElectionModal" tabindex="-1" role="dialog" aria-labelledby="noElectionModalLabel" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-body" style="text-align: center;">
+	        등록된 선거가 존재하지 않습니다.<br>
+            선거를 먼저 개설해주십시오.
+	      </div>
+	      <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" onclick="document.location.href='/adminMain'">확인</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+    <%- include('foot.ejs'); %>
+    <script type="text/javascript" src="/public/script.js"></script>
+  </body>
+</html>

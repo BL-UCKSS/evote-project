@@ -308,7 +308,6 @@ let adminEmail = function(database, callback) {
 };
 
 app.get('/help', async (req, res) => {
-  let id = 'admin';
   if(database){
     adminEmail(database, function(err, email){
       console.log('관리자 이메일 : ' + email);
@@ -317,7 +316,7 @@ app.get('/help', async (req, res) => {
         email:email
       };
       htmlrender(req, res, 'help', context);
-    })
+    });
   }else{
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
@@ -505,23 +504,22 @@ async function registerUser(walletId, gubun){
     let invokeResponse;
     if (gubun === 'user'){
 	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
-    }else if(gubun == 'admin'){
+    }else if(gubun === 'admin'){
       //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
     }else{
       console.log('error');
       return;
     }
-
-	    if (invokeResponse.error) {
-      console.log(invokeResponse.error);
-	    } else {
-	        //console.log('after network.invoke ');
-	        let parsedResponse = JSON.parse(invokeResponse);
-	        parsedResponse += '. Use walletId to login above.';
-	        console.log(parsedResponse);
-
-	    }
-
+    if(invokeResponse){
+      if (invokeResponse.error) {
+        console.log(invokeResponse.error);
+      } else {
+        //console.log('after network.invoke ');
+        let parsedResponse = JSON.parse(invokeResponse);
+        parsedResponse += '. Use walletId to login above.';
+        console.log(parsedResponse);
+      }
+    }
   }
 }
 
@@ -544,7 +542,8 @@ app.post('/process/login', async (req, res) => {
         }
                     
         if(docs){
-          if(docs[0]._doc.password === hashPw){
+          console.log('look at this : ' + docs[0]);
+          if(docs[0]._doc.pw === hashPw){
             //관리자 로그인 성공
             req.session.userid = paramStdno;
             req.session.univ = docs[0]._doc.univ;
