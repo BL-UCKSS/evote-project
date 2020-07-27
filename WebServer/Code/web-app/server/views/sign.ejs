@@ -6,14 +6,11 @@
   </head>
   <% /* session.univ는 학생의 단과대학을 표시해줌 */ %>
   <% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
   <% } else { %>
   <body class="loginbody">
     <div class="text-center">
-    	<div class="main-header">
-            <a href="/main"><img class="mb-4" src="/img/smulogo4.png" alt width="150" height="47"></a>
-            <a href="/help"><img class="help mb-4" src="/img/suggestion.png" alt width="45" height="40"></a>
-            <a href="javascript:if(confirm('로그아웃하시겠습니까?'))document.location.href='/login';"><img class="sidemenu mb-4" src="/img/logout.png" alt width="45" height="40"></a>
-        </div>
+    	<%- include('header.ejs'); %>
         <div class="sign-box">
             <div class="in-sign-box">
                 <p class="signtext">유의사항</p>
@@ -28,7 +25,7 @@
             </div>
             <div class="signbtns">
                 <button class="nsignbtn btn btn-primary" onclick="alert('메인으로 돌아갑니다.');document.location.href='/main'">동의안함</button>
-                <button onclick="document.location.href='/vote'" class="signbtn btn btn-primary">동의함</button>
+                <button onclick="document.location.href='/process/personalagree'" class="signbtn btn btn-primary">동의함</button>
             </div>
         </div>
     </div>

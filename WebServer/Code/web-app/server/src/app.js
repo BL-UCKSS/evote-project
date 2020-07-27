@@ -279,11 +279,10 @@ app.get('/help', async (req, res) => {
 });
 
 app.get('/logout', async (req, res) => {
-  req.session.userid = null;
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'home', context);
+  req.session.destroy(function(){
+    req.session;
+  });
+  res.redirect('/login');
 });
 
 // SSO 로그인 관련 router
@@ -348,8 +347,8 @@ let checkAgree = function(database, stdno, callback){
 app.post('/process/personalagree', async (req, res) => {
   console.log('/process/personalagree 라우팅 함수 호출됨.');
 
-  let paramStdno = req.body.voterId || req.query.voterId;
-  let paramAgree = req.body.agree || req.query.agree;
+  let paramStdno = req.session.userid;
+  let paramAgree = true;
   console.log('요청 파라미터 : ' + paramStdno + ', ' + paramAgree);    
   
   if (database) {
@@ -418,17 +417,17 @@ app.post('/process/checkagree', async (req, res) => {
   }
 });
 
-async function registerVoter(voterId){
-  let response = await network.registerVoter(voterId);
+async function registerUser(walletId){
+  let response = await network.registerVoter(walletId);
   if (response.error) {
 	    // eslint-disable-next-line no-mixed-spaces-and-tabs
 	    console.log(response.error);
   } else {
-	    let networkObj = await network.connectToNetwork(voterId);
+	    let networkObj = await network.connectToNetwork(walletId);
 	    if (networkObj.error) {
 	        console.log(networkObj.error);
 	    }
-	    let argument = JSON.stringify({voterId:voterId, registrarId:voterId, firstName:'no', lastName:'no'});
+	    let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
 	    let args = [argument];
 	    //connect to network and update the state with voterId  
 	    let invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
@@ -438,7 +437,7 @@ async function registerVoter(voterId){
 	    } else {
 	        //console.log('after network.invoke ');
 	        let parsedResponse = JSON.parse(invokeResponse);
-	        parsedResponse += '. Use voterId to login above.';
+	        parsedResponse += '. Use walletId to login above.';
 	        console.log(parsedResponse);
 
 	    }
@@ -455,7 +454,7 @@ app.post('/process/login', async (req, res) => {
   console.log('요청 파라미터 : ' + paramStdno + ', ' + hashPw);    
   
   if (database) {
-    authUser(database, paramStdno, paramPassword, function(err, docs) {
+    authUser(database, paramStdno, hashPw, function(err, docs) {
       if(err){
         console.log('에러 발생.');
         //에러발생
@@ -465,21 +464,28 @@ app.post('/process/login', async (req, res) => {
       }
                   
       if(docs){
-        //console.dir(docs);
-        req.session.userid = paramStdno;
-        req.session.univ = docs[0]._doc.univ;
-        req.session.save();
-        //console.log(req.session.userid);
-        //사용자 로그인 성공
-        let context = {
-          session: req.session
-        };
+        if(docs[0]._doc.password === hashPw){
+          //console.dir(docs);
+          req.session.userid = paramStdno;
+          req.session.univ = docs[0]._doc.univ;
+          req.session.save();
+          //console.log(req.session.userid);
+          //사용자 로그인 성공
+          let context = {
+            session: req.session
+          };
+          //registerUser(paramStdno);
+          // wallet은 walletid로 등록
+          let useridpw = paramStdno + hashPw;
+          let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+          registerUser(walletid);
 
-        //registerVoter
-        registerVoter(paramStdno);
-
-        htmlrender(req, res, 'main', context);
-        return;
+          htmlrender(req, res, 'main', context);
+          return;
+        }else{
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'아이디 또는 비밀번호가 틀렸습니다.\');document.location.href=\'/login\';</script>');
+          return;
+        }
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
