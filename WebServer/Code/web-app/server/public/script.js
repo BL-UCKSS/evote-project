@@ -1,9 +1,9 @@
 //adminMain
 function noElection(option) {
     if (option === 'manage') { //선거 관리하기
-        document.location.href = './adminManage.html';
+        document.location.href = '/adminManage';
     } else if (option == 'count') { //투표율 확인
-        document.location.href = './adminNow.html';
+        document.location.href = '/adminNow';
     } else { //투표가 하나라도 개설되지 않았을 경우 팝업
         $('#noElectionModal').modal('toggle');
     }
@@ -31,9 +31,9 @@ function electionDeleted() {
 }
 
 function modifyElection() {
-    document.location.href = './modifyElection.html';
+    document.location.href = '/modifyElection';
 }
 
 function endElection() {
-    document.location.href = './adminManage.html?id=2';
+    document.location.href = '/adminManage.html?id=2';
 }
