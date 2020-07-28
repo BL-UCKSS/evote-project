@@ -457,6 +457,22 @@ let authAdmin = function(database, id, pw, callback) {
   });
 };
 
+//사용자를 개인정보처리동의 DB에 추가하는 함수
+let personalAgree = function(database, stdno, callback) {
+  
+  let pAgree = new PersonalAgreeModel({stdno:stdno});
+  console.log('personalAgree 호출됨 : ' + stdno);
+  
+  pAgree.save(function(err) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    console.log('('+ stdno +') 개인정보처리동의 데이터 추가함.');
+    callback(null, pAgree);
+  });
+};
+
 //사용자가 개인정보처리에 동의했는지 확인하는 함수(vote 페이지에서)
 let checkAgree = function(database, stdno, callback){
   console.log('checkAgree 호출됨 : ' + stdno);
@@ -493,7 +509,7 @@ let existAgree = function(database, stdno, callback){
     console.log('학번 %s로 검색됨.', stdno);
     
     if(result.length > 0){      //사용자가 이미 동의함
-      console.log('(' +stdno+ ')님이 이미 개인정보처리 동의를 완료했습니다.')
+      console.log('(' +stdno+ ')님이 이미 개인정보처리 동의를 완료했습니다.');
       callback(null, result);
     }else{ 
       console.log('학번 일치하는 사용자 없음.');
@@ -503,7 +519,7 @@ let existAgree = function(database, stdno, callback){
           return;
         }
         else {
-          console.log('(' +stdno+ ')님의 개인정보처리 동의를 완료했습니다.')
+          console.log('(' +stdno+ ')님의 개인정보처리 동의를 완료했습니다.');
           callback(null, result);
         }
       });
