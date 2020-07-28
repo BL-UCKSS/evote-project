@@ -117,7 +117,11 @@ function connectDB() {
     AdminSchema.static('findById', function(adminid, callback) {
       return this.find({id:adminid}, callback);        
     });
-          
+
+    AdminSchema.static('updateById', function(adminid, _email) {
+      return this.update({id:adminid}, {$set : {email:_email}});
+    });
+  
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
 
@@ -178,10 +182,7 @@ const htmlrender = function(req, res, fname, context){
 };
 
 app.get('/', async (req, res) => {
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'home', context);
+  res.redirect('/login');
 });
 
 app.get('/login', async (req, res) => {
@@ -196,6 +197,62 @@ app.get('/main', async (req, res) => {
     session:req.session
   };
   htmlrender(req, res, 'main', context);
+});
+
+app.get('/adminMain', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'adminMain', context);
+});
+
+app.get('/adminNow', async (req, res) => {
+  let t = new Date();
+  let total = 12; //재학생 수
+  let arr = [];
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let resVoter = await network.invoke(networkObj, true, 'queryByObjectType', 'voter');
+  let parsedVoter = await JSON.parse(resVoter);
+  parsedVoter = await JSON.parse(parsedVoter);
+
+  let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let parsedElection = await JSON.parse(resElection);
+  parsedElection = await JSON.parse(parsedElection);
+  
+  //선거 목록 출력 후 선거별로 투표율 계산 및 출력
+  for (let i in parsedElection){
+    let count = 0;
+    //type으로는 총학생회 투표나 각 단과대 투표로 구분하는 걸 가정
+    if(parsedElection[i] && parsedElection[i].Record.year === t.getFullYear() && parsedElection[i].Record.type === 'election'){ //'chonghak', 'yoongongdae'
+      //해당 선거의 투표율을 확인해야하지만, 현재 querybyobjecttype voter는 type을 구분할 수 없음.
+      for (let j in parsedVoter){
+        if(parsedVoter[j].Record.ballotCast){
+        //if(parsedVoter[j].Record.ballotType === parsedVoter[i].Record.type) //이런식으로 구분할 수 있겠음.
+          count += 1;
+        }
+      }
+      let avg = count / total * 100;
+      let isEnd = true;
+      let nowTime = new Date().toISOString();
+      if(parsedElection[i].Record.endDate < nowTime){
+        nowTime = false; //아직 선거가 끝나지 않음. 진행중인 선거.
+      }
+      arr.push({
+        name: parsedElection[i].Record.name,
+        enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
+        avg: avg.toFixed(2),
+        isEnd: isEnd
+      });
+    }
+  }
+  
+  
+  let context = {
+    session:req.session,
+    list: arr
+  };
+
+  htmlrender(req, res, 'adminNow', context);
 });
 
 let getHashPw = function(database, stdno, callback) {
@@ -306,7 +363,13 @@ let adminEmail = function(database, callback) {
   });
 };
 
+let updateAdminEmail = async function(database, id, email) {
+  console.log('updateAdminEmail 호출됨');
+  await AdminModel.updateById(id, email);
+};
+
 app.get('/help', async (req, res) => {
+  let mode = req.query.mode;
   if(database){
     adminEmail(database, function(err, email){
       console.log('관리자 이메일 : ' + email);
@@ -314,7 +377,11 @@ app.get('/help', async (req, res) => {
         session:req.session,
         email:email
       };
-      htmlrender(req, res, 'help', context);
+      if(mode === 'admin'){
+        htmlrender(req, res, 'suggestion', context);
+      }else{
+        htmlrender(req, res, 'help', context);
+      }
     });
   }else{
     console.log('에러 발생.');
@@ -323,6 +390,16 @@ app.get('/help', async (req, res) => {
     res.send(context);
     return;    
   }
+});
+
+app.post('/help', async (req, res) => {
+  let email = req.body.email || req.query.email;
+  await updateAdminEmail(database, 'admin', email);
+  let context = {
+    session:req.session,
+    email:email
+  };
+  htmlrender(req, res, 'suggestion', context);
 });
 
 app.get('/logout', async (req, res) => {
@@ -377,22 +454,6 @@ let authAdmin = function(database, id, pw, callback) {
       console.log('아이디 일치하는 관리자 없음.');
       callback(null, null);
     }
-  });
-};
-
-//사용자를 개인정보처리동의 DB에 추가하는 함수
-let personalAgree = function(database, stdno, callback) {
-  
-  let pAgree = new PersonalAgreeModel({stdno:stdno});
-  console.log('personalAgree 호출됨 : ' + stdno);
-  
-  pAgree.save(function(err) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-    console.log('('+ stdno +') 개인정보처리동의 데이터 추가함.');
-    callback(null, pAgree);
   });
 };
 
@@ -557,19 +618,19 @@ app.post('/process/existagree', async (req, res) => {
 async function registerUser(walletId, gubun){
   let response = await network.registerVoter(walletId);
   if (response.error) {
-      // eslint-disable-next-line no-mixed-spaces-and-tabs
-      console.log(response.error);
+	    // eslint-disable-next-line no-mixed-spaces-and-tabs
+	    console.log(response.error);
   } else {
-      let networkObj = await network.connectToNetwork(walletId);
-      if (networkObj.error) {
-          console.log(networkObj.error);
-      }
-      let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
-      let args = [argument];
+	    let networkObj = await network.connectToNetwork(walletId);
+	    if (networkObj.error) {
+	        console.log(networkObj.error);
+	    }
+	    let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
+	    let args = [argument];
     //connect to network and update the state with voterId
     let invokeResponse;
     if (gubun === 'user'){
-        invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
+	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
     }else if(gubun === 'admin'){
       //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
     }else{
@@ -735,9 +796,9 @@ let loadCandidate = function(database, no, callback) {
       console.log('일치하는 기호 없음.');
       callback(null, null);
     }
-  });  
+  });
+  
 };
-
 let loadCandidateByElectId = function(database, electId, callback) {
   console.log('loadCandidateByElectId 호출됨 : ' + electId);
   
@@ -752,15 +813,15 @@ let loadCandidateByElectId = function(database, electId, callback) {
       console.log('일치하는 기호 없음.');
       callback(null, null);
     }
-  });  
+  });
+  
 };
-
 app.get('/castBallot/:electId', async (req, res) => {
+
   let array = new Array();
   let context;
   let data;
   let electId;
-
   if (database) {
     //electId 조회
     electId = req.params.electId;
@@ -771,8 +832,10 @@ app.get('/castBallot/:electId', async (req, res) => {
         let context = {error:'Error is occured'};
         res.send(context);
         return;
-      }                  
+      }
+                  
       if(docs){
+        // console.dir(docs);
         for(let i=0; i<docs.length; i++){
           data = {
             no: i+1,
@@ -805,14 +868,16 @@ app.get('/castBallot/:electId', async (req, res) => {
         res.send(context);
         return;
       }
-    });    
+    });
+    
   }else {
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
     let context = {error:'Database is not connected'};
     res.send(context);
     return;    
-  }  
+  }
+  
 });
 
 app.get('/personalAgree', async (req, res) => {

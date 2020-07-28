@@ -13,17 +13,39 @@
         <%- include('header2.ejs'); %>
         <!-- title -->
         <div class="now-title">
-            <div>진행 중인 선거</div>
+            <div>등록된 선거</div>
         </div>
         <!-- title end -->
         <!-- content -->
+        <% if(list.length > 0) { %>
+        <% for(var i=0; i<list.length; i++) { %>
+        <% if(!list[i].isEnd) { %>
+        <%# 종료된 선거의 경우 빗금 치기 %>
+        <div class="now-content" style="text-decoration: line-through;">
+        <% } else { %>
         <div class="now-content">
+        <% } %>
             <div>
-                <span class="now-content-span">2020 상명대학교 사범대 학생회 선거</span>
-                <span class="now-content-span2">~ 20.07.18</span>
+                <span class="now-content-span"><%= list[i].name %></span>
+                <span class="now-content-span2">~ <%= list[i].enddate %></span>
             </div>
-            <div class="now-content-result"><input type="text" readonly value="총 투표율 <%= avg %>%"></div>
+            <div class="now-content-result">
+                <div class="progress">
+                    <% if(list[i].avg > 11) { %>
+                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                        <%= list[i].avg %>%
+                    </div>
+                    <% } else { %>
+                    <div style="text-align: center; font-weight:bold;width:100%">
+                        <%= list[i].avg %>%
+                    </div>
+                    <% } %>
+                </div>
+                
+            </div>
         </div>
+        <% } %>
+        <% } %>
         <!-- content end -->
     </div>
     <%- include('foot.ejs'); %>
