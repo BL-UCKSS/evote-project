@@ -13,18 +13,13 @@
         <%- include('header2.ejs'); %>
         <!-- title -->
         <div class="now-title">
-            <div>등록된 선거</div>
+            <div>진행 중인 선거</div>
         </div>
         <!-- title end -->
         <!-- content -->
         <% if(list.length > 0) { %>
         <% for(var i=0; i<list.length; i++) { %>
-        <% if(!list[i].isEnd) { %>
-        <%# 종료된 선거의 경우 빗금 치기 %>
-        <div class="now-content" style="text-decoration: line-through;">
-        <% } else { %>
         <div class="now-content">
-        <% } %>
             <div>
                 <span class="now-content-span"><%= list[i].name %></span>
                 <span class="now-content-span2">~ <%= list[i].enddate %></span>

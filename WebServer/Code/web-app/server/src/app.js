@@ -232,17 +232,14 @@ app.get('/adminNow', async (req, res) => {
         }
       }
       let avg = count / total * 100;
-      let isEnd = true;
       let nowTime = new Date().toISOString();
       if(parsedElection[i].Record.endDate < nowTime){
-        nowTime = false; //아직 선거가 끝나지 않음. 진행중인 선거.
+        arr.push({
+          name: parsedElection[i].Record.name,
+          enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
+          avg: avg.toFixed(2),
+        });
       }
-      arr.push({
-        name: parsedElection[i].Record.name,
-        enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
-        avg: avg.toFixed(2),
-        isEnd: isEnd
-      });
     }
   }
   
