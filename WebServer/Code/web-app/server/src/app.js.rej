@@ -1,0 +1,10 @@
+diff a/WebServer/Code/web-app/server/src/app.js b/WebServer/Code/web-app/server/src/app.js	(rejected hunks)
+@@ -328,7 +328,7 @@
+ app.get('/logout', async (req, res) => {
+   req.session.destroy(function(){
+     req.session;
+-  });
++  })
+   res.redirect('/login');
+ });
+ 
