@@ -233,7 +233,7 @@ app.get('/adminNow', async (req, res) => {
       }
       let avg = count / total * 100;
       let nowTime = new Date().toISOString();
-      if(parsedElection[i].Record.endDate < nowTime){
+      if(parsedElection[i].Record.endDate > nowTime){
         arr.push({
           name: parsedElection[i].Record.name,
           enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
@@ -242,7 +242,6 @@ app.get('/adminNow', async (req, res) => {
       }
     }
   }
-  
   
   let context = {
     session:req.session,
@@ -591,6 +590,24 @@ app.post('/process/checkagree', async (req, res) => {
   }
 });
 
+let loadCandidateByElectId = function(database, electId, callback) {
+  console.log('loadCandidateByElectId 호출됨 : ' + electId);
+  
+  CandidateModel.findByElectId(electId, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+    if(result.length > 0){
+      callback(null, result);
+    }else{
+      console.log('일치하는 기호 없음.');
+      callback(null, null);
+    }
+  });
+  
+};
+
 app.post('/process/existagree', async (req, res) => {
   console.log('/process/existagree 라우팅 함수 호출됨.');
 
@@ -610,13 +627,55 @@ app.post('/process/existagree', async (req, res) => {
         return;
       }
       if(docs){
-        //사용자 개인정보처리동의 성공
-        let context = {
-          session: req.session
-        };
-
-        htmlrender(req, res, 'vote', context);
-        return;
+        //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
+        //총학생회 선거 if(year == Date.now() && gubun == "chonghak") 일 때 첫번째로 출력됨.
+        let electId = 'm1xagvyp8re9taxvr52f'; //임시로 하드코딩함.
+        let array = [];
+        // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
+        loadCandidateByElectId(database, electId, function(err, docs) {
+          if(err){
+            console.log('에러 발생.');
+            let context = {error:'Error is occured'};
+            res.send(context);
+            return;
+          }
+                      
+          if(docs){
+            // console.dir(docs);
+            for(let i=0; i<docs.length; i++){
+              let data = {
+                no: docs[i]._doc.no,
+                hakbun1: docs[i]._doc.hakbun1,
+                hakbun2: docs[i]._doc.hakbun2,
+                name1: docs[i]._doc.name1,
+                name2: docs[i]._doc.name2,
+                dept1: docs[i]._doc.dept1,
+                dept2: docs[i]._doc.dept2,
+                grade1: docs[i]._doc.grade1,
+                grade2: docs[i]._doc.grade2,
+                profile1: docs[i]._doc.profile1,
+                profile2: docs[i]._doc.profile2,
+                hname: docs[i]._doc.hname,
+                icon: docs[i]._doc.icon,
+                link: docs[i]._doc.link,
+              };
+              array.push(data);
+            }
+            let context = {
+              list: array,
+              session: req.session
+            };
+            //console.log(context);
+            htmlrender(req, res, 'vote', context);
+            return;
+          }else{
+            console.log('에러 발생.');
+            //사용자 데이터 조회 안됨
+            let context = {error:'기호 없음'};
+            res.send(context);
+            return;
+          }
+        });
       }
     });  
   }else {
@@ -812,23 +871,7 @@ let loadCandidate = function(database, no, callback) {
   });
   
 };
-let loadCandidateByElectId = function(database, electId, callback) {
-  console.log('loadCandidateByElectId 호출됨 : ' + electId);
-  
-  CandidateModel.findByElectId(electId, function(err, result) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-    if(result.length > 0){
-      callback(null, result);
-    }else{
-      console.log('일치하는 기호 없음.');
-      callback(null, null);
-    }
-  });
-  
-};
+
 app.get('/castBallot/:electId', async (req, res) => {
 
   let array = new Array();

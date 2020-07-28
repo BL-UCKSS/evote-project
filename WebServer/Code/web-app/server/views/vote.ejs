@@ -24,55 +24,32 @@
                 <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="2"></li>
             </ol>
             <div class="carousel-inner">
+                <% for(var i=0; i<list.length; i++) { %>
+                <% if(i==0) { %>
                 <div class="carousel-item active">
-                    <!-- hubo banner -->
-                    <div class="hubo-banner">
-                        <!-- title -->
-                        <div><span class="hubo-title">S.Catch</span></div>
-                        <!-- logo -->
-                        <div class="hubo-logo"><img src="/img/bridge.png"></div>
-                    </div>
-                    <!-- hubo-div -->
-                    <div class="hubo-container">
-                        <!-- hubo 1-->
-                        <div class="hubo-one">
-                            <p class="hubo-classify">정후보</p>
-                            <img class="hubo-img" src="/img/user.png">
-                            <p class="hubo-info">이땡땡<br>컴퓨터과학과<br>4학년 17학번</p>
-                        </div>
-                        <!-- hubo 2-->
-                        <div class="hubo-two">
-                            <p class="hubo-classify">부후보</p>
-                            <img class="hubo-img" src="/img/user.png">
-                            <p class="hubo-info">김와와<br>경영학과<br>3학년 18학번</p>
-                        </div>
-                        <!-- slide index -->
-                        <br>
-                        <span class="slide-index">
-                        </span>
-                    </div>
-                </div>
+                <% } else { %>
                 <div class="carousel-item">
+                <% } %>
                     <!-- hubo banner -->
                     <div class="hubo-banner">
                         <!-- title -->
-                        <div><span class="hubo-title">S.Catch</span></div>
+                        <div><span class="hubo-title">기호 <%= list[i].no %>번 <%= list[i].hname %></span></div>
                         <!-- logo -->
-                        <div class="hubo-logo"><img src="/img/bridge.png"></div>
+                        <div class="hubo-logo"><a href="<%= list[i].link %>" target="_blank"><img style="width:70px;height:70px;" src="/img/<%= list[i].icon %>"></a></div>
                     </div>
                     <!-- hubo-div -->
                     <div class="hubo-container">
                         <!-- hubo 1-->
                         <div class="hubo-one">
                             <p class="hubo-classify">정후보</p>
-                            <img class="hubo-img" src="/img/user.png">
-                            <p class="hubo-info">이땡땡<br>컴퓨터과학과<br>4학년 17학번</p>
+                            <img class="hubo-img" src="/img/<%= list[i].profile1 %>">
+                            <p class="hubo-info"><%= list[i].name1 %><br><%= list[i].dept1 %><br><%= list[i].grade1 %>학년 <%= list[i].hakbun1 %>학번</p>
                         </div>
                         <!-- hubo 2-->
                         <div class="hubo-two">
                             <p class="hubo-classify">부후보</p>
-                            <img class="hubo-img" src="/img/user.png">
-                            <p class="hubo-info">김와와<br>경영학과<br>3학년 18학번</p>
+                            <img class="hubo-img" src="/img/<%= list[i].profile2 %>">
+                            <p class="hubo-info"><%= list[i].name2 %><br><%= list[i].dept2 %><br><%= list[i].grade2 %>학년 <%= list[i].hakbun2 %>학번</p>
                         </div>
                         <!-- slide index -->
                         <br>
@@ -80,34 +57,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="carousel-item">
-                    <!-- hubo banner -->
-                    <div class="hubo-banner">
-                        <!-- title -->
-                        <div><span class="hubo-title">S.Catch</span></div>
-                        <!-- logo -->
-                        <div class="hubo-logo"><img src="/img/bridge.png"></div>
-                    </div>
-                    <!-- hubo-div -->
-                    <div class="hubo-container">
-                        <!-- hubo 1-->
-                        <div class="hubo-one">
-                            <p class="hubo-classify">정후보</p>
-                            <img class="hubo-img" src="/img/user.png">
-                            <p class="hubo-info">이땡땡<br>컴퓨터과학과<br>4학년 17학번</p>
-                        </div>
-                        <!-- hubo 2-->
-                        <div class="hubo-two">
-                            <p class="hubo-classify">부후보</p>
-                            <img class="hubo-img" src="/img/user.png">
-                            <p class="hubo-info">김와와<br>경영학과<br>3학년 18학번</p>
-                        </div>
-                        <!-- slide index -->
-                        <br>
-                        <span class="slide-index">
-                        </span>
-                    </div>
-                </div>
+                <% } %>
             </div>
             <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
