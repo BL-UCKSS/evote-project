@@ -117,11 +117,7 @@ function connectDB() {
     AdminSchema.static('findById', function(adminid, callback) {
       return this.find({id:adminid}, callback);        
     });
-
-    AdminSchema.static('updateById', function(adminid, _email) {
-      return this.update({id:adminid}, {$set : {email:_email}});
-    });
-  
+          
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
 
@@ -182,7 +178,10 @@ const htmlrender = function(req, res, fname, context){
 };
 
 app.get('/', async (req, res) => {
-  res.redirect('/login');
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'home', context);
 });
 
 app.get('/login', async (req, res) => {
@@ -197,35 +196,6 @@ app.get('/main', async (req, res) => {
     session:req.session
   };
   htmlrender(req, res, 'main', context);
-});
-
-app.get('/adminMain', async (req, res) => {
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'adminMain', context);
-});
-
-app.get('/adminNow', async (req, res) => {
-  let count = 0;
-  let total = 10;
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'voter');
-  let parsedResponse = await JSON.parse(response);
-  parsedResponse = await JSON.parse(parsedResponse);
-  
-  for (let key in parsedResponse){
-    if(parsedResponse[key].Record.ballotCast){
-      count += 1;
-    }
-  }
-  let avg = count / total * 100;
-  let context = {
-    session:req.session,
-    avg:avg
-  };
-
-  htmlrender(req, res, 'adminNow', context);
 });
 
 let getHashPw = function(database, stdno, callback) {
@@ -336,13 +306,7 @@ let adminEmail = function(database, callback) {
   });
 };
 
-let updateAdminEmail = async function(database, id, email) {
-  console.log('updateAdminEmail 호출됨');
-  await AdminModel.updateById(id, email);
-};
-
 app.get('/help', async (req, res) => {
-  let mode = req.query.mode;
   if(database){
     adminEmail(database, function(err, email){
       console.log('관리자 이메일 : ' + email);
@@ -350,11 +314,7 @@ app.get('/help', async (req, res) => {
         session:req.session,
         email:email
       };
-      if(mode === 'admin'){
-        htmlrender(req, res, 'suggestion', context);
-      }else{
-        htmlrender(req, res, 'help', context);
-      }
+      htmlrender(req, res, 'help', context);
     });
   }else{
     console.log('에러 발생.');
@@ -365,20 +325,10 @@ app.get('/help', async (req, res) => {
   }
 });
 
-app.post('/help', async (req, res) => {
-  let email = req.body.email || req.query.email;
-  await updateAdminEmail(database, 'admin', email);
-  let context = {
-    session:req.session,
-    email:email
-  };
-  htmlrender(req, res, 'suggestion', context);
-});
-
 app.get('/logout', async (req, res) => {
   req.session.destroy(function(){
     req.session;
-  })
+  });
   res.redirect('/login');
 });
 
@@ -430,7 +380,7 @@ let authAdmin = function(database, id, pw, callback) {
   });
 };
 
-//사용자가 개인정보처리에 동의하여 DB에 추가 (★★★★수정하는 중★★★★)
+//사용자를 개인정보처리동의 DB에 추가하는 함수
 let personalAgree = function(database, stdno, callback) {
   
   let pAgree = new PersonalAgreeModel({stdno:stdno});
@@ -446,7 +396,7 @@ let personalAgree = function(database, stdno, callback) {
   });
 };
 
-//사용자가 개인정보처리에 동의했는지 확인 (★★★★수정하는 중★★★★)
+//사용자가 개인정보처리에 동의했는지 확인하는 함수(vote 페이지에서)
 let checkAgree = function(database, stdno, callback){
   console.log('checkAgree 호출됨 : ' + stdno);
 
@@ -459,21 +409,51 @@ let checkAgree = function(database, stdno, callback){
     console.log('학번 %s로 검색됨.', stdno);
     console.log(result);
     
-    if(result.length > 0){      //사용자가 동의 함
+    if(result.length > 0){      //사용자가 DB에 존재
       callback(null, result);
-    }else{  //personalAgree 호출해야 함
+    }else{
       console.log('학번 일치하는 사용자 없음.');
-      // callback(null, {error:'no user'});
+      callback(null, {error:'no user'});
     }
   });
 };
 
-// (★★★★수정하는 중★★★★)
+//사용자가 개인정보처리에 동의했는지 확인하는 함수(sign 페이지에서)
+let existAgree = function(database, stdno, callback){
+  console.log('existAgree 호출됨 : ' + stdno);
+
+  //개인정보처리에 동의했는지 확인
+  PersonalAgreeModel.findById(stdno, function(err, result) {
+    if(err) {
+      callback(err, null);
+      return;
+    }
+
+    console.log('학번 %s로 검색됨.', stdno);
+    
+    if(result.length > 0){      //사용자가 이미 동의함
+      console.log('(' +stdno+ ')님이 이미 개인정보처리 동의를 완료했습니다.')
+      callback(null, result);
+    }else{ 
+      console.log('학번 일치하는 사용자 없음.');
+      personalAgree(database, stdno, function(err){
+        if(err) {
+          callback(err, null);
+          return;
+        }
+        else {
+          console.log('(' +stdno+ ')님의 개인정보처리 동의를 완료했습니다.')
+          callback(null, result);
+        }
+      });
+    }
+  });
+};
+
 app.post('/process/personalagree', async (req, res) => {
   console.log('/process/personalagree 라우팅 함수 호출됨.');
 
   let paramStdno = req.session.userid;
-  // let paramAgree = true;
   console.log('요청 파라미터 : ' + paramStdno);    
   
   if (database) {
@@ -487,13 +467,9 @@ app.post('/process/personalagree', async (req, res) => {
         return;
       }                  
       if(docs){
-        //console.dir(docs);
         //사용자 개인정보처리동의 성공
         let context = {success:'agree successful'};
         res.send(context);
-
-        // htmlrender(req, res, 'vote', context);
-
         return;
       }
     });  
@@ -506,7 +482,6 @@ app.post('/process/personalagree', async (req, res) => {
   }
 });
 
-//(★★★★수정하는 중★★★★)
 app.post('/process/checkagree', async (req, res) => {
   console.log('/process/checkagree 라우팅 함수 호출됨.');
 
@@ -530,6 +505,43 @@ app.post('/process/checkagree', async (req, res) => {
           context = {votable:false};
         }
         res.send(context);        
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+});
+
+app.post('/process/existagree', async (req, res) => {
+  console.log('/process/existagree 라우팅 함수 호출됨.');
+
+  let paramStdno = req.session.userid;
+  console.log('요청 파라미터 : ' + paramStdno);    
+  
+  if (database) {
+    //사용자가 사전에 동의했는지 체크 
+    // 동의하지 않았다면 DB에 삽입. 이미 동의했을 경우, 바로 vote페이지로
+    existAgree(database, paramStdno, function(err, docs) {
+      if(err){
+        console.log(err);
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+      if(docs){
+        //사용자 개인정보처리동의 성공
+        let context = {
+          session: req.session
+        };
+
+        htmlrender(req, res, 'vote', context);
         return;
       }
     });  
@@ -723,9 +735,9 @@ let loadCandidate = function(database, no, callback) {
       console.log('일치하는 기호 없음.');
       callback(null, null);
     }
-  });
-  
+  });  
 };
+
 let loadCandidateByElectId = function(database, electId, callback) {
   console.log('loadCandidateByElectId 호출됨 : ' + electId);
   
@@ -740,15 +752,15 @@ let loadCandidateByElectId = function(database, electId, callback) {
       console.log('일치하는 기호 없음.');
       callback(null, null);
     }
-  });
-  
+  });  
 };
-app.get('/castBallot/:electId', async (req, res) => {
 
+app.get('/castBallot/:electId', async (req, res) => {
   let array = new Array();
   let context;
   let data;
   let electId;
+
   if (database) {
     //electId 조회
     electId = req.params.electId;
@@ -759,10 +771,8 @@ app.get('/castBallot/:electId', async (req, res) => {
         let context = {error:'Error is occured'};
         res.send(context);
         return;
-      }
-                  
+      }                  
       if(docs){
-        // console.dir(docs);
         for(let i=0; i<docs.length; i++){
           data = {
             no: i+1,
@@ -795,16 +805,14 @@ app.get('/castBallot/:electId', async (req, res) => {
         res.send(context);
         return;
       }
-    });
-    
+    });    
   }else {
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
     let context = {error:'Database is not connected'};
     res.send(context);
     return;    
-  }
-  
+  }  
 });
 
 app.get('/personalAgree', async (req, res) => {

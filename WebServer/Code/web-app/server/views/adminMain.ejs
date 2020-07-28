@@ -4,12 +4,9 @@
     <%- include('head.ejs'); %>
     <title>Admin Main Page</title>
   </head>
-<% if(session.userid != 'admin' && session.g != 'Y') { %>
-	<script>document.location.href="/login";</script>
-<% } else { %>
   <body class="loginbody">
     <div class="text-center">
-    	<%- include('header2.ejs'); %>
+    	<%- include('header.ejs'); %>
     	
     	<div class="vote-container">
     		<a href="/registervote"><span class="myvote registervote">
@@ -53,5 +50,4 @@
     <%- include('foot.ejs'); %>
     <script type="text/javascript" src="/public/script.js"></script>
   </body>
-<% } %>
-</html>	
+</html>
