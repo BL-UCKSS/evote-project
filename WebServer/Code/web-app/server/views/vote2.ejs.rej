@@ -1,9 +1,0 @@
-diff a/WebServer/Code/web-app/server/views/vote2.ejs b/WebServer/Code/web-app/server/views/vote2.ejs	(rejected hunks)
-@@ -11,6 +11,7 @@
- <body class="loginbody">
-     <div class="text-center">
-         <%- include('header.ejs'); %>
-+
-         <div class="vote-banner">
-             <span class="vote-date">2020 상명대 선거</span>
-             <span class="vote-name">총학생회</span>
