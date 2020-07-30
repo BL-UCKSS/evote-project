@@ -342,6 +342,13 @@ app.get('/vote2', async (req, res) => {
   htmlrender(req, res, 'vote2', context);
 });
 
+app.get('/finvote', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'finvote', context);
+});
+
 let adminEmail = function(database, callback) {
   console.log('adminEmail 호출됨');
   
@@ -629,7 +636,7 @@ app.post('/process/existagree', async (req, res) => {
       if(docs){
         //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
         //총학생회 선거 if(year == Date.now() && gubun == "chonghak") 일 때 첫번째로 출력됨.
-        let electId = 'm1xagvyp8re9taxvr52f'; //임시로 하드코딩함.
+        let electId = '46i1odwh6rzpp7dua7sbep'; //임시로 하드코딩함.
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
         loadCandidateByElectId(database, electId, function(err, docs) {
@@ -638,10 +645,8 @@ app.post('/process/existagree', async (req, res) => {
             let context = {error:'Error is occured'};
             res.send(context);
             return;
-          }
-                      
+          }                      
           if(docs){
-            // console.dir(docs);
             for(let i=0; i<docs.length; i++){
               let data = {
                 no: docs[i]._doc.no,
@@ -665,7 +670,7 @@ app.post('/process/existagree', async (req, res) => {
               list: array,
               session: req.session
             };
-            //console.log(context);
+
             htmlrender(req, res, 'vote', context);
             return;
           }else{
@@ -686,6 +691,138 @@ app.post('/process/existagree', async (req, res) => {
     return;    
   }
 });
+
+app.post('/process/vote2', async (req, res) => {
+  console.log('/process/vote2 라우팅 함수 호출됨.');
+
+  let paramStdno = req.session.userid;  
+  
+  if (database) {
+    //사용자가 개인정보처리 동의했는지 체크 
+    checkAgree(database, paramStdno, function(err, docs) {
+      if(err){
+        console.log(err);
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+      if(docs){ //사용자 확인 후  있음 result, 없음 error
+        if(docs == {error: 'no user'}){
+          console.log('('+stdno+')사용자가 개인정보처리에 동의하지 않았습니다.');
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'개인정보처리 약관에 동의하셔야 투표가 가능합니다.\');document.location.href=\'/sign\';</script>');
+        }
+        let electId = '46i1odwh6rzpp7dua7sbep'; //임시로 하드코딩함.
+        let array = [];
+        // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
+        loadCandidateByElectId(database, electId, function(err, docs) {
+          if(err){
+            console.log('에러 발생.');
+            let context = {error:'Error is occured'};
+            res.send(context);
+            return;
+          }                      
+          if(docs){
+            for(let i=0; i<docs.length; i++){
+              let data = {
+                no: docs[i]._doc.no,
+                hakbun1: docs[i]._doc.hakbun1,
+                hakbun2: docs[i]._doc.hakbun2,
+                name1: docs[i]._doc.name1,
+                name2: docs[i]._doc.name2,
+                dept1: docs[i]._doc.dept1,
+                dept2: docs[i]._doc.dept2,
+                grade1: docs[i]._doc.grade1,
+                grade2: docs[i]._doc.grade2,
+                profile1: docs[i]._doc.profile1,
+                profile2: docs[i]._doc.profile2,
+                hname: docs[i]._doc.hname,
+                icon: docs[i]._doc.icon,
+                link: docs[i]._doc.link,
+              };
+              array.push(data);
+            }
+            let context = {
+              list: array,
+              session: req.session
+            };
+            htmlrender(req, res, 'vote2', context);            
+            return;
+          }else{
+            console.log('에러 발생.');
+            //사용자 데이터 조회 안됨
+            let context = {error:'기호 없음'};
+            res.send(context);
+            return;
+          }
+        });
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+});
+
+app.post('/process/finvote', async (req, res) => {
+  console.log('/process/finvote 라우팅 함수 호출됨.');
+
+  //[현재] "기호 1번 브릿지" 형식으로 넘어옴 (req.body.candidates)
+  //받아오고 난 후에는 블록체인 네트워크에 실어야 함
+  let paramballot = req.body.candidates;
+  let userid = req.session.userid;
+  let univ = req.session.univ;
+  let pw = ''; //pw from db
+
+  // console.log(paramballot);
+
+  if (database) {
+    getHashPw(database, userid, function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+      if(docs){
+        pw = docs;
+        let useridpw = userid + pw;
+        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+        
+        // 사용자에게 한 번 더 묻기 (수정해야 함)
+        // res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'정말 투표하시겠습니까?\');document.location.href=\'/finvote\';</script>');
+
+        // 블록체인에 투표 데이터 전송해야 함
+        // saveBallot(walletid, electionid, paramballot)
+
+      }else{
+        console.log('에러 발생.');
+        //사용자 데이터 조회 안됨
+        let context = {error:'no user'};
+        console.log(context);
+        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'에러!\');document.location.href=\'/main\';</script>');
+        return;
+      }
+    });
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+  //{ candidates: '브릿지' } 형식으로 넘어옴 (req.body)
+
+
+  let electId = '46i1odwh6rzpp7dua7sbep'; //임시로 하드코딩함.
+  let array = [];
+
+})
 
 async function registerUser(walletId, gubun){
   let response = await network.registerVoter(walletId);

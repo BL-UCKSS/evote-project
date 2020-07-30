@@ -11,69 +11,71 @@
 <body class="loginbody">
     <div class="text-center">
         <%- include('header.ejs'); %>
-        <div class="vote-banner">
-            <% /* 여기는 DB에 저장된 정보가 아님 */ %>
-            <span class="vote-date">2020 상명대 선거</span>
-            <span class="vote-name">총학생회</span>
-        </div>
-        <!-- vote-table slide -->
-        <div id="carouselIndicators" class="carousel slide vote-table vote-slide" data-ride="carousel" data-interval="false">
-            <ol class="carousel-indicators">
-                <li data-target="#carouselIndicators" data-slide-to="0" class="vote-slide-li active"></li>
-                <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="1"></li>
-                <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="2"></li>
-            </ol>
-            <div class="carousel-inner">
-                <% for(var i=0; i<list.length; i++) { %>
-                <% if(i==0) { %>
-                <div class="carousel-item active">
-                <% } else { %>
-                <div class="carousel-item">
-                <% } %>
-                    <!-- hubo banner -->
-                    <div class="hubo-banner">
-                        <!-- title -->
-                        <div><span class="hubo-title">기호 <%= list[i].no %>번 <%= list[i].hname %></span></div>
-                        <!-- logo -->
-                        <div class="hubo-logo"><a href="<%= list[i].link %>" target="_blank"><img style="width:70px;height:70px;" src="/img/<%= list[i].icon %>"></a></div>
-                    </div>
-                    <!-- hubo-div -->
-                    <div class="hubo-container">
-                        <!-- hubo 1-->
-                        <div class="hubo-one">
-                            <p class="hubo-classify">정후보</p>
-                            <img class="hubo-img" src="/img/<%= list[i].profile1 %>">
-                            <p class="hubo-info"><%= list[i].name1 %><br><%= list[i].dept1 %><br><%= list[i].grade1 %>학년 <%= list[i].hakbun1 %>학번</p>
+        <form action="/process/vote2" method="post">
+            <div class="vote-banner">
+                <% /* 여기는 DB에 저장된 정보가 아님 */ %>
+                <span class="vote-date">2020 상명대 선거</span>
+                <span class="vote-name">총학생회</span>
+            </div>
+            <!-- vote-table slide -->
+            <div id="carouselIndicators" class="carousel slide vote-table vote-slide" data-ride="carousel" data-interval="false">
+                <ol class="carousel-indicators">
+                    <li data-target="#carouselIndicators" data-slide-to="0" class="vote-slide-li active"></li>
+                    <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="1"></li>
+                    <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <% for(var i=0; i<list.length; i++) { %>
+                    <% if(i==0) { %>
+                    <div class="carousel-item active">
+                    <% } else { %>
+                    <div class="carousel-item">
+                    <% } %>
+                        <!-- hubo banner -->
+                        <div class="hubo-banner">
+                            <!-- title -->
+                            <div><span class="hubo-title">기호 <%= list[i].no %>번 <%= list[i].hname %></span></div>
+                            <!-- logo -->
+                            <div class="hubo-logo"><a href="<%= list[i].link %>" target="_blank"><img style="width:70px;height:70px;" src="/img/<%= list[i].icon %>"></a></div>
                         </div>
-                        <!-- hubo 2-->
-                        <div class="hubo-two">
-                            <p class="hubo-classify">부후보</p>
-                            <img class="hubo-img" src="/img/<%= list[i].profile2 %>">
-                            <p class="hubo-info"><%= list[i].name2 %><br><%= list[i].dept2 %><br><%= list[i].grade2 %>학년 <%= list[i].hakbun2 %>학번</p>
+                        <!-- hubo-div -->
+                        <div class="hubo-container">
+                            <!-- hubo 1-->
+                            <div class="hubo-one">
+                                <p class="hubo-classify">정후보</p>
+                                <img class="hubo-img" src="/img/<%= list[i].profile1 %>">
+                                <p class="hubo-info"><%= list[i].name1 %><br><%= list[i].dept1 %><br><%= list[i].grade1 %>학년 <%= list[i].hakbun1 %>학번</p>
+                            </div>
+                            <!-- hubo 2-->
+                            <div class="hubo-two">
+                                <p class="hubo-classify">부후보</p>
+                                <img class="hubo-img" src="/img/<%= list[i].profile2 %>">
+                                <p class="hubo-info"><%= list[i].name2 %><br><%= list[i].dept2 %><br><%= list[i].grade2 %>학년 <%= list[i].hakbun2 %>학번</p>
+                            </div>
+                            <!-- slide index -->
+                            <br>
+                            <span class="slide-index">
+                            </span>
                         </div>
-                        <!-- slide index -->
-                        <br>
-                        <span class="slide-index">
-                        </span>
                     </div>
+                    <% } %>
                 </div>
-                <% } %>
+                <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#carouselIndicators" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
             </div>
-            <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="sr-only">Previous</span>
-            </a>
-            <a class="carousel-control-next" href="#carouselIndicators" role="button" data-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="sr-only">Next</span>
-            </a>
-        </div>
-        <!-- slide end -->
-        <div class="vote-box">
-            <div class="votebtns">
-                <button class="signbtn btn btn-primary" onclick="document.location.href='/vote2';">투표하기</button>
+            <!-- slide end -->
+            <div class="vote-box">
+                <div class="votebtns">
+                    <button class="signbtn btn btn-primary" type="submit">투표하기</button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 	<%- include('foot.ejs'); %>
   </body>
