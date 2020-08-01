@@ -180,6 +180,14 @@ const htmlrender = function(req, res, fname, context){
     res.end(html);
   });
 };
+//임시로 ibm-evote의 선거 코드를 가져오는 함수
+let getElectId = async function(){
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let res = JSON.parse(JSON.parse(response));
+  let electId = res[0].Key;
+  return electId;
+};
 
 app.get('/', async (req, res) => {
   res.redirect('/login');
@@ -347,6 +355,13 @@ app.get('/finvote', async (req, res) => {
     session:req.session
   };
   htmlrender(req, res, 'finvote', context);
+});
+
+app.get('/registervote', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'registervote', context);
 });
 
 let adminEmail = function(database, callback) {
@@ -624,7 +639,7 @@ app.post('/process/existagree', async (req, res) => {
   if (database) {
     //사용자가 사전에 동의했는지 체크 
     // 동의하지 않았다면 DB에 삽입. 이미 동의했을 경우, 바로 vote페이지로
-    existAgree(database, paramStdno, function(err, docs) {
+    existAgree(database, paramStdno, async function(err, docs) {
       if(err){
         console.log(err);
         console.log('에러 발생.');
@@ -636,7 +651,7 @@ app.post('/process/existagree', async (req, res) => {
       if(docs){
         //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
         //총학생회 선거 if(year == Date.now() && gubun == "chonghak") 일 때 첫번째로 출력됨.
-        let electId = '46i1odwh6rzpp7dua7sbep'; //임시로 하드코딩함.
+        let electId = await getElectId(); //임시로 하드코딩함.
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
         loadCandidateByElectId(database, electId, function(err, docs) {
@@ -699,7 +714,7 @@ app.post('/process/vote2', async (req, res) => {
   
   if (database) {
     //사용자가 개인정보처리 동의했는지 체크 
-    checkAgree(database, paramStdno, function(err, docs) {
+    checkAgree(database, paramStdno, async function(err, docs) {
       if(err){
         console.log(err);
         console.log('에러 발생.');
@@ -713,7 +728,7 @@ app.post('/process/vote2', async (req, res) => {
           console.log('('+stdno+')사용자가 개인정보처리에 동의하지 않았습니다.');
           res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'개인정보처리 약관에 동의하셔야 투표가 가능합니다.\');document.location.href=\'/sign\';</script>');
         }
-        let electId = '46i1odwh6rzpp7dua7sbep'; //임시로 하드코딩함.
+        let electId = await getElectId(); //임시로 하드코딩함.
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
         loadCandidateByElectId(database, electId, function(err, docs) {
@@ -781,7 +796,7 @@ app.post('/process/finvote', async (req, res) => {
   // console.log(paramballot);
 
   if (database) {
-    getHashPw(database, userid, function(err, docs) {
+    getHashPw(database, userid, async function(err, docs) {
       if(err){
         console.log('에러 발생.');
         //에러발생
@@ -793,13 +808,30 @@ app.post('/process/finvote', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        
+        let electId = await getElectId();
+        let picked = paramballot;
+
+
         // 사용자에게 한 번 더 묻기 (수정해야 함)
         // res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'정말 투표하시겠습니까?\');document.location.href=\'/finvote\';</script>');
 
         // 블록체인에 투표 데이터 전송해야 함
         // saveBallot(walletid, electionid, paramballot)
+        let networkObj = await network.connectToNetwork(walletid);
+        let data = {
+          voterId:walletid,
+          electionId:electId,
+          picked:picked
+        };
+        data = JSON.stringify(data);
+        let args = [data];
 
+        let response = await network.invoke(networkObj, false, 'castVote', args); //args = voterId, electionId, picked
+        if (response.error) {
+          res.send(response.error);
+        } else {
+          res.send(response);
+        }
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
@@ -819,7 +851,7 @@ app.post('/process/finvote', async (req, res) => {
   //{ candidates: '브릿지' } 형식으로 넘어옴 (req.body)
 
 
-  let electId = '46i1odwh6rzpp7dua7sbep'; //임시로 하드코딩함.
+  let electId = await getElectId(); //임시로 하드코딩함.
   let array = [];
 
 })
