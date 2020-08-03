@@ -364,6 +364,14 @@ app.get('/registervote', async (req, res) => {
   htmlrender(req, res, 'registervote', context);
 });
 
+app.get('/process/registervote', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  
+  
+});
+
 let adminEmail = function(database, callback) {
   console.log('adminEmail 호출됨');
   

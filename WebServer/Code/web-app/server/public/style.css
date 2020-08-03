@@ -188,14 +188,14 @@ a:link {
 
 /* register vote(admin) */
 .register-box {
-    margin: 10% 10px;
+    margin: 5% 10px;
     font-size: 16px;
     text-align: center;
     background-color: #ffffff;
 }
 
 .in-register-box {
-    margin: 10% 5px;
+    /*margin: 10% 5px;*/
     background-color: #ffffff;
     padding: 18px 10px;
 }
@@ -229,8 +229,8 @@ a:link {
 /* register candidate(admin) */
 .candidate-img-box {
     margin: 0% 0px;
-    padding-top: 50px;
-    padding-bottom: 3px;
+    padding-top: 35px;
+    padding-bottom: 0px;
     background-color: #6BB9ED;
 }
 
