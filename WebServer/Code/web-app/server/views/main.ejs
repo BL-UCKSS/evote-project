@@ -8,6 +8,8 @@
 <%# session.univ %>
 <% if(!session.userid) { %>
     <script>document.location.href="/login";</script>
+<% } else if(session.userid == 'admin' && session.g == 'Y' %>
+    <script>document.location.href="/adminMain";</script>
 <% } else { %>
 <body class="loginbody">
     <div class="text-center">

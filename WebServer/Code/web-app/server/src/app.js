@@ -22,6 +22,7 @@ let network = require('./fabric/network.js');
 
 // mongoose 모듈 사용
 let mongoose = require('mongoose');
+//파일 이름은 겹칠 수 있으므로, 후에 electionid와 함께 사용
 const storage = multer.diskStorage({
   destination : (req, file, cb) => {
     cb(null, 'public/img/');
@@ -272,6 +273,13 @@ app.get('/adminNow', async (req, res) => {
   };
 
   htmlrender(req, res, 'adminNow', context);
+});
+
+app.get('/adminManage', async (req, res) => {
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'adminManage', context);
 });
 
 let getHashPw = function(database, stdno, callback) {
