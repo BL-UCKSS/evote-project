@@ -288,6 +288,113 @@ app.get('/adminManage', async (req, res) => {
   htmlrender(req, res, 'adminManage', context);
 });
 
+app.post('/process/startElection', async(req,res) => {
+  console.log('startElection 호출됨');
+  let electionid = req.body.electionid || req.query.electionid;
+  console.log('electionid : '+ electionid);
+  /*let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'startElection', electionid);
+  let context = JSON.parse(JSON.parse(response));
+  res.send(context);*/
+  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
+});
+
+app.post('/process/endElection', async(req,res) => {
+  console.log('endElection 호출됨');
+  let electionid = req.body.electionid || req.query.electionid;
+  console.log('electionid : '+ electionid);
+  /*let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'endElection', electionid);
+  let context = JSON.parse(JSON.parse(response));
+  res.send(context);*/
+  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
+});
+
+app.get('/modifyvote', async (req, res) => {
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let list = JSON.parse(JSON.parse(response));
+  console.log(list);
+  let context = {
+    session:req.session,
+    list:list
+  };
+  htmlrender(req, res, 'modifyvote', context);
+});
+
+app.post('/process/modifyvote', async (req, res) => {
+  console.log('/process/modifyvote 라우팅 함수 호출됨.');
+  // ledger에 등록된 선거 수정
+  /*let args = {
+    startdate: req.body.startdate,
+    enddate: req.body.enddate
+  };
+  let response = await network.invoke(networkObj, false, 'modifyElection', args);
+  if (response.error) {
+    res.send(response.error);
+  } else {
+    res.send(response);
+  }*/
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'adminMain', context);
+});
+
+app.post('/process/registervote', upload.array('image'), async (req, res) => {
+  // ledger에 선거 등록
+  // electionid 같은 경우엔 체인코드에서 처리해도됨
+  /*let args = {
+    electionid: 0,
+    name: req.body.name,
+    startdate: req.body.startdate,
+    enddate: req.body.enddate
+  };
+  let response = await network.invoke(networkObj, false, 'createElection', args);
+  if (response.error) {
+    res.send(response.error);
+  } else {
+    res.send(response);
+  }*/
+  // DB에 저장한다.
+  if(database){
+    // DB에 req.body의 값들을 삽입한다.
+    // electionId의 경우 getElectId()를 임시적으로 사용한다.
+    let electionId = await getElectId();
+    let len = req.body.no.length;
+    for(let i=0; i<len;i+=2){
+      let j = i + 1;
+      let data = {
+        electionid:electionId,
+        hname:req.body.hname,
+        icon:req.files[0].filename,
+        link:req.body.link,
+        hakbun1:req.body.no[i],
+        name1:req.body.sname[i],
+        dept1:req.body.dept[i],
+        grade1:req.body.grade[i],
+        profile1:req.files[j].filename,
+        hakbun2:req.body.no[i+1],
+        name2:req.body.sname[i+1],
+        dept2:req.body.dept[i+1],
+        grade2:req.body.grade[i+1],
+        profile2:req.files[j+1].filename,
+      };
+      registerCandidate(database, data);
+    }
+  }else{
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'adminMain', context);
+});
+
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
@@ -397,60 +504,6 @@ let registerCandidate = async function(database, data) {
   console.log('registerCandidate 호출됨');
   await CandidateModel.registerCandidate(data);
 };
-
-app.post('/process/registervote', upload.array('image'), async (req, res) => {
-  // ledger에 선거 등록
-  // electionid 같은 경우엔 체인코드에서 처리해도됨
-  /*let args = {
-    electionid: 0,
-    name: req.body.name,
-    startdate: req.body.startdate,
-    enddate: req.body.enddate
-  };
-  let response = await network.invoke(networkObj, false, 'createElection', args);
-  if (response.error) {
-    res.send(response.error);
-  } else {
-    res.send(response);
-  }*/
-  // DB에 저장한다.
-  if(database){
-    // DB에 req.body의 값들을 삽입한다.
-    // electionId의 경우 getElectId()를 임시적으로 사용한다.
-    let electionId = await getElectId();
-    let len = req.body.no.length;
-    for(let i=0; i<len;i+=2){
-      let j = i + 1;
-      let data = {
-        electionid:electionId,
-        hname:req.body.hname,
-        icon:req.files[0].filename,
-        link:req.body.link,
-        hakbun1:req.body.no[i],
-        name1:req.body.sname[i],
-        dept1:req.body.dept[i],
-        grade1:req.body.grade[i],
-        profile1:req.files[j].filename,
-        hakbun2:req.body.no[i+1],
-        name2:req.body.sname[i+1],
-        dept2:req.body.dept[i+1],
-        grade2:req.body.grade[i+1],
-        profile2:req.files[j+1].filename,
-      };
-      registerCandidate(database, data);
-    }
-  }else{
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
-  }
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'adminMain', context);
-});
 
 let adminEmail = function(database, callback) {
   console.log('adminEmail 호출됨');
