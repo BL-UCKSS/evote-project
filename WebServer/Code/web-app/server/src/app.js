@@ -299,6 +299,17 @@ app.post('/process/startElection', async(req,res) => {
   res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
+app.post('/process/endElection', async(req,res) => {
+  console.log('endElection 호출됨');
+  let electionid = req.body.electionid || req.query.electionid;
+  console.log('electionid : '+ electionid);
+  /*let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'endElection', electionid);
+  let context = JSON.parse(JSON.parse(response));
+  res.send(context);*/
+  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
+});
+
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
