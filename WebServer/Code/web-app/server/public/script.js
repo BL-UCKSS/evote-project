@@ -15,10 +15,12 @@ var noElection = function (option) {
     }
 }
 //adminManage
-var changeTitle = function(modal, title){
+var changeTitle = function(modal, title, electionid){
     $('#'+modal).modal('toggle');
     $('#'+modal+' #modalTitle').text(title);
     $('.modal #modalTitle').text(title);
+    $('#'+modal+' #modalElectId').text(electionid);
+    $('.modal #modalElectId').text(electionid);
 };
 var hideToggle = function(hide, toggle){
     $('#'+hide).modal('hide');

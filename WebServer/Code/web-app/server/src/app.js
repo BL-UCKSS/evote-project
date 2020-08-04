@@ -288,6 +288,17 @@ app.get('/adminManage', async (req, res) => {
   htmlrender(req, res, 'adminManage', context);
 });
 
+app.post('/process/startElection', async(req,res) => {
+  console.log('startElection 호출됨');
+  let electionid = req.body.electionid || req.query.electionid;
+  console.log('electionid : '+ electionid);
+  /*let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'startElection', electionid);
+  let context = JSON.parse(JSON.parse(response));
+  res.send(context);*/
+  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
+});
+
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
