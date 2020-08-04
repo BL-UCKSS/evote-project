@@ -18,71 +18,51 @@
     <li data-target="#carouselIndicators" data-slide-to="1" class="manage-slide-li"></li>
 </ol>
 <div class="carousel-inner">
+    <!-- 등록된 선거 -->
     <div class="carousel-item active manage-carousel-item">
         <!-- title -->
         <div class="manage-carousel-item-title">
             <div class="manage-carousel-item-title-inner">등록된 선거</div>
         </div>
         <!-- title end -->
-        <!-- content --> <!-- for loop start -->
-        <div class="manage-carousel-item-content" data-toggle="modal" data-target="#regElecModal">
+        <% for (var i=0; i<list.length; i++) { %>
+            <% /* 등록된 선거 조건으로 출력해야함 */ %>
+        <div class="manage-carousel-item-content" onclick="changeTitle('regElecModal','<%= list[i].Record.name %>');return false;">
             <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2">20.07.18&nbsp;&nbsp;&nbsp;&nbsp;D-xx</div>
-                <div class="manage-carousel-item-content-3">2020 상명대학교 총학생회 선거</div>
+                <div class="manage-carousel-item-content-2"><%= list[i].Record.startDate.substring(0,10) %>~<%= list[i].Record.endDate.substring(0,10) %></div>
+                <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
             </div>
         </div>
-        <div class="manage-carousel-item-content" data-toggle="modal" data-target="#regElecModal">
-            <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2">20.07.18&nbsp;&nbsp;&nbsp;&nbsp;D-xx</div>
-                <div class="manage-carousel-item-content-3">2020 상명대학교 사범대 학생회 선거</div>
-            </div>
-        </div>
-        <div class="manage-carousel-item-content" data-toggle="modal" data-target="#regElecModal">
-            <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2">20.07.18&nbsp;&nbsp;&nbsp;&nbsp;D-xx</div>
-                <div class="manage-carousel-item-content-3">2020 상명대학교 사범대 학생회 선거</div>
-            </div>
-        </div>
-        <div class="manage-carousel-item-content" data-toggle="modal" data-target="#regElecModal">
-            <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2">20.07.18&nbsp;&nbsp;&nbsp;&nbsp;D-xx</div>
-                <div class="manage-carousel-item-content-3">2020 상명대학교 사범대 학생회 선거</div>
-            </div>
-        </div>
-        <div class="manage-carousel-item-content" data-toggle="modal" data-target="#regElecModal">
-            <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2">20.07.18&nbsp;&nbsp;&nbsp;&nbsp;D-xx</div>
-                <div class="manage-carousel-item-content-3">2020 상명대학교 사범대 학생회 선거</div>
-            </div>
-        </div>
-        <!-- content end --> <!-- for loop end -->
+        <% } %>
     </div>
+    <!-- 진행 중인 선거 -->
     <div class="carousel-item">
         <!-- title -->
         <div class="manage-carousel-item-title">
             <div class="manage-carousel-item-title-inner">진행 중인 선거</div>
         </div> <!-- title end -->
-        <!-- content -->
-        <div class="manage-carousel-item-content" data-toggle="modal" data-target="#startedElecModal">
+        <% for (var i=0; i<list.length; i++) { %>
+            <% /* 진행 중인 선거 조건으로 출력해야함 */ %>
+        <div class="manage-carousel-item-content" onclick="changeTitle('startedElecModal','<%= list[i].Record.name %>');return false;">
             <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2">20.07.18&nbsp;&nbsp;&nbsp;&nbsp;D-xx</div>
-                <div class="manage-carousel-item-content-3">2020 상명대학교 총학생회 선거</div>
+                <div class="manage-carousel-item-content-2"><%= list[i].Record.startDate.substring(0,10) %>~<%= list[i].Record.endDate.substring(0,10) %></div>
+                <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
             </div>
         </div>
-        <!-- content end -->
+        <% } %>
     </div>
     <!-- slide end -->
     <!-- modal start -->
     <div class="modal fade" id="regElecModal" tabindex="-1" role="dialog" aria-labelledby="regElecModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content" style="margin:70px;">
-                <div class="modal-body tac">
+                <div class="modal-body tac" id="modalTitle">
                     2020 상명대학교 총학생회 선거
                 </div>
                 <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="startElection();">선거 시작</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="modifyElection()">선거 수정</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="deleteElection();">선거 삭제</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','startElectionModal');">선거 시작</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="goUrl('/modifyElection')">선거 수정</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','deleteElectionModal');">선거 삭제</button>
                 </div>
             </div>
         </div>
@@ -92,11 +72,11 @@
     <div class="modal fade" id="startedElecModal" tabindex="-1" role="dialog" aria-labelledby="startedElecModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content" style="margin:70px;">
-                <div class="modal-body tac">
+                <div class="modal-body tac" id="modalTitle">
                     2020 상명대학교 총학생회 선거
                 </div>
                 <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:100%;" onclick="endElection();">선거 종료</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:100%;" onclick="goUrl('/adminManage.html?id=2');">선거 종료</button>
                 </div>
             </div>
         </div>
@@ -110,13 +90,13 @@
                     <div style="font-size:medium;">
                         선거를 시작하시겠습니까?
                     </div>
-                    <div style="font-size:small;">
+                    <div style="font-size:small;" id="modalTitle">
                         2020 상명대학교 총학생회 선거
                     </div>
                 </div>
                 <div class="modal-footer jac">
                     <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="electionStarted();">시작</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="start" onclick="hideToggle('startElectionModal','electionStartedModal');">시작</button>
                 </div>
             </div>
         </div>
@@ -127,7 +107,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content" style="margin:70px;">
                 <div class="modal-body tac">
-                    <div style="font-size:medium;">
+                    <div style="font-size:medium;" id="modalTitle">
                         2020 상명대학교 사범대 학생회 선거
                     </div>
                     <div style="font-size:small;">
@@ -135,7 +115,7 @@
                     </div>
                 </div>
                 <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="document.location.href='./adminManage.html?id=2'">확인</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="goUrl('/adminManage?id=2');">확인</button>
                 </div>
             </div>
         </div>
@@ -149,13 +129,13 @@
                     <div style="font-size:medium;">
                         선거를 삭제하시겠습니까?
                     </div>
-                    <div style="font-size:small;">
+                    <div style="font-size:small;" id="modalTitle">
                         2020 상명대학교 총학생회 선거
                     </div>
                 </div>
                 <div class="modal-footer jac">
                     <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="electionDeleted();">삭제</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="hideToggle('deleteElectionModal','electionDeletedModal');">삭제</button>
                 </div>
             </div>
         </div>
@@ -166,7 +146,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content" style="margin:70px;">
                 <div class="modal-body tac">
-                    <div style="font-size:medium;">
+                    <div style="font-size:medium;" id="modalTitle">
                         2020 상명대학교 사범대 학생회 선거
                     </div>
                     <div style="font-size:small;">
@@ -174,7 +154,7 @@
                     </div>
                 </div>
                 <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="document.location.href='./adminManage.html'">확인</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="goUrl('/adminManage');">확인</button>
                 </div>
             </div>
         </div>

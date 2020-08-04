@@ -276,8 +276,14 @@ app.get('/adminNow', async (req, res) => {
 });
 
 app.get('/adminManage', async (req, res) => {
+
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let list = JSON.parse(JSON.parse(response));
+  console.log(list);
   let context = {
-    session:req.session
+    session:req.session,
+    list:list
   };
   htmlrender(req, res, 'adminManage', context);
 });
