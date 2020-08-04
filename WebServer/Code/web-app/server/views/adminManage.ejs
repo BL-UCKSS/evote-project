@@ -78,7 +78,7 @@
                 </div>
                 <div style="display:none;" id="modalElectId"></div>
                 <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:100%;" onclick="goUrl('/adminManage?id=2');">선거 종료</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:100%;" id="end" onclick="end();">선거 종료</button>
                 </div>
             </div>
         </div>
@@ -140,7 +140,7 @@
                 </div>
                 <div class="modal-footer jac">
                     <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="hideToggle('deleteElectionModal','electionDeletedModal');">삭제</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="remove();">삭제</button>
                 </div>
             </div>
         </div>
@@ -196,6 +196,34 @@ var start = function(){
         dataType: 'json',
         success: function(response){
             hideToggle('startElectionModal','electionStartedModal');
+        }
+    });
+}
+var end = function(){
+    var electionid = $('#end').parent().parent().find('#modalElectId').text()
+    $.ajax({
+        url: '/process/endElection',
+        type: 'post',
+        data: {
+            electionid:electionid
+        },
+        dataType: 'json',
+        success: function(response){
+            goUrl('/adminManage?id=2');
+        }
+    });
+}
+var remove = function(){
+    var electionid = $('#remove').parent().parent().find('#modalElectId').text()
+    $.ajax({
+        url: '/process/removeElection',
+        type: 'post',
+        data: {
+            electionid:electionid
+        },
+        dataType: 'json',
+        success: function(response){
+            hideToggle('deleteElectionModal','electionDeletedModal');
         }
     });
 }

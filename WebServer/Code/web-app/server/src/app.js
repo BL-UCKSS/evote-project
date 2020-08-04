@@ -280,7 +280,7 @@ app.get('/adminManage', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let list = JSON.parse(JSON.parse(response));
-  console.log(list);
+  //console.log(list);
   let context = {
     session:req.session,
     list:list
@@ -305,6 +305,17 @@ app.post('/process/endElection', async(req,res) => {
   console.log('electionid : '+ electionid);
   /*let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'endElection', electionid);
+  let context = JSON.parse(JSON.parse(response));
+  res.send(context);*/
+  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
+});
+
+app.post('/process/removeElection', async(req,res) => {
+  console.log('removeElection 호출됨');
+  let electionid = req.body.electionid || req.query.electionid;
+  console.log('electionid : '+ electionid);
+  /*let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'removeElection', electionid);
   let context = JSON.parse(JSON.parse(response));
   res.send(context);*/
   res.send(true); // 임시로 무조건 시작 성공하게 만듦.
