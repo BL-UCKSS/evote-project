@@ -321,6 +321,37 @@ app.post('/process/removeElection', async(req,res) => {
   res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
+app.get('/modifyvote', async (req, res) => {
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let list = JSON.parse(JSON.parse(response));
+  console.log(list);
+  let context = {
+    session:req.session,
+    list:list
+  };
+  htmlrender(req, res, 'modifyvote', context);
+});
+
+app.post('/process/modifyvote', async (req, res) => {
+  console.log('/process/modifyvote 라우팅 함수 호출됨.');
+  // ledger에 등록된 선거 수정
+  /*let args = {
+    startdate: req.body.startdate,
+    enddate: req.body.enddate
+  };
+  let response = await network.invoke(networkObj, false, 'modifyElection', args);
+  if (response.error) {
+    res.send(response.error);
+  } else {
+    res.send(response);
+  }*/
+  let context = {
+    session:req.session
+  };
+  htmlrender(req, res, 'adminMain', context);
+});
+
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
@@ -845,8 +876,8 @@ app.post('/process/vote2', async (req, res) => {
         return;
       }
       if(docs){ //사용자 확인 후  있음 result, 없음 error
-        if(docs == {error: 'no user'}){
-          console.log('('+stdno+')사용자가 개인정보처리에 동의하지 않았습니다.');
+        if(docs === {error: 'no user'}){
+          console.log('('+paramStdno+')사용자가 개인정보처리에 동의하지 않았습니다.');
           res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'개인정보처리 약관에 동의하셔야 투표가 가능합니다.\');document.location.href=\'/sign\';</script>');
         }
         let electId = await getElectId(); //임시로 하드코딩함.
@@ -911,7 +942,7 @@ app.post('/process/finvote', async (req, res) => {
   //받아오고 난 후에는 블록체인 네트워크에 실어야 함
   let paramballot = req.body.candidates;
   let userid = req.session.userid;
-  let univ = req.session.univ;
+  //let univ = req.session.univ;
   let pw = ''; //pw from db
 
   // console.log(paramballot);
@@ -972,10 +1003,10 @@ app.post('/process/finvote', async (req, res) => {
   //{ candidates: '브릿지' } 형식으로 넘어옴 (req.body)
 
 
-  let electId = await getElectId(); //임시로 하드코딩함.
-  let array = [];
+  //let electId = await getElectId(); //임시로 하드코딩함.
+  //let array = [];
 
-})
+});
 
 async function registerUser(walletId, gubun){
   let response = await network.registerVoter(walletId);
@@ -1144,23 +1175,23 @@ app.get('/checkrating', async (req, res) => {
   htmlrender(req, res, 'checkrating', context);
 });
 
-let loadCandidate = function(database, no, callback) {
-  console.log('loadCandidate 호출됨 : ' + no);
+// let loadCandidate = function(database, no, callback) {
+//   console.log('loadCandidate 호출됨 : ' + no);
   
-  CandidateModel.findById(no, function(err, result) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-    if(result.length > 0){
-      callback(null, result);
-    }else{
-      console.log('일치하는 기호 없음.');
-      callback(null, null);
-    }
-  });
+//   CandidateModel.findById(no, function(err, result) {
+//     if(err) {
+//       callback(err, null);
+//       return;
+//     }
+//     if(result.length > 0){
+//       callback(null, result);
+//     }else{
+//       console.log('일치하는 기호 없음.');
+//       callback(null, null);
+//     }
+//   });
   
-};
+// };
 
 app.get('/castBallot/:electId', async (req, res) => {
 
