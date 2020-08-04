@@ -39,6 +39,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+WebServer/Code/web-app/server/package-lock.json
 
 # TypeScript v1 declaration files
 typings/
@@ -78,4 +79,6 @@ typings/
 
 #wallet
 wallet
-WebServer/Code/web-app/server/package-lock.json
+
+#image files
+WebServer/Code/web-app/server/public/img/
