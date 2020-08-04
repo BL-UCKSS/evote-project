@@ -12,7 +12,7 @@
     <div class="text-center">
         <%- include('header2.ejs'); %>
 		
-		<form action="/process/registervote" method="post" name="register">
+		<form action="/process/registervote" method="post" name="register" enctype="multipart/form-data">
 		<div id="page1">
 			<div class="register-box">
 				<div class="in-register-box"> 
@@ -36,7 +36,7 @@
     		<div class="register-box">
 				<div class="candidate-img-box" style="border-radius: 0; width: 100%">
 				<label for="himage_file">
-					<input type="file" id="himage_file" name="himage" style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+					<input type="file" id="himage_file" name="image" style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
     				<div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class="" style="position: absolute; top: 75px; left: 20px; width: 80px; height: 20px;"><div data-text-content="true" style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">선거운동본부</div></div>
     				<div data-obj-id="ftabY" data-obj-type="icon" class="himage_icon" style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;cursor: pointer;" data-released-from-group="VdIJ0">
     					<svg xmlns="http://www.w3.org/2000/svg" width="100" height="120" viewBox="0 0 48 48" data-svg-content="true" fill="rgb(255, 255, 255)">

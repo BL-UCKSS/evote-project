@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 const servestatic = require('serve-static');
 const crypto = require('crypto');
+const multer = require('multer');
 
 // sso user login 세션 관리용
 const cookieParser = require('cookie-parser');
@@ -21,6 +22,16 @@ let network = require('./fabric/network.js');
 
 // mongoose 모듈 사용
 let mongoose = require('mongoose');
+const storage = multer.diskStorage({
+  destination : (req, file, cb) => {
+    cb(null, 'public/img/');
+  },
+  filename : (req, file, cb) => {
+    let name = req.body.name;
+    cb(null, name + '_' + file.originalname);
+  }
+});
+const upload = multer({storage: storage});
 
 let database;
 let UserSchema;
@@ -63,21 +74,20 @@ function connectDB() {
     console.log('PersonalAgreeSchema 정의함.');
 
     CandidateSchema = mongoose.Schema({
-      no: {type:Number, required:true},
-      electionid: {type:String, required:true},
-      hakbun1: {type:Number, required:true},
-      hakbun2: {type:Number, required:true},
-      name1: {type:String, index:'hashed', required:true},
-      name2: {type:String, index:'hashed', required:true},
-      dept1: {type:String, required:true},
-      dept2: {type:String, required:true},
-      grade1: {type:Number, required:true},
-      grade2: {type:Number, required:true},
-      profile1: {type:String, required:true},
-      profile2: {type:String, required:true},
+      electionid: {type:String, required:true, unique:true},
       hname: {type:String, required:true},
       icon: {type:String, required:true},
       link: {type:String, required:false},
+      hakbun1: {type:Number, required:true},
+      name1: {type:String, index:'hashed', required:true},
+      dept1: {type:String, required:true},
+      grade1: {type:Number, required:true},
+      profile1: {type:String, required:true},
+      hakbun2: {type:Number, required:true},
+      name2: {type:String, index:'hashed', required:true},
+      dept2: {type:String, required:true},
+      grade2: {type:Number, required:true},
+      profile2: {type:String, required:true},
     });
     console.log('CandidateSchema 정의함.');
 
@@ -112,6 +122,11 @@ function connectDB() {
 
     CandidateSchema.static('findByElectId', function(electId,callback){
       return this.find({electionid:electId}, callback);        
+    });
+
+    CandidateSchema.static('registerCandidate', function(data){
+      let candy = new this(data);
+      return candy.save();
     });
 
     AdminSchema.static('findById', function(adminid, callback) {
@@ -364,12 +379,63 @@ app.get('/registervote', async (req, res) => {
   htmlrender(req, res, 'registervote', context);
 });
 
-app.get('/process/registervote', async (req, res) => {
+let registerCandidate = async function(database, data) {
+  console.log('registerCandidate 호출됨');
+  await CandidateModel.registerCandidate(data);
+};
+
+app.post('/process/registervote', upload.array('image'), async (req, res) => {
+  // ledger에 선거 등록
+  // electionid 같은 경우엔 체인코드에서 처리해도됨
+  /*let args = {
+    electionid: 0,
+    name: req.body.name,
+    startdate: req.body.startdate,
+    enddate: req.body.enddate
+  };
+  let response = await network.invoke(networkObj, false, 'createElection', args);
+  if (response.error) {
+    res.send(response.error);
+  } else {
+    res.send(response);
+  }*/
+  // DB에 저장한다.
+  if(database){
+    // DB에 req.body의 값들을 삽입한다.
+    // electionId의 경우 getElectId()를 임시적으로 사용한다.
+    let electionId = await getElectId();
+    let len = req.body.no.length;
+    for(let i=0; i<len;i+=2){
+      let j = i + 1;
+      let data = {
+        electionid:electionId,
+        hname:req.body.hname,
+        icon:req.files[0].filename,
+        link:req.body.link,
+        hakbun1:req.body.no[i],
+        name1:req.body.sname[i],
+        dept1:req.body.dept[i],
+        grade1:req.body.grade[i],
+        profile1:req.files[j].filename,
+        hakbun2:req.body.no[i+1],
+        name2:req.body.sname[i+1],
+        dept2:req.body.dept[i+1],
+        grade2:req.body.grade[i+1],
+        profile2:req.files[j+1].filename,
+      };
+      registerCandidate(database, data);
+    }
+  }else{
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
   let context = {
     session:req.session
   };
-  
-  
+  htmlrender(req, res, 'adminMain', context);
 });
 
 let adminEmail = function(database, callback) {
@@ -672,20 +738,20 @@ app.post('/process/existagree', async (req, res) => {
           if(docs){
             for(let i=0; i<docs.length; i++){
               let data = {
-                no: docs[i]._doc.no,
-                hakbun1: docs[i]._doc.hakbun1,
-                hakbun2: docs[i]._doc.hakbun2,
-                name1: docs[i]._doc.name1,
-                name2: docs[i]._doc.name2,
-                dept1: docs[i]._doc.dept1,
-                dept2: docs[i]._doc.dept2,
-                grade1: docs[i]._doc.grade1,
-                grade2: docs[i]._doc.grade2,
-                profile1: docs[i]._doc.profile1,
-                profile2: docs[i]._doc.profile2,
+                electionid: docs[i]._doc.electionid,
                 hname: docs[i]._doc.hname,
                 icon: docs[i]._doc.icon,
                 link: docs[i]._doc.link,
+                hakbun1: docs[i]._doc.hakbun1,
+                name1: docs[i]._doc.name1,
+                dept1: docs[i]._doc.dept1,
+                grade1: docs[i]._doc.grade1,
+                profile1: docs[i]._doc.profile1,
+                hakbun2: docs[i]._doc.hakbun2,
+                name2: docs[i]._doc.name2,
+                dept2: docs[i]._doc.dept2,
+                grade2: docs[i]._doc.grade2,
+                profile2: docs[i]._doc.profile2,
               };
               array.push(data);
             }
@@ -1275,7 +1341,10 @@ app.post('/queryByKey', async (req, res) => {
 });
 
 app.all('*', function(req, res) {
-  res.status(404).send('<h1>요청하신 페이지는 없어용.</h1>');
+  res.writeHead(404, {'Content-Type':'text/html;charset=utf-8'});
+  res.write('<script>setTimeout(function(){document.location.href=\'/\';},3000);</script>');
+  res.end('<h1>요청하신 페이지는 없어용.');
+  //res.status(404).send('<h1>요청하신 페이지는 없어용.');
 });
 
 app.listen(process.env.PORT || 8081, function(){
