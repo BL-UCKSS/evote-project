@@ -62,7 +62,7 @@
                 <div style="display:none;" id="modalElectId"></div>
                 <div class="modal-footer jac">
                     <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','startElectionModal');">선거 시작</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="goUrl('/modifyElection')">선거 수정</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" id="modify" onclick="modifyElection();return false;">선거 수정</button>
                     <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','deleteElectionModal');">선거 삭제</button>
                 </div>
             </div>
@@ -166,6 +166,10 @@
         </div>
     </div>
     <!-- modal end -->
+    <!-- hidden form -->
+    <form action="/modifyvote" method="post" style="display:none;" name="modifyFrm">
+        <input type="hidden" name="electionid">
+    </form>
 </div>
 <%- include('foot.ejs'); %>
 <script type="text/javascript" src="/public/script.js"></script>
@@ -226,6 +230,11 @@ var remove = function(){
             hideToggle('deleteElectionModal','electionDeletedModal');
         }
     });
+}
+var modifyElection = function(){
+    var electionid = $('#modify').parent().parent().find('#modalElectId').text();
+    $('form[name=modifyFrm] input').val(electionid);
+    document.modifyFrm.submit();
 }
 </script>
 </body>

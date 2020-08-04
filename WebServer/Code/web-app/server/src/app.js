@@ -321,11 +321,13 @@ app.post('/process/removeElection', async(req,res) => {
   res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
-app.get('/modifyvote', async (req, res) => {
+app.post('/modifyvote', async (req, res) => {
+  let electionid = req.body.electionid || req.query.electionid;
+  console.log(electionid);
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let list = JSON.parse(JSON.parse(response));
-  console.log(list);
+  //console.log(list);
   let context = {
     session:req.session,
     list:list
