@@ -288,36 +288,14 @@ app.get('/adminManage', async (req, res) => {
   htmlrender(req, res, 'adminManage', context);
 });
 
-app.post('/process/startElection', async(req,res) => {
-  console.log('startElection 호출됨');
-  let electionid = req.body.electionid || req.query.electionid;
-  console.log('electionid : '+ electionid);
-  /*let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'startElection', electionid);
-  let context = JSON.parse(JSON.parse(response));
-  res.send(context);*/
-  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
-});
-
-app.post('/process/endElection', async(req,res) => {
-  console.log('endElection 호출됨');
-  let electionid = req.body.electionid || req.query.electionid;
-  console.log('electionid : '+ electionid);
-  /*let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'endElection', electionid);
-  let context = JSON.parse(JSON.parse(response));
-  res.send(context);*/
-  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
-});
-
 app.post('/process/removeElection', async(req,res) => {
   console.log('removeElection 호출됨');
   let electionid = req.body.electionid || req.query.electionid;
   console.log('electionid : '+ electionid);
-  /*let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'removeElection', electionid);
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'deleteMyAsset', electionid);
   let context = JSON.parse(JSON.parse(response));
-  res.send(context);*/
+  res.send(context);
   res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
@@ -376,7 +354,7 @@ app.get('/myvote', async (req, res) => {
   let userid = req.session.userid;
   let pw = ''; //pw from db
   if (database) {
-    getHashPw(database, userid, function(err, docs) {
+    getHashPw(database, userid, async function(err, docs) {
       if(err){
         console.log('에러 발생.');
         //에러발생
@@ -391,9 +369,9 @@ app.get('/myvote', async (req, res) => {
         //임시로 출력
         res.end('<p>userid : '+userid+'</p><p>pw : '+pw+'</p><p>useridpw : '+useridpw+'</p><p>walletid : '+walletid+'</p>');
         // 아직 queryByWalletId 컨트랙이 완성되지 않음.
-        /*
+        
         let networkObj = await network.connectToNetwork(appAdmin);
-        let response = await network.invoke(networkObj, true, 'queryByWalletid', walletid); //walletid만 넘기겠음
+        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
         response = JSON.parse(response);
         if (response.error) {
           res.send(response.error);
@@ -404,8 +382,8 @@ app.get('/myvote', async (req, res) => {
           session:req.session,
           list:response
         };
-        */
-        //htmlrender(req, res, 'myvote', context);
+        
+        htmlrender(req, res, 'myvote', context);
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
@@ -467,18 +445,19 @@ let registerCandidate = async function(database, data) {
 app.post('/process/registervote', upload.array('image'), async (req, res) => {
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
-  /*let args = {
-    electionid: 0,
+  let args = {
+    univ: req.body.univ,
     name: req.body.name,
     startdate: req.body.startdate,
     enddate: req.body.enddate
   };
+  let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'createElection', args);
   if (response.error) {
     res.send(response.error);
   } else {
     res.send(response);
-  }*/
+  }
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
