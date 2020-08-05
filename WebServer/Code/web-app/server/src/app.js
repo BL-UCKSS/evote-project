@@ -1027,7 +1027,7 @@ app.post('/process/finvote', async (req, res) => {
   }
 });
 
-async function registerUser(walletId, gubun){
+async function registerUser(walletId, gubun, univ){
   let response = await network.registerVoter(walletId);
   if (response.error) {
 	    // eslint-disable-next-line no-mixed-spaces-and-tabs
@@ -1037,12 +1037,14 @@ async function registerUser(walletId, gubun){
 	    if (networkObj.error) {
 	        console.log(networkObj.error);
 	    }
-	    let argument = JSON.stringify({voterId:walletId, registrarId:walletId, firstName:'no', lastName:'no'});
+	    let argument = JSON.stringify({voterId:walletId, department:univ}); 
 	    let args = [argument];
     //connect to network and update the state with voterId
     let invokeResponse;
     if (gubun === 'user'){
 	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
+    }else if(gubun === 'admin'){
+      console.log('admin logged in');
     }else{
       console.log('error');
       return;
@@ -1093,7 +1095,7 @@ app.post('/process/login', async (req, res) => {
             // wallet은 walletid로 등록
             let useridpw = paramStdno + hashPw;
             let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-            registerUser(walletid, 'admin');
+            registerUser(walletid, 'admin', 'admin');
   
             htmlrender(req, res, 'adminMain', context);
             return;
@@ -1143,7 +1145,7 @@ app.post('/process/login', async (req, res) => {
             // wallet은 walletid로 등록
             let useridpw = paramStdno + hashPw;
             let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-            registerUser(walletid, 'user');
+            registerUser(walletid, 'user', req.session.univ);
   
             htmlrender(req, res, 'main', context);
             return;
