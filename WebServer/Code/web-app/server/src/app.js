@@ -316,16 +316,22 @@ app.post('/modifyvote', async (req, res) => {
 app.post('/process/modifyvote', async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
   // ledger에 등록된 선거 수정
-  /*let args = {
+  let args = {
+    electionid: req.body.electionid,
+    name: req.body.name,
+    univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate
   };
+  args = JSON.stringify(args);
+  args = [args];
+  let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'modifyElection', args);
   if (response.error) {
     res.send(response.error);
   } else {
     res.send(response);
-  }*/
+  }
   let context = {
     session:req.session
   };
