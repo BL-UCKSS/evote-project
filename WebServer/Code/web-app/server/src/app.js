@@ -402,7 +402,7 @@ app.get('/myvote', async (req, res) => {
         }
         let context = {
           session:req.session,
-          data:response
+          list:response
         };
         */
         //htmlrender(req, res, 'myvote', context);

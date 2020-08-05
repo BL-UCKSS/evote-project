@@ -12,7 +12,7 @@
     	<%- include('header.ejs'); %>
 
 		<div class="myvote-cards">
-			<% for %>
+			<% for(var i=0;i<list.length;i++){ %>
 			<div class="myvote-card">
 				<span class="myvote-card-title">
 					2020 상명대학교 총학생회 선거
@@ -21,7 +21,7 @@
 					기호 1번 S.Catch
 				</span>
 			</div>
-			<% endfor %>
+			<% } %>
 		</div>
     	
     </div>
