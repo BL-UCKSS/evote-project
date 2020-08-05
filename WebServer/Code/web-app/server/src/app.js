@@ -288,17 +288,6 @@ app.get('/adminManage', async (req, res) => {
   htmlrender(req, res, 'adminManage', context);
 });
 
-app.post('/process/startElection', async(req,res) => {
-  console.log('startElection 호출됨');
-  let electionid = req.body.electionid || req.query.electionid;
-  console.log('electionid : '+ electionid);
-  /*let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'startElection', electionid);
-  let context = JSON.parse(JSON.parse(response));
-  res.send(context);*/
-  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
-});
-
 app.post('/process/endElection', async(req,res) => {
   console.log('endElection 호출됨');
   let electionid = req.body.electionid || req.query.electionid;
@@ -327,12 +316,51 @@ app.post('/modifyvote', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let list = JSON.parse(JSON.parse(response));
-  //console.log(list);
-  let context = {
-    session:req.session,
-    list:list
-  };
-  htmlrender(req, res, 'modifyvote', context);
+  let array = [];
+    
+  loadCandidateByElectId(database, electionid, function(err, docs) {
+    if(err){
+      console.log('에러 발생.');
+      let context = {error:'Error is occured'};
+      res.send(context);
+      return;
+    }                      
+    if(docs){
+      for(let i=0; i<docs.length; i++){
+        let data = {
+          electionid: docs[i]._doc.electionid,
+          hname: docs[i]._doc.hname,
+          icon: docs[i]._doc.icon,
+          link: docs[i]._doc.link,
+          hakbun1: docs[i]._doc.hakbun1,
+          name1: docs[i]._doc.name1,
+          dept1: docs[i]._doc.dept1,
+          grade1: docs[i]._doc.grade1,
+          profile1: docs[i]._doc.profile1,
+          hakbun2: docs[i]._doc.hakbun2,
+          name2: docs[i]._doc.name2,
+          dept2: docs[i]._doc.dept2,
+          grade2: docs[i]._doc.grade2,
+          profile2: docs[i]._doc.profile2,
+        };
+        array.push(data);
+      }
+      console.log(array);
+      let context = {
+        session:req.session,
+        list:list,
+        candidateData:array
+      };
+    
+      htmlrender(req, res, 'modifyvote', context);
+    }else{
+      console.log('에러 발생.');
+      //사용자 데이터 조회 안됨
+      let context = {error:'기호 없음'};
+      res.send(context);
+      return;
+    }
+  });
 });
 
 app.post('/process/modifyvote', async (req, res) => {
@@ -467,18 +495,19 @@ let registerCandidate = async function(database, data) {
 app.post('/process/registervote', upload.array('image'), async (req, res) => {
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
-  /*let args = {
-    electionid: 0,
+  let args = {
     name: req.body.name,
+    univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate
   };
+  let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'createElection', args);
   if (response.error) {
     res.send(response.error);
   } else {
     res.send(response);
-  }*/
+  }
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
@@ -804,7 +833,7 @@ app.post('/process/existagree', async (req, res) => {
       }
       if(docs){
         //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
-        //총학생회 선거 if(year == Date.now() && gubun == "chonghak") 일 때 첫번째로 출력됨.
+        //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
         let electId = await getElectId(); //임시로 하드코딩함.
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
@@ -941,13 +970,10 @@ app.post('/process/finvote', async (req, res) => {
   console.log('/process/finvote 라우팅 함수 호출됨.');
 
   //[현재] "기호 1번 브릿지" 형식으로 넘어옴 (req.body.candidates)
-  //받아오고 난 후에는 블록체인 네트워크에 실어야 함
   let paramballot = req.body.candidates;
   let userid = req.session.userid;
   //let univ = req.session.univ;
   let pw = ''; //pw from db
-
-  // console.log(paramballot);
 
   if (database) {
     getHashPw(database, userid, async function(err, docs) {
@@ -965,12 +991,10 @@ app.post('/process/finvote', async (req, res) => {
         let electId = await getElectId();
         let picked = paramballot;
 
-
         // 사용자에게 한 번 더 묻기 (수정해야 함)
         // res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'정말 투표하시겠습니까?\');document.location.href=\'/finvote\';</script>');
 
-        // 블록체인에 투표 데이터 전송해야 함
-        // saveBallot(walletid, electionid, paramballot)
+        // 블록체인에 투표 데이터 전송
         let networkObj = await network.connectToNetwork(walletid);
         let data = {
           voterId:walletid,
@@ -1002,12 +1026,6 @@ app.post('/process/finvote', async (req, res) => {
     res.send(context);
     return;    
   }
-  //{ candidates: '브릿지' } 형식으로 넘어옴 (req.body)
-
-
-  //let electId = await getElectId(); //임시로 하드코딩함.
-  //let array = [];
-
 });
 
 async function registerUser(walletId, gubun){

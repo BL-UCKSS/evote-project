@@ -61,65 +61,8 @@
                 </div>
                 <div style="display:none;" id="modalElectId"></div>
                 <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','startElectionModal');">선거 시작</button>
                     <button type="button" class="btn btn-primary manage-modal-footer-button" id="modify" onclick="modifyElection();return false;">선거 수정</button>
                     <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','deleteElectionModal');">선거 삭제</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- modal end -->
-    <!-- modal start -->
-    <div class="modal fade" id="startedElecModal" tabindex="-1" role="dialog" aria-labelledby="startedElecModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content" style="margin:70px;">
-                <div class="modal-body tac" id="modalTitle">
-                    2020 상명대학교 총학생회 선거
-                </div>
-                <div style="display:none;" id="modalElectId"></div>
-                <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:100%;" id="end" onclick="end();">선거 종료</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- modal end -->
-    <!-- modal start -->
-    <div class="modal fade" id="startElectionModal" tabindex="-1" role="dialog" aria-labelledby="startElectionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content" style="margin:70px;">
-                <div class="modal-body tac">
-                    <div style="font-size:medium;">
-                        선거를 시작하시겠습니까?
-                    </div>
-                    <div style="font-size:small;" id="modalTitle">
-                        2020 상명대학교 총학생회 선거
-                    </div>
-                    <div style="display:none;" id="modalElectId"></div>
-                </div>
-                <div class="modal-footer jac">
-                    <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="start" onclick="start();">시작</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- modal end -->
-    <!-- modal start -->
-    <div class="modal fade" id="electionStartedModal" tabindex="-1" role="dialog" aria-labelledby="electionStartedModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content" style="margin:70px;">
-                <div class="modal-body tac">
-                    <div style="font-size:medium;" id="modalTitle">
-                        2020 상명대학교 사범대 학생회 선거
-                    </div>
-                    <div style="display:none;" id="modalElectId"></div>
-                    <div style="font-size:small;">
-                        선거가 시작되었습니다.
-                    </div>
-                </div>
-                <div class="modal-footer jac">
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="goUrl('/adminManage?id=2');">확인</button>
                 </div>
             </div>
         </div>
@@ -189,34 +132,6 @@ $(function() {
         $('.carousel-inner > .carousel-item:nth-child(2)').removeClass('active');
     }
 })
-var start = function(){
-    var electionid = $('#start').parent().parent().find('#modalElectId').text()
-    $.ajax({
-        url: '/process/startElection',
-        type: 'post',
-        data: {
-            electionid:electionid
-        },
-        dataType: 'json',
-        success: function(response){
-            hideToggle('startElectionModal','electionStartedModal');
-        }
-    });
-}
-var end = function(){
-    var electionid = $('#end').parent().parent().find('#modalElectId').text()
-    $.ajax({
-        url: '/process/endElection',
-        type: 'post',
-        data: {
-            electionid:electionid
-        },
-        dataType: 'json',
-        success: function(response){
-            goUrl('/adminManage?id=2');
-        }
-    });
-}
 var remove = function(){
     var electionid = $('#remove').parent().parent().find('#modalElectId').text()
     $.ajax({
