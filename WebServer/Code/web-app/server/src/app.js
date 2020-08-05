@@ -1043,8 +1043,6 @@ async function registerUser(walletId, gubun){
     let invokeResponse;
     if (gubun === 'user'){
 	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
-    }else if(gubun === 'admin'){
-      //invokeResponse = await network.invoke(networkObj, false, 'createAdmin', args);
     }else{
       console.log('error');
       return;
