@@ -443,6 +443,7 @@ let registerCandidate = async function(database, data) {
 };
 
 app.post('/process/registervote', upload.array('image'), async (req, res) => {
+  console.log('/process/registervote 호출됨.');
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
   let args = {
@@ -451,18 +452,20 @@ app.post('/process/registervote', upload.array('image'), async (req, res) => {
     startdate: req.body.startdate,
     enddate: req.body.enddate
   };
+  args = JSON.stringify(args);
+  args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'createElection', args);
   if (response.error) {
-    res.send(response.error);
+    console.log('registervote error : ' + response.error);
   } else {
-    res.send(response);
+    console.log(response);
   }
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
     // electionId의 경우 getElectId()를 임시적으로 사용한다.
-    let electionId = await getElectId();
+    let electionId = response.electionid;
     let len = req.body.no.length;
     for(let i=0; i<len;i+=2){
       let j = i + 1;
