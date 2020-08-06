@@ -529,21 +529,27 @@ app.get('/myvote', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        //임시로 출력
-        res.end('<p>userid : '+userid+'</p><p>pw : '+pw+'</p><p>useridpw : '+useridpw+'</p><p>walletid : '+walletid+'</p>');
-        // 아직 queryByWalletId 컨트랙이 완성되지 않음.
-        
         let networkObj = await network.connectToNetwork(appAdmin);
         let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+        let nolist = false;
+        let arr = [];
         response = JSON.parse(response);
         if (response.error) {
-          res.send(response.error);
-        } else {
-          res.send(response);
+          console.log(response.error);
+          nolist = true;
+        }
+        if(response.length === 0){
+          nolist = true;
+        }
+        for(let i=0; i<response.length; i++){
+          if(response[i].ballotCast){
+            arr.append(response[i]);
+          }
         }
         let context = {
           session:req.session,
-          list:response
+          list:arr,
+          nolist:nolist
         };
         
         htmlrender(req, res, 'myvote', context);
