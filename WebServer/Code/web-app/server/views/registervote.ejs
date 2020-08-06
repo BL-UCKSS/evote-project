@@ -22,7 +22,16 @@
 					</div>
 					<p class="registertext">선거 종류</p>
 					<div class="form-group">
-						<input type="text" class="form-control" name="univ" placeholder="총학생회/융합공과대 등등">
+						<!--input type="text" class="form-control" name="univ" placeholder="총학생회/융합공과대 등등"-->
+						<select class="custom-select" id="univSelect" name="univ">
+							<option selected>선택하세요...</option>
+							<option value="총학생회">총학생회</option>
+							<option value="인문사회과학대학">인문사회과학대학</option>
+							<option value="사범대학">사범대학</option>
+							<option value="경영경제대학">경영경제대학</option>
+							<option value="융합공과대학">융합공과대학</option>
+							<option value="문화예술대학">문화예술대학</option>
+						  </select>
 					</div>
 					<p class="registertext">시작 날짜 선택</p>
 					<input type="text" id="startdate" class="form-control" name="startdate" value="2020-08-01 12:00">
