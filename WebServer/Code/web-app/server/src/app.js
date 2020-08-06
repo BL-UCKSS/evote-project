@@ -166,13 +166,19 @@ let getElectIdByYearUniv = async function(year, univ){
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let res = JSON.parse(JSON.parse(response));
   let i = 0;
+  let cnt = 0;
   if(res.length === 0){
     return false;
   }
   for(; i<res.length; i++){
     if(res[i].Record.startDate.substring(0,4) === year && res[i].Record.univ === univ){
+      cnt++;
       break;
     }
+  }
+  if(cnt === 0){
+    console.log(univ + '에 맞는 선거가 열리지 않았습니다.');
+    return false;
   }
   return res[i].Key;
 };
@@ -1019,7 +1025,7 @@ app.post('/process/existagree', async (req, res) => {
             let context = {error:'Error is occured'};
             res.send(context);
             return;
-          }                      
+          }         
           if(docs){
             for(let i=0; i<docs.length; i++){
               let data = {
@@ -1089,10 +1095,11 @@ app.post('/process/vote2', async (req, res) => {
         }
         //단과대 선거id 찾기
         let year = new Date();
+        console.log('세션 univ : ' + req.session.univ);
         let electId = await getElectIdByYearUniv(year.getFullYear(), req.session.univ);
         if(!electId){
           console.log('에러 발생.');
-          let context = {error:'선거가 존재하지 않음'};
+          let context = {error:req.session.univ+'선거가 존재하지 않음'};
           res.send(context);
           return;
         }
