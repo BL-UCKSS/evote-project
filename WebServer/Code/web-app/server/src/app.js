@@ -168,6 +168,19 @@ let getElectId = async function(){
   let electId = res[0].Key;
   return electId;
 };
+let getElectIdByYearUniv = async function(year, univ){
+  year = String(year);
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let res = JSON.parse(JSON.parse(response));
+  let i = 0;
+  for(; i<res.length; i++){
+    if(res[i].Record.startDate.substring(0,4) === year && res[i].Record.univ === univ){
+      break;
+    }
+  }
+  return res[i].Key;
+};
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
@@ -855,7 +868,6 @@ app.post('/process/registervote', upload.array('image'), async (req, res) => {
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
-    // electionId의 경우 getElectId()를 임시적으로 사용한다.
     let electionId = response.electionid;
     let len = req.body.no.length;
     for(let i=0; i<len;i+=2){
@@ -988,8 +1000,10 @@ app.post('/process/existagree', async (req, res) => {
       }
       if(docs){
         //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
+        //총학생회 선거 정보를 불러와야 함. -> 선거이름, 시작시간, 종료시간 
         //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
-        let electId = await getElectId(); //임시로 하드코딩함.
+        let year = new Date();
+        let electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
         loadCandidateByElectId(database, electId, function(err, docs) {
