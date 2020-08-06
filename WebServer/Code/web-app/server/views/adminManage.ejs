@@ -29,7 +29,7 @@
             <% /* 등록된 선거 조건으로 출력해야함 */ %>
         <div class="manage-carousel-item-content" onclick="changeTitle('regElecModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
             <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2"><%= list[i].Record.startDate %>~<%= list[i].Record.endDate %></div>
+                <div class="manage-carousel-item-content-2"><%= list[i].Record.startDate.substring(0,10) %> <%= list[i].Record.startDate.substring(11,16) %>~<%= list[i].Record.endDate.substring(0,10) %> <%= list[i].Record.endDate.substring(11,16) %></div>
                 <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
             </div>
         </div>
@@ -45,7 +45,7 @@
             <% /* 진행 중인 선거 조건으로 출력해야함 */ %>
         <div class="manage-carousel-item-content" style="cursor:default;" onclick="changeTitle('startedElecModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
             <div class="manage-carousel-item-content-1">
-                <div class="manage-carousel-item-content-2"><%= list[i].Record.startDate %>~<%= list[i].Record.endDate %></div>
+                <div class="manage-carousel-item-content-2"><%= list[i].Record.startDate.substring(0,10) %> <%= list[i].Record.startDate.substring(11,16) %>~<%= list[i].Record.endDate.substring(0,10) %> <%= list[i].Record.endDate.substring(11,16) %></div>
                 <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
             </div>
         </div>
