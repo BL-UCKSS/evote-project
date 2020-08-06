@@ -820,7 +820,7 @@ app.post('/modifyvote', async (req, res) => {
     }
   });
 });
-
+//참고로, 후보자 사진 또는 운동본부 사진을 바꾸지 않았을 때는 원래 값 그대로 유지하도록 BE에서 구현해줘야함. by 김동규
 app.post('/process/modifyvote', async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
   // ledger에 등록된 선거 수정
