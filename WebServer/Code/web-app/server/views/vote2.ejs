@@ -17,6 +17,7 @@
             <span class="vote-name">총학생회</span>
         </div>
         <form action="/process/finvote" method="post">
+            <input type="hidden" name="electId" value="<%= electId %>">
             <!-- vote-table -->
             <div class="vote-table vote-table2">
                 <% for(var i=0; i<list.length+1; i++) { %>

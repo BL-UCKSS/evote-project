@@ -160,20 +160,15 @@ function connectDB() {
   
   database.on('error', console.error.bind(console, 'mongoose 연결 에러.'));
 }
-//임시로 ibm-evote의 선거 코드를 가져오는 함수
-let getElectId = async function(){
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-  let res = JSON.parse(JSON.parse(response));
-  let electId = res[0].Key;
-  return electId;
-};
 let getElectIdByYearUniv = async function(year, univ){
   year = String(year);
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let res = JSON.parse(JSON.parse(response));
   let i = 0;
+  if(res.length === 0){
+    return false;
+  }
   for(; i<res.length; i++){
     if(res[i].Record.startDate.substring(0,4) === year && res[i].Record.univ === univ){
       break;
@@ -1004,6 +999,12 @@ app.post('/process/existagree', async (req, res) => {
         //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
         let year = new Date();
         let electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+        if(!electId){
+          console.log('에러 발생.');
+          let context = {error:'선거가 존재하지 않음'};
+          res.send(context);
+          return;
+        }
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
         loadCandidateByElectId(database, electId, function(err, docs) {
@@ -1080,7 +1081,15 @@ app.post('/process/vote2', async (req, res) => {
           console.log('('+paramStdno+')사용자가 개인정보처리에 동의하지 않았습니다.');
           res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'개인정보처리 약관에 동의하셔야 투표가 가능합니다.\');document.location.href=\'/sign\';</script>');
         }
-        let electId = await getElectId(); //임시로 하드코딩함.
+        //단과대 선거id 찾기
+        let year = new Date();
+        let electId = await getElectIdByYearUniv(year.getFullYear(), req.session.univ);
+        if(!electId){
+          console.log('에러 발생.');
+          let context = {error:'선거가 존재하지 않음'};
+          res.send(context);
+          return;
+        }
         let array = [];
         // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
         loadCandidateByElectId(database, electId, function(err, docs) {
@@ -1112,7 +1121,8 @@ app.post('/process/vote2', async (req, res) => {
             }
             let context = {
               list: array,
-              session: req.session
+              session: req.session,
+              electId: electId
             };
             htmlrender(req, res, 'vote2', context);            
             return;
@@ -1142,6 +1152,7 @@ app.post('/process/finvote', async (req, res) => {
   let paramballot = req.body.candidates;
   let userid = req.session.userid;
   //let univ = req.session.univ;
+  let electId = req.body.electId;
   let pw = ''; //pw from db
 
   if (database) {
@@ -1157,7 +1168,6 @@ app.post('/process/finvote', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        let electId = await getElectId();
         let picked = paramballot;
 
         // 사용자에게 한 번 더 묻기 (수정해야 함)
