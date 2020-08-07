@@ -512,7 +512,10 @@ app.get('/adminManage', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let list = JSON.parse(JSON.parse(response));
-  //console.log(list);
+  //console.log('response : ' + JSON.stringify(list));
+  if(response.error){
+    console.log('adminManage error : ' + response.error);
+  }
   let context = {
     session:req.session,
     list:list
@@ -868,14 +871,15 @@ app.post('/process/registervote', upload.array('image'), async (req, res) => {
   let response = await network.invoke(networkObj, false, 'createElection', args);
   if (response.error) {
     console.log('registervote error : ' + response.error);
-  } else {
-
-    console.log(response);
-  }
+    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
+    return;
+  } 
+  console.log('createElection response : ' + response);
+  response = JSON.parse(response);
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
-    let electionId = response.electionid;
+    let electionId = response.electionId;
     let len = req.body.no.length;
     for(let i=0; i<len;i+=2){
       let j = i + 1;
@@ -1202,7 +1206,7 @@ app.post('/process/finvote', async (req, res) => {
           return;
         } else {
           console.log(response);
-          res.send('<h1>단과대 투표 이어서 하게 만드세요.</h1>')
+          res.send('<h1>단과대 투표 이어서 하게 만드세요.</h1>');
         }
       }else{
         console.log('에러 발생.');
