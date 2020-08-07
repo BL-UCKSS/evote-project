@@ -1198,9 +1198,11 @@ app.post('/process/finvote', async (req, res) => {
 
         let response = await network.invoke(networkObj, false, 'castVote', args); //args = voterId, electionId, picked
         if (response.error) {
-          res.send(response.error);
+          console.log(response.error);
+          return;
         } else {
-          res.send(response);
+          console.log(response);
+          res.send('<h1>단과대 투표 이어서 하게 만드세요.</h1>')
         }
       }else{
         console.log('에러 발생.');
