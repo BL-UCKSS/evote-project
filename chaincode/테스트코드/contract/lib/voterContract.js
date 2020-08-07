@@ -312,9 +312,10 @@ class MyAssetContract extends Contract {
   async queryWithQueryString(ctx, queryString) {
 
     console.log('query String');
-    //console.log(JSON.stringify(queryString));
+    console.log(JSON.stringify(queryString));
 
-    let resultsIterator = await ctx.stub.getQueryResult(JSON.stringify(queryString));
+    let resultsIterator = await ctx.stub.getQueryResult(queryString);
+
     let allResults = [];
 
     // eslint-disable-next-line no-constant-condition
