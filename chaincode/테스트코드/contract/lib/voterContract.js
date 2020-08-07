@@ -36,7 +36,7 @@ class MyAssetContract extends Contract {
       let electionEndDate = new Date(args.enddate);
 
       let election = new Election(args.name, args.univ, electionStartDate, electionEndDate);
-      await ctx.stub.putState(election.electionId, Buffer.from(JSON.stringify(election)));
+      await ctx.stub.putState(election.electionid, Buffer.from(JSON.stringify(election)));
       return election;
 
     } else {

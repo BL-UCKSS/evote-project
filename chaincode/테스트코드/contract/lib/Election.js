@@ -36,9 +36,9 @@ class Election {
    */
   constructor(name, univ, startDate, endDate) {
     // 28자리 임의의 스트링 출력
-    this.electionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    this.electionid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-    if (this.validateElection(this.electionId)) {
+    if (this.validateElection(this.electionid)) {
 
       //create the election object 객체 안에 들어가는 값들
       this.name = name;

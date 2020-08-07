@@ -879,7 +879,7 @@ app.post('/process/registervote', upload.array('image'), async (req, res) => {
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
-    let electionId = response.electionId;
+    let electionId = response.electionid;
     let len = req.body.no.length;
     for(let i=0; i<len;i+=2){
       let j = i + 1;
