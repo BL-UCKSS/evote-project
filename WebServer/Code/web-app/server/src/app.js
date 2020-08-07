@@ -1096,7 +1096,7 @@ app.post('/process/vote2', async (req, res) => {
         //단과대 선거id 찾기
         let year = new Date();
         console.log('세션 univ : ' + req.session.univ);
-        let electId = await getElectIdByYearUniv(year.getFullYear(), req.session.univ);
+        let electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
         if(!electId){
           console.log('에러 발생.');
           let context = {error:req.session.univ+'선거가 존재하지 않음'};
