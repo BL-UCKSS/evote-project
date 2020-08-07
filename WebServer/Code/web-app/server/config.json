@@ -4,6 +4,5 @@
   "appAdminSecret": "adminpw",
   "orgMSPID": "Org1MSP",
   "caName": "ca.org1.example.com",
-  "userName": "V1",
   "gatewayDiscovery": { "enabled": true, "asLocalhost": true }
 }
