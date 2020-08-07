@@ -82,3 +82,8 @@ wallet
 
 #image files
 WebServer/Code/web-app/server/public/img/
+chaincode/테스트코드/contract/.gitignore
+chaincode/테스트코드/contract/.editorconfig
+chaincode/테스트코드/contract/.eslintignore
+chaincode/테스트코드/contract/.eslintrc.js
+chaincode/테스트코드/contract/.npmignore
