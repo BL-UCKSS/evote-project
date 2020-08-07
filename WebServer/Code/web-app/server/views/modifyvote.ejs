@@ -40,7 +40,7 @@
                         <input type="text" id="enddate" class="form-control" name="enddate" value="<%= list[0].Record.endDate.substring(0,10) %>">
                     </div>
                     <div class="signbtns">
-                    <button data-toggle="modal" data-target="#cancelModifyVoteModal" class="nregisterbtn btn" onclick="return false;">취소</button>
+                    <button class="nregisterbtn btn" onclick="$('#cancelModifyVoteModal').modal('show');return false;">취소</button>
                     <button type="button" class="registerbtn btn" onclick="goNextPage(1, 2);return false;">다음</a>
                     </div>
                 </div>
