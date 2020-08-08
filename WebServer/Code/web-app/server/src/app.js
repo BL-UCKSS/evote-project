@@ -592,8 +592,7 @@ app.get('/myvote', async (req, res) => {
 });
 
 app.get('/sign', async (req, res) => {
-  let univ;
-  //if univ casted : univ = req.session.univ;
+  let univ = req.session.univ;
   let userid = req.session.userid;
   let pw = ''; //pw from db
   if (database) {
@@ -617,8 +616,24 @@ app.get('/sign', async (req, res) => {
         }
         if(!response.totalElectionCast){
           univ = '총학생회';
+          let year = new Date();
+          let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
+          if(!electId){
+            console.log('에러 발생.');
+            let context = {error:req.session.univ+' 선거가 존재하지 않음'};
+            res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+            return;
+          }
         }else if(!response.departmentElectionCast){
           univ = req.session.univ;
+          let year = new Date();
+          let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
+          if(!electId){
+            console.log('에러 발생.');
+            let context = {error:req.session.univ+' 선거가 존재하지 않음'};
+            res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+            return;
+          }
         }else{
           console.log('이미 모든 투표를 완료하였습니다.');
           response.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
@@ -1111,7 +1126,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
         if(!electId){
           console.log('에러 발생.');
           let context = {error:'선거가 존재하지 않음'};
-          res.send(context);
+          res.send('<');
           return;
         }
         let array = [];
@@ -1199,7 +1214,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
         if(!electId){
           console.log('에러 발생.');
           let context = {error:req.session.univ+'선거가 존재하지 않음'};
-          res.send(context);
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
           return;
         }
         let array = [];
@@ -1304,7 +1319,7 @@ app.post('/process/finvote/:univ', async (req, res) => {
           return;
         } else {
           console.log(response);
-          res.send('<h1>'+response+'</h1>');
+          res.send('<h1>hello'+JSON.stringify(response)+'</h1>');
         }
       }else{
         console.log('에러 발생.');
