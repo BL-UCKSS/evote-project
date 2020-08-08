@@ -187,9 +187,10 @@
 			$(function(){
 				var temp = [];
 				var date = new Date();
-				$('#startdate').val(getFormatDate(date, 3));
+				//$('#startdate').val(getFormatDate(date, 3));
+				$('#startdate').val(getFormatDate(date, -1));
 				$('#enddate').val(getFormatDate(date, 5));
-				date.setDate(date.getDate() + 3);
+				//date.setDate(date.getDate() + 3);
 				for(var i=1; i<date.getDate();i++){
 					var month = (date.getMonth()+1) >= 10 ? (date.getMonth()+1) : '0' + (date.getMonth()+1);
 					var day = i >= 10 ? i : '0' + i;
