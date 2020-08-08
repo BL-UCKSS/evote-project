@@ -133,6 +133,10 @@ function connectDB() {
       return candy.save();
     });
 
+    CandidateSchema.static('removeCandidate', function(electId){
+      return this.deleteOne({electionid:electId});      
+    });
+
     AdminSchema.static('findById', function(adminid, callback) {
       return this.find({id:adminid}, callback);        
     });
@@ -202,6 +206,10 @@ let getHashPw = function(database, stdno, callback) {
 let registerCandidate = async function(database, data) {
   console.log('registerCandidate 호출됨');
   await CandidateModel.registerCandidate(data);
+};
+let removeCandidate = async function(database, data) {
+  console.log('removeCandidate 호출됨');
+  await CandidateModel.removeCandidate(data);
 };
 let adminEmail = function(database, callback) {
   console.log('adminEmail 호출됨');
@@ -613,20 +621,29 @@ app.get('/sign', async (req, res) => {
           univ = req.session.univ;
         }else{
           console.log('이미 모든 투표를 완료하였습니다.');
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
+          response.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
           return;
         }
 
         //투표 기간이 되었는지 확인하기
-        // let res = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-        // let list = JSON.parse(JSON.parse(res));
-        // let year = new Date();
-        // year = String(year.getFullYear());
-        // for(let i=0; i<list.length; i++){
-        //   if(String(res[i].Record.startDate).substring(0,4) === year && res[i].Record.univ === univ){
-            
-        //   }
-        // }
+        let ress = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+        let list = JSON.parse(JSON.parse(ress));
+        let curDate = new Date();
+        let year = String(curDate.getFullYear());
+        for(let i=0; i<list.length; i++){
+          if(String(list[i].Record.startDate).substring(0,4) === year && list[i].Record.univ === univ){
+            let t1 = new Date(list[i].Record.startDate);
+            let t2 = new Date(list[i].Record.endDate);
+            if(curDate >= t1 && curDate <= t2){
+              console.log('투표기간입니다.');
+              break;
+            }else{
+              console.log('투표 기간이 아닙니다.');
+              res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
+              return;
+            }
+          }
+        }
 
         let context = {
           session:req.session,
@@ -837,6 +854,15 @@ app.post('/process/removeElection', async(req,res) => {
   console.log('electionid : '+ electionid);
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'deleteMyAsset', electionid);
+  if(database){
+    removeCandidate(database, electionid);
+  }else{
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
   let context = JSON.parse(JSON.parse(response));
   res.send(context);
   res.send(true); // 임시로 무조건 시작 성공하게 만듦.
