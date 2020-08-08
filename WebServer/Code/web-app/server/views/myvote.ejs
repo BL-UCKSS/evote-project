@@ -16,7 +16,8 @@
 			<div class="myvote-card" style="text-align: center;padding:25px;">참여한 선거가 없습니다.</div>
 			<% } else { %>
 			<% for(var i=0;i<list.length; i++) { %>
-			<div class="myvote-card">
+				<% //선거 결과 확인하기 %>
+			<div class="myvote-card" OnClick="location.href ='/process/myvote/<%=list[i].election%>'">
 				<span class="myvote-card-title">
 					<%= list[i].election %>
 				</span>
