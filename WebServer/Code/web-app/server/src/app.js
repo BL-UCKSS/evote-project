@@ -564,23 +564,45 @@ app.get('/myvote', async (req, res) => {
             arr.append(year + response[i].totalElectionPicked);
           }
         }
-        //arr 는 votableId 모음 집임
-        let res1 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem'); 
-        res1 = JSON.parse(JSON.parse(res1));
         arr = [];
-        for(let i=0; i<res1.length; i++){
-          let len = res1[i].Key.length;
-          let str = res1[i].Key.substring(4, len);
+        //총학생회
+        let res1 = await network.invoke(networkObj, true, 'readMyAsset', walletid); 
+        res1 = JSON.parse(res1);
+        let name;
+        if(res1.totalElectionCast){
+          name = res1.totalElectionPicked;
+          let res2 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
+          res2 = JSON.parse(JSON.parse(res2));
+          let electionid;
+          for(let i=0; i<res2.length; i++){
+            if(year+name === res2[i].Key){
+              electionid = res2[i].Record.electionId;
+            }
+          }
+          let res3 = await network.invoke(networkObj, true, 'readMyAsset', electionid);
+          res3 = JSON.parse(res3);
           arr.push({
-            election: res1[i].Record.electionId,
-            name: str
+            election:res3.name,
+            name:name
           });
         }
-        //arr : electionid, name
-        for(let i=0; i<arr.length; i++){
-          let res2 = await network.invoke(networkObj, true, 'readMyAsset', arr[i].election);
-          res2 = JSON.parse(res2);
-          arr[i].election = res2.name;
+        //단과대
+        if(res1.departmentElectionCast){
+          name = res1.departmentElectionPicked;
+          let res2 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
+          res2 = JSON.parse(JSON.parse(res2));
+          let electionid;
+          for(let i=0; i<res2.length; i++){
+            if(year+name === res2[i].Key){
+              electionid = res2[i].Record.electionId;
+            }
+          }
+          let res3 = await network.invoke(networkObj, true, 'readMyAsset', electionid);
+          res3 = JSON.parse(res3);
+          arr.push({
+            election:res3.name,
+            name:name
+          });
         }
         let context = {
           session:req.session,
@@ -987,6 +1009,7 @@ app.post('/process/registervote', upload.array('image'), async (req, res) => {
     enddate: req.body.enddate,
     votableid:[req.body.hname]
   };
+  args.votableid.push('기권');
   args = JSON.stringify(args);
   args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
@@ -1244,7 +1267,6 @@ app.post('/process/vote2/:univ', async (req, res) => {
           if(docs){
             for(let i=0; i<docs.length; i++){
               let data = {
-                no: docs[i]._doc.no,
                 hakbun1: docs[i]._doc.hakbun1,
                 hakbun2: docs[i]._doc.hakbun2,
                 name1: docs[i]._doc.name1,
