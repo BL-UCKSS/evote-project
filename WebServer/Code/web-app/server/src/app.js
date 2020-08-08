@@ -474,29 +474,25 @@ app.get('/adminMain', async (req, res) => {
 });
 
 app.get('/adminNow', async (req, res) => {
-  let t = new Date();
   let total = 12; //재학생 수
   let arr = [];
   let networkObj = await network.connectToNetwork(appAdmin);
-  let resVoter = await network.invoke(networkObj, true, 'queryByObjectType', 'voter');
-  let parsedVoter = await JSON.parse(resVoter);
-  parsedVoter = await JSON.parse(parsedVoter);
-
   let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let parsedElection = await JSON.parse(resElection);
   parsedElection = await JSON.parse(parsedElection);
   
+  let now = new Date();
   //선거 목록 출력 후 선거별로 투표율 계산 및 출력
   for (let i in parsedElection){
     let count = 0;
-    // 상태코드로 선거가 삭제된 것이 아님을 확인해야하고, 현재 시간이 startdate/enddate 사이에 있는 지 확인해야한다.
-    if(parsedElection[i] && parsedElection[i].Record.year === t.getFullYear() && parsedElection[i].Record.type === 'election'){ 
-      //해당 선거의 투표율을 확인해야하지만, 현재 querybyobjecttype voter는 type을 구분할 수 없음.
-      for (let j in parsedVoter){
-        if(parsedVoter[j].Record.ballotCast){
-        //if(parsedVoter[j].Record.ballotType === parsedVoter[i].Record.type) //이런식으로 구분할 수 있겠음.
-          count += 1;
-        }
+    let t1 = new Date(parsedElection[i].Record.startDate);
+    let t2 = new Date(parsedElection[i].Record.endDate);
+    if(now >= t1 && now <= t2){ 
+      //해당 선거의 투표율을 확인해야하지만, 현재 querybyobjecttype voter는 type을 구분할 수 없음.votableItem
+      let parsedVotablItems = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
+      parsedVotablItems = JSON.parse(JSON.parse(parsedVotablItems));
+      for(let j=0; j<parsedVotablItems.length; j++){
+        count += parsedVotablItems[j].Record.count;
       }
       let avg = count / total * 100;
       let nowTime = new Date().toISOString();
