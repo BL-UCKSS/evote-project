@@ -1334,7 +1334,8 @@ app.post('/process/finvote/:univ', async (req, res) => {
           return;
         } else {
           console.log(response);
-          res.send('<h1>hello'+JSON.stringify(response)+'</h1>');
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표가 완료되었습니다. 다음 투표를 진행하시려면 투표하기를 눌러주십시오.\');document.location.href=\'/main\';</script>');
+          return;
         }
       }else{
         console.log('에러 발생.');
