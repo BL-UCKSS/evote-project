@@ -97,9 +97,7 @@ class MyAssetContract extends Contract {
    * Creates a voter in the world state, based on the args given.
    *  
    * @param args.voterId - the Id the voter, used as the key to store the voter object
-   * @param args.registrarId - the registrar the voter is registered for
-   * @param args.firstName - first name of voter
-   * @param args.lastName - last name of voter
+   * @param args.univ - department of university
    * @returns - nothing - but updates the world state with a voter
    */
   async createVoter(ctx, args) {
@@ -107,7 +105,7 @@ class MyAssetContract extends Contract {
     args = JSON.parse(args);
 
     //create a new voter
-    let newVoter = await new Voter(args.voterId, args.registrarId, args.firstName, args.lastName);
+    let newVoter = await new Voter(args.voterId, args.univ);
 
     //update state with new voter
     await ctx.stub.putState(newVoter.voterId, Buffer.from(JSON.stringify(newVoter)));
@@ -117,7 +115,7 @@ class MyAssetContract extends Contract {
 
     if (currElections.length === 0) {
       let response = {};
-      response.error = 'no elections. Run the init() function first.';
+      response.error = 'no elections. Create election first.';
       return response;
     }
 
@@ -225,17 +223,17 @@ class MyAssetContract extends Contract {
       //make sure we have an election
       let electionAsBytes = await ctx.stub.getState(args.electionId);
       let election = await JSON.parse(electionAsBytes);
-      let voterAsBytes = await ctx.stub.getState(args.voterId);
+      let voterAsBytes = await ctx.stub.getState(args.walletid);
       let voter = await JSON.parse(voterAsBytes);
 
-      if (voter.ballotCast) {
+      if (voter.totalElectionCast) { //총학생회 투표, 단과대 투표 두개를 확인해야한다.
         let response = {};
         response.error = 'this voter has already cast this ballot!';
         return response;
       }
 
       //check the date of the election, to make sure the election is still open
-      let currentTime = await new Date(2020, 10, 3);
+      let currentTime = await new Date(args.currentTime);
 
       //parse date objects
       let parsedCurrentTime = await Date.parse(currentTime);
@@ -264,7 +262,11 @@ class MyAssetContract extends Contract {
         console.log(result);
 
         //make sure this voter cannot vote again! 
-        voter.ballotCast = true;
+        if(args.univ === '총학생회'){
+          voter.totalElectionCast = true; 
+        }else{
+          voter.departmentElectionCast = true;
+        }
         voter.picked = {};
         voter.picked = args.picked;
 

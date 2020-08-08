@@ -9,15 +9,15 @@ class Voter {
    * voter is . 
    *  
    * @param items - an array of choices 
-   * @param registrarId - 단과 
+   * @param univ - 단과 
    * @param voterId - 랜덤한 고유아이디(중복없는)
    * @returns - registrar object
    */
-  constructor(voterId, registrarId) {
+  constructor(voterId, univ) {
 
-    if (this.validateVoter(voterId) && this.validateRegistrar(registrarId)) {
+    if (this.validateVoter(voterId) && this.validateUniv(univ)) {
       this.voterId = voterId;
-      this.registrarId = registrarId;
+      this.univ = univ;
       this.ballotCreated = false;
       this.type = 'voter';
       if (this.__isContract) {
@@ -63,10 +63,10 @@ class Voter {
    * @param voterId - an array of choices 
    * @returns - yes if valid Voter, no if invalid
    */
-  async validateRegistrar(registrarId) {
+  async validateUniv(univ) {
 
     //registrarId error checking here, i.e. check if valid drivers License, or state ID
-    if (registrarId) {
+    if (univ) {
       return true;
     } else {
       return false;

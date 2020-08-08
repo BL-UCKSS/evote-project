@@ -16,11 +16,12 @@
             <% /* session.univ는 학생의 단과대학을 표시해줌 */ %>
             <span class="vote-name">총학생회</span>
         </div>
-        <form action="/process/finvote" method="post">
+        <form action="/process/finvote/<%=univ%>" method="post">
             <input type="hidden" name="electId" value="<%= electId %>">
             <!-- vote-table -->
             <div class="vote-table vote-table2">
                 <% for(var i=0; i<list.length+1; i++) { %>
+                    <%= univ %>
                     <% if(i == list.length) { %>
                         <div class="input-group">
                             <div class="input-group-prepend">

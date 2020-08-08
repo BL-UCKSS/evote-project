@@ -581,10 +581,60 @@ app.get('/myvote', async (req, res) => {
 });
 
 app.get('/sign', async (req, res) => {
-  let context = {
-    session:req.session
-  };
-  htmlrender(req, res, 'sign', context);
+  let univ;
+  //if univ casted : univ = req.session.univ;
+  let userid = req.session.userid;
+  let pw = ''; //pw from db
+  if (database) {
+    getHashPw(database, userid, async function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        //에러발생
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }
+      if(docs){
+        pw = docs;
+        let useridpw = userid + pw;
+        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+        let networkObj = await network.connectToNetwork(walletid);
+        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+        response = JSON.parse(response);
+        if (response.error) {
+          console.log(response.error);
+        }
+        if(!response.totalElectionCast){
+          univ = '총학생회';
+        }else if(!response.departmentElectionCast){
+          univ = req.session.univ;
+        }else{
+          console.log('이미 모든 투표를 완료하였습니다.');
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
+          return;
+        }
+        let context = {
+          session:req.session,
+          univ:univ
+        };
+        htmlrender(req, res, 'sign', context);
+      }else{
+        console.log('에러 발생.');
+        //사용자 데이터 조회 안됨
+        let context = {error:'no user'};
+        console.log(context);
+        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'에러!\');document.location.href=\'/main\';</script>');
+        return;
+      }
+    });  
+  }else {
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
+  }
+  
 });
 
 app.get('/vote', async (req, res) => {
@@ -991,10 +1041,11 @@ app.post('/process/checkagree', async (req, res) => {
   }
 });
 
-app.post('/process/existagree', async (req, res) => {
+app.post('/process/existagree/:univ', async (req, res) => {
   console.log('/process/existagree 라우팅 함수 호출됨.');
 
   let paramStdno = req.session.userid;
+  let univ = req.params.univ;
   console.log('요청 파라미터 : ' + paramStdno);    
   
   if (database) {
@@ -1014,7 +1065,7 @@ app.post('/process/existagree', async (req, res) => {
         //총학생회 선거 정보를 불러와야 함. -> 선거이름, 시작시간, 종료시간 
         //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
         let year = new Date();
-        let electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+        let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
         if(!electId){
           console.log('에러 발생.');
           let context = {error:'선거가 존재하지 않음'};
@@ -1052,7 +1103,8 @@ app.post('/process/existagree', async (req, res) => {
             }
             let context = {
               list: array,
-              session: req.session
+              session: req.session,
+              univ:univ
             };
 
             htmlrender(req, res, 'vote', context);
@@ -1076,10 +1128,11 @@ app.post('/process/existagree', async (req, res) => {
   }
 });
 
-app.post('/process/vote2', async (req, res) => {
+app.post('/process/vote2/:univ', async (req, res) => {
   console.log('/process/vote2 라우팅 함수 호출됨.');
 
   let paramStdno = req.session.userid;  
+  let univ = req.params.univ;
   
   if (database) {
     //사용자가 개인정보처리 동의했는지 체크 
@@ -1100,7 +1153,7 @@ app.post('/process/vote2', async (req, res) => {
         //단과대 선거id 찾기
         let year = new Date();
         console.log('세션 univ : ' + req.session.univ);
-        let electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+        let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
         if(!electId){
           console.log('에러 발생.');
           let context = {error:req.session.univ+'선거가 존재하지 않음'};
@@ -1139,7 +1192,8 @@ app.post('/process/vote2', async (req, res) => {
             let context = {
               list: array,
               session: req.session,
-              electId: electId
+              electId: electId,
+              univ:univ
             };
             htmlrender(req, res, 'vote2', context);            
             return;
@@ -1162,13 +1216,13 @@ app.post('/process/vote2', async (req, res) => {
   }
 });
 
-app.post('/process/finvote', async (req, res) => {
+app.post('/process/finvote/:univ', async (req, res) => {
   console.log('/process/finvote 라우팅 함수 호출됨.');
 
-  //[현재] "기호 1번 브릿지" 형식으로 넘어옴 (req.body.candidates)
+  //[현재] "브릿지" 형식으로 넘어옴 (req.body.candidates)
   let paramballot = req.body.candidates;
   let userid = req.session.userid;
-  //let univ = req.session.univ;
+  let univ = req.params.univ;
   let electId = req.body.electId;
   let pw = ''; //pw from db
 
@@ -1187,15 +1241,15 @@ app.post('/process/finvote', async (req, res) => {
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
         let picked = paramballot;
 
-        // 사용자에게 한 번 더 묻기 (수정해야 함)
-        // res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'정말 투표하시겠습니까?\');document.location.href=\'/finvote\';</script>');
-
         // 블록체인에 투표 데이터 전송
         let networkObj = await network.connectToNetwork(walletid);
+        let currentTime = new Date();
         let data = {
-          voterId:walletid,
+          walletid:walletid,
           electionId:electId,
-          picked:picked
+          picked:picked,
+          currentTime:currentTime,
+          univ:univ
         };
         data = JSON.stringify(data);
         let args = [data];

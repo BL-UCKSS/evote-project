@@ -11,7 +11,7 @@
 <body class="loginbody">
     <div class="text-center">
         <%- include('header.ejs'); %>
-        <form action="/process/vote2" method="post">
+        <form action="/process/vote2/<%=univ%>" method="post">
             <div class="vote-banner">
                 <% /* 여기는 DB에 저장된 정보가 아님 */ %>
                 <span class="vote-date">2020 상명대 선거</span>
