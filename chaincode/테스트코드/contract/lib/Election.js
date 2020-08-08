@@ -45,7 +45,6 @@ class Election {
       this.univ = univ;
       this.startDate = startDate;
       this.endDate = endDate;
-      this.check = univ + startDate.getFullYear();
       this.type = 'election';
       if (this.__isContract) {
         delete this.__isContract;

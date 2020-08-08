@@ -361,12 +361,15 @@ let registerUser = async function(walletId, gubun, univ){
 	    // eslint-disable-next-line no-mixed-spaces-and-tabs
 	    console.log(response.error);
   } else {
-	    let networkObj = await network.connectToNetwork(walletId);
-	    if (networkObj.error) {
-	        console.log(networkObj.error);
-	    }
-	    let argument = JSON.stringify({voterId:walletId, department:univ}); 
-	    let args = [argument];
+    let networkObj = await network.connectToNetwork(walletId);
+    if (networkObj.error) {
+      console.log(networkObj.error);
+    }
+    let year = new Date();
+    year = String(year.getFullYear());
+    let argument = JSON.stringify({voterId:walletId, department:univ, year:year}); 
+    let args = [argument];
+
     //connect to network and update the state with voterId
     let invokeResponse;
     if (gubun === 'user'){
@@ -613,6 +616,18 @@ app.get('/sign', async (req, res) => {
           res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
           return;
         }
+
+        //투표 기간이 되었는지 확인하기
+        // let res = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+        // let list = JSON.parse(JSON.parse(res));
+        // let year = new Date();
+        // year = String(year.getFullYear());
+        // for(let i=0; i<list.length; i++){
+        //   if(String(res[i].Record.startDate).substring(0,4) === year && res[i].Record.univ === univ){
+            
+        //   }
+        // }
+
         let context = {
           session:req.session,
           univ:univ
@@ -913,7 +928,8 @@ app.post('/process/registervote', upload.array('image'), async (req, res) => {
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
-    enddate: req.body.enddate
+    enddate: req.body.enddate,
+    votableid:[req.body.hname]
   };
   args = JSON.stringify(args);
   args = [args];
@@ -1255,12 +1271,14 @@ app.post('/process/finvote/:univ', async (req, res) => {
         let args = [data];
 
         let response = await network.invoke(networkObj, false, 'castVote', args); //args = voterId, electionId, picked
+        response = JSON.parse(response);
         if (response.error) {
           console.log(response.error);
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+response.error+'\');document.location.href=\'/main\';</script>');
           return;
         } else {
           console.log(response);
-          res.send('<h1>단과대 투표 이어서 하게 만드세요.</h1>');
+          res.send('<h1>'+response+'</h1>');
         }
       }else{
         console.log('에러 발생.');
@@ -1428,6 +1446,7 @@ app.post('/registerVoter', async (req, res) => {
   ////console.log('req.body: ');
   ////console.log(req.body);
   let voterId = req.body.voterId;
+  req.body.univ = req.session.univ;
   console.log(voterId);
   //first create the identity for the voter and add to wallet
   let response = await network.registerVoter(voterId);
@@ -1448,7 +1467,8 @@ app.post('/registerVoter', async (req, res) => {
     ////console.log('network obj');
     ////console.log(util.inspect(networkObj));
 
-
+    let year = new Date();
+    req.body.year = String(year.getFullYear());
     req.body = JSON.stringify(req.body);
     let args = [req.body];
     //connect to network and update the state with voterId  

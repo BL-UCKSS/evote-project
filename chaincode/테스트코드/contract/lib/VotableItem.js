@@ -11,14 +11,12 @@ class VotableItem {
    * ballot.
    *
    * @param votableId - the Id of the votableItem
-   * @param description - the description of the votableItem
-   * @param voterId - the unique Id which corresponds to a registered voter
+   * @param electionId - the Id of the election
    * @returns - registrar object
    */
-  constructor(ctx, votableId , votableCandidate, description) {
+  constructor(ctx, votableId, electionId) {
     this.votableId = votableId;
-    this.votableCandidate = votableCandidate;
-    this.description = description;
+    this.electionId = electionId;
     this.count = 0;
     this.type = 'votableItem';
     if (this.__isContract) {

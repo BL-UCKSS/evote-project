@@ -1,6 +1,6 @@
 {
     "name": "testContract",
-    "version": "1.0.3",
+    "version": "3.0.0.1",
     "description": "Smart Contract for Test",
     "main": "index.js",
     "engines": {

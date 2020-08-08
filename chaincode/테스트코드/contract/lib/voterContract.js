@@ -34,11 +34,21 @@ class MyAssetContract extends Contract {
     if(await this.validate(args.name) && await this.validate(args.univ) && await this.validate(args.startdate) && await this.validate(args.enddate)){
       let electionStartDate = new Date(args.startdate);
       let electionEndDate = new Date(args.enddate);
-
+      let year = String(electionStartDate.getFullYear());
       let election = new Election(args.name, args.univ, electionStartDate, electionEndDate);
       await ctx.stub.putState(election.electionid, Buffer.from(JSON.stringify(election)));
+
+      let votableItems = [];
+      for(let i=0; i<args.votableid.length; i++){
+        let votable = new VotableItem(ctx, args.votableid[i], election.electionid);
+        votableItems.push(votable);
+      }
+      for (let i = 0; i < votableItems.length; i++) {
+        await ctx.stub.putState(year + votableItems[i].votableId, Buffer.from(JSON.stringify(votableItems[i])));
+      }
       return election;
 
+      
     } else {
       let response = {};
       response.error = '정상적이지 않은 입력입니다! : '+ args;
@@ -105,7 +115,7 @@ class MyAssetContract extends Contract {
     args = JSON.parse(args);
 
     //create a new voter
-    let newVoter = await new Voter(args.voterId, args.univ);
+    let newVoter = new Voter(args.voterId, args.univ);
 
     //update state with new voter
     await ctx.stub.putState(newVoter.voterId, Buffer.from(JSON.stringify(newVoter)));
@@ -117,15 +127,32 @@ class MyAssetContract extends Contract {
       let response = {};
       response.error = 'no elections. Create election first.';
       return response;
+    }else{
+      for(let i=0; i<currElections.length; i++){
+        if(currElections[i].Record.univ === '총학생회' && String(currElections[i].Record.startdate).substring(0,4) === args.year){
+          let vList = [];
+          let votableItems = JSON.parse(await this.queryByObjectType(ctx, 'votableItem'));
+          for(let j=0; j<votableItems.length; j++){
+            if(votableItems[i].electionId === currElections[i].Key){
+              vList.push(votableItems[j]);
+            }
+          }
+          //generate ballot with the given votableItems
+          await this.generateBallot(ctx, vList, currElections[i], newVoter);
+        }
+        if(currElections[i].Record.univ === args.univ && String(currElections[i].Record.startdate).substring(0,4) === args.year){
+          let vList = [];
+          let votableItems = JSON.parse(await this.queryByObjectType(ctx, 'votableItem'));
+          for(let j=0; j<votableItems.length; j++){
+            if(votableItems[i].electionId === currElections[i].Key){
+              vList.push(votableItems[j]);
+            }
+          }
+          //generate ballot with the given votableItems
+          await this.generateBallot(ctx, vList, currElections[i], newVoter);
+        }
+      }
     }
-
-    //get the election that is created in the init function
-    let currElection = currElections[0];
-
-    let votableItems = JSON.parse(await this.queryByObjectType(ctx, 'votableItem'));
-    
-    //generate ballot with the given votableItems
-    await this.generateBallot(ctx, votableItems, currElection, newVoter);
 
     let response = `voter with voterId ${newVoter.voterId} is updated in the world state`;
     return response;
@@ -211,10 +238,7 @@ class MyAssetContract extends Contract {
    */
   async castVote(ctx, args) {
     args = JSON.parse(args);
-
-    //get the political party the voter voted for, also the key
-    let votableId = args.picked;
-
+    
     //check to make sure the election exists
     let electionExists = await this.myAssetExists(ctx, args.electionId);
 
@@ -225,15 +249,24 @@ class MyAssetContract extends Contract {
       let election = await JSON.parse(electionAsBytes);
       let voterAsBytes = await ctx.stub.getState(args.walletid);
       let voter = await JSON.parse(voterAsBytes);
-
-      if (voter.totalElectionCast) { //총학생회 투표, 단과대 투표 두개를 확인해야한다.
-        let response = {};
-        response.error = 'this voter has already cast this ballot!';
-        return response;
+      if(args.univ === '총학생회'){
+        if (voter.totalElectionCast) { //총학생회 투표, 단과대 투표 두개를 확인해야한다.
+          let response = {};
+          response.error = '총학생회 투표는 이미 하셨습니다.';
+          return response;
+        }
+      }else{
+        if (voter.departmentElectionCast) { //총학생회 투표, 단과대 투표 두개를 확인해야한다.
+          let response = {};
+          response.error = '투표는 이미 하셨습니다.';
+          return response;
+        }
       }
 
       //check the date of the election, to make sure the election is still open
       let currentTime = await new Date(args.currentTime);
+      let year = String(currentTime.getFullYear());
+      let votableId = year + args.picked;
 
       //parse date objects
       let parsedCurrentTime = await Date.parse(currentTime);
@@ -258,17 +291,18 @@ class MyAssetContract extends Contract {
         await votable.count++;
 
         //update the state with the new vote count
+        //votableId가 "브릿지"일 경우, 년도별로 같은 브릿지가 검색되면 어떻게 하나. 년도를 votableId 앞에 추가해야할듯. 예) 2020브릿지
         let result = await ctx.stub.putState(votableId, Buffer.from(JSON.stringify(votable)));
         console.log(result);
 
         //make sure this voter cannot vote again! 
         if(args.univ === '총학생회'){
           voter.totalElectionCast = true; 
+          voter.totalElectionPicked = args.picked;
         }else{
           voter.departmentElectionCast = true;
+          voter.departmentElectionPicked = args.picked;
         }
-        voter.picked = {};
-        voter.picked = args.picked;
 
         //update state to say that this voter has voted, and who they picked
         let response = await ctx.stub.putState(voter.voterId, Buffer.from(JSON.stringify(voter)));
