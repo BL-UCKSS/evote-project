@@ -1141,7 +1141,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
         if(!electId){
           console.log('에러 발생.');
           let context = {error:'선거가 존재하지 않음'};
-          res.send('<');
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
           return;
         }
         let array = [];
