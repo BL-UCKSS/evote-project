@@ -549,7 +549,7 @@ app.get('/myvote', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        let networkObj = await network.connectToNetwork(appAdmin);
+        let networkObj = await network.connectToNetwork(walletid);
         let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
         let nolist = false;
         let arr = [];
@@ -561,24 +561,43 @@ app.get('/myvote', async (req, res) => {
         if(response.length === 0){
           nolist = true;
         }
+        let year = new Date();
+        year = String(year.getFullYear());
         for(let i=0; i<response.length; i++){
-          if(response[i].ballotCast){
-            arr.append(response[i]);
+          if(response[i].totalElectionCast){
+            arr.append(year + response[i].totalElectionPicked);
           }
+        }
+        //arr 는 votableId 모음 집임
+        let res1 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem'); 
+        res1 = JSON.parse(JSON.parse(res1));
+        arr = [];
+        for(let i=0; i<res1.length; i++){
+          let len = res1[i].Key.length;
+          let str = res1[i].Key.substring(4, len);
+          arr.push({
+            election: res1[i].Record.electionId,
+            name: str
+          });
+        }
+        //arr : electionid, name
+        for(let i=0; i<arr.length; i++){
+          let res2 = await network.invoke(networkObj, true, 'readMyAsset', arr[i].election);
+          res2 = JSON.parse(res2);
+          arr[i].election = res2.name;
         }
         let context = {
           session:req.session,
           list:arr,
           nolist:nolist
         };
-        
         htmlrender(req, res, 'myvote', context);
       }else{
         console.log('에러 발생.');
         //사용자 데이터 조회 안됨
         let context = {error:'no user'};
         console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'에러!\');document.location.href=\'/main\';</script>');
+        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
         return;
       }
     });  
@@ -670,7 +689,7 @@ app.get('/sign', async (req, res) => {
         //사용자 데이터 조회 안됨
         let context = {error:'no user'};
         console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'에러!\');document.location.href=\'/main\';</script>');
+        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
         return;
       }
     });  
@@ -1326,7 +1345,7 @@ app.post('/process/finvote/:univ', async (req, res) => {
         //사용자 데이터 조회 안됨
         let context = {error:'no user'};
         console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'에러!\');document.location.href=\'/main\';</script>');
+        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
         return;
       }
     });
