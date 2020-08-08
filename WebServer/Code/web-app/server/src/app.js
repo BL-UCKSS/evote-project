@@ -1347,7 +1347,7 @@ app.post('/process/finvote/:univ', async (req, res) => {
         };
         data = JSON.stringify(data);
         let args = [data];
-
+        console.log(args);
         let response = await network.invoke(networkObj, false, 'castVote', args); //args = voterId, electionId, picked
         response = JSON.parse(response);
         if (response.error) {
