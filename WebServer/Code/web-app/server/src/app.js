@@ -78,7 +78,7 @@ function connectDB() {
     console.log('PersonalAgreeSchema 정의함.');
 
     CandidateSchema = mongoose.Schema({
-      electionid: {type:String, required:true, unique:true},
+      electionid: {type:String, required:true},
       hname: {type:String, required:true},
       icon: {type:String, required:true},
       link: {type:String, required:false},
@@ -1075,51 +1075,50 @@ app.post('/process/modifyvote', async (req, res) => {
   htmlrender(req, res, 'adminMain', context);
 });
 
-app.post('/process/registervote', upload.array('image'), async (req, res) => {
+app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}]), async (req, res) => {
   console.log('/process/registervote 호출됨.');
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
+  let len = req.body.isMulti;
   let args = {
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    votableid:[req.body.hname]
+    candidates:req.body.hname
   };
-  args.votableid.push('기권');
   args = JSON.stringify(args);
   args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'createElection', args);
+  response = JSON.parse(response);
   if (response.error) {
     console.log('registervote error : ' + response.error);
     res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
     return;
   } 
-  console.log('createElection response : ' + response);
-  response = JSON.parse(response);
+  console.log('createElection response : ' + typeof response + ' => ' + response);
+  //response = JSON.parse(response);
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
-    let electionId = response.electionid;
-    let len = req.body.no.length;
-    for(let i=0; i<len;i+=2){
-      let j = i + 1;
+    let electionId = response.success;
+    for(let i=0; i<len;i+=1){
       let data = {
         electionid:electionId,
-        hname:req.body.hname,
-        icon:req.files[0].filename,
-        link:req.body.link,
-        hakbun1:req.body.no[i],
-        name1:req.body.sname[i],
-        dept1:req.body.dept[i],
-        grade1:req.body.grade[i],
-        profile1:req.files[j].filename,
-        hakbun2:req.body.no[i+1],
-        name2:req.body.sname[i+1],
-        dept2:req.body.dept[i+1],
-        grade2:req.body.grade[i+1],
-        profile2:req.files[j+1].filename,
+        hname:req.body.hname[i],
+        icon:req.files.image[i].filename,
+        link:req.body.link[i],
+        hakbun1:req.body.no1[i],
+        name1:req.body.sname1[i],
+        dept1:req.body.dept1[i],
+        grade1:req.body.grade1[i],
+        profile1:req.files.image1[i].filename,
+        hakbun2:req.body.no2[i],
+        name2:req.body.sname2[i],
+        dept2:req.body.dept2[i],
+        grade2:req.body.grade2[i],
+        profile2:req.files.image2[i].filename,
       };
       registerCandidate(database, data);
     }
