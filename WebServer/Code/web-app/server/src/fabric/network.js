@@ -56,7 +56,7 @@ exports.connectToNetwork = async function (userName) {
 
     console.log('Connected to mychannel. ');
     // Get the contract we have installed on the peer
-    const contract = await network.getContract('testContract');
+    const contract = await network.getContract('voterContract');
 
 
     let networkObj = {
@@ -121,9 +121,9 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
         console.log(args);
         console.log(func);
         console.log(typeof args);
-
+        
         args = JSON.parse(args[0]);
-
+        
         //console.log(util.inspect(args));
         args = JSON.stringify(args);
         //console.log(util.inspect(args));
