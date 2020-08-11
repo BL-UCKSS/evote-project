@@ -1,0 +1,32 @@
+{
+
+"election": {
+	  "electionId" : "39pt54o4sxzmn3f5vcm8sp",
+	  "name" : "2020성근선거1",
+	  "univ" : "성근",
+	  "startdate" : "2020-08-11",
+	  "enddate": "2020-08-14" 
+	 } ,
+"walletId" : "gengeunwallet"
+
+}
+
+{
+	  "name" : "2020성근선거1",
+	  "univ" : "성근",
+	  "startdate" : "2020-08-11",
+	  "enddate": "2020-08-14" 
+}
+
+{
+	"name" : "성근이",
+	"electionId" : "v0rly06bz6ctl0ewdsye1"
+}
+
+
+{
+	  "electionId" : "39pt54o4sxzmn3f5vcm8sp" ,
+	  "voterId" : "hly7hpybypcw7axh9pkw6" ,
+	  "candidateId" : "2j1w8h8kb1f6rrq6czmq5a"
+	  
+}
