@@ -199,11 +199,15 @@
 				$('#startdate').datetimepicker({
 					format: "YYYY-MM-DD hh:mm",
 					disabledDates : temp,
-					tooltips : { today: "오늘" ,  selectTime: '시간설정'}
+					minDate : date.getFullYear()+'-01-01 00:00',
+					maxDate : date.getFullYear()+'-12-31 00:00',
+					tooltips : { today: "오늘" ,  selectTime: '시간설정'},
 				});
 				$('#enddate').datetimepicker({
 					format: "YYYY-MM-DD hh:mm",
 					disabledDates : temp,
+					minDate : date.getFullYear()+'-01-01 00:00',
+					maxDate : date.getFullYear()+'-12-31 00:00',
 					tooltips : { today: "오늘" ,  selectTime: '시간설정'}
 				})
 			})

@@ -1,7 +1,7 @@
 {
-    "name": "testContract",
-    "version": "9.0.7",
-    "description": "Smart Contract for Test",
+    "name": "voterContract",
+    "version": "12.1.127",
+    "description": "My Smart Contract",
     "main": "index.js",
     "engines": {
         "node": ">=8",
@@ -12,7 +12,7 @@
         "start": "fabric-chaincode-node start"
     },
     "engineStrict": true,
-    "author": "John Kim",
+    "author": "John Doe",
     "license": "Apache-2.0",
     "dependencies": {
         "fabric-contract-api": "1.4.1",
