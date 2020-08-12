@@ -20,8 +20,7 @@ class VBallot {
       this.election = election;
       this.voterId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       this.type = 'vBallot';
-      //여기서 초기화 할지 나중에 추가할지 고민!
-      //this.picked
+      this.picked = "NULL";
       return this;
 
     } else if (!this.validateInput(walletId)){

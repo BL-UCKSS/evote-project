@@ -311,6 +311,7 @@ async createCandidateResult(ctx, args) {
     return response;
 
 
+
   } else {
     let response = {};
     response.error = "현재 선거가 진행중입니다.";
@@ -333,6 +334,140 @@ async generateCandidateResult(ctx , name, electionId) {
 
 }
 
+/**
+   *
+   * createVBallot
+   *
+   * VBallot 생성함수입니다.
+   *  
+   * @param args.election - 객체 형태, [ elctionId, name, univ,startdate,enddate ]
+   * @param args.walletId - 학번+해쉬(비번) => walletid(app상에서 책정)
+   * @returns - nothing - but updates the world state with a voter
+   */
+  async createVBallot(ctx, args) {
+
+    args = JSON.parse(args);
+    let electionExists = await this.myAssetExists(ctx, args.election.electionId);
+
+    if (electionExists) {
+
+        let vBallot = await new VBallot(args.walletId, args.election);
+
+     //update state with new VBallot
+        await ctx.stub.putState(vBallot.voterId, Buffer.from(JSON.stringify(vBallot)));
+
+        let response = {};
+        response.success = '선거 : '+args.election.name + ' 에 대한 VBallot 생성완료 \n ';
+                         // +'voterId는 ' + vBallot.voterId + ' 입니다.' ;
+        return response;
+    
+      } else {
+        let response = {};
+        response.error = '투표를 위한 선거가 존재하지 않습니다. 선거를 먼저 생성하십시오!';
+        return response;
+        }
+    
+  }
+
+
+
+  /**
+   *
+   * castVote
+   * 
+   * First to checks that a particular voterId has not voted before, and then 
+   * checks if it is a valid election time, and if it is, we increment the 
+   * count of the political party that was picked by the voter and update 
+   * the world state. 
+   * 
+   * @param electionId - the electionId of the election we want to vote in
+   * @param voterId - the voterId of the voter that wants to vote
+   * @param candidateId - the Id of the candidate the voter has selected.
+   * @returns an array which has the winning briefs of the ballot. 
+  학생05: 후보자에게 투표한다
+   */
+  async castVote(ctx, args) {
+    args = JSON.parse(args);
+
+    //get the political party the voter voted for, also the key
+    let candidateId = args.candidateId;
+
+    //check to make sure the election exists 
+    let electionExists = await this.myAssetExists(ctx, args.electionId);
+
+    if (electionExists) {
+
+      //make sure we have an election
+      let electionAsBytes = await ctx.stub.getState(args.electionId);
+      let election = await JSON.parse(electionAsBytes);
+      let vBallotAsBytes = await ctx.stub.getState(args.voterId);
+      let vBallot = await JSON.parse(vBallotAsBytes);
+
+      console.log(candidateId);
+
+      if ((vBallot.picked != "NULL")) {
+        let response = {};
+        response.error = '이미 '+ election.name +' 선거를 진행하셨습니다.';
+
+        return response;
+      }
+      
+
+      //parse date objects -- 현재 시간 하드코딩 추후 수정 필요 - 수정 시작
+
+      let currentTime = await new Date();
+      let parsedCurrentTime = await Date.parse(currentTime);
+      let electionStart = await Date.parse(election.startDate);
+      let electionEnd = await Date.parse(election.endDate);
+
+      
+
+      //only allow vote if the election has started 
+      if (parsedCurrentTime >= electionStart && parsedCurrentTime < electionEnd) {
+
+        let candidateExists = await this.myAssetExists(ctx,candidateId);
+        if (!candidateExists) {
+          let response = {};
+          response.error = '선택하신 후보자가 존재하지 않습니다!';
+          return response;
+        }
+
+        //get the candidate object from the state - with the Candidate the user picked
+        let candidateAsBytes = await ctx.stub.getState(candidateId);
+        let candidate = await JSON.parse(candidateAsBytes);
+
+        //increase the vote of the political party that was picked by the voter
+        await candidate.count++;
+
+        //update the state with the new vote count
+        let result = await ctx.stub.putState(candidateId, Buffer.from(JSON.stringify(candidate)));
+        console.log(result);
+
+        //make sure this voter cannot vote again! 
+        vBallot.picked = {};
+        vBallot.picked = args.candidateId;
+
+        //update state to say that this voter has voted, and who they picked
+        let response = await ctx.stub.putState(vBallot.voterId, Buffer.from(JSON.stringify(vBallot)));
+        console.log(response);
+
+       
+        
+
+        return vBallot;
+
+      } else {
+        let response = {};
+        response.error = 'the election is not open now!';
+        return response;
+      }
+
+    } else {
+      let response = {};
+      response.error = 'the election or the voter does not exist!';
+      return response;
+    }
+  }
 
 
  // 데이터가 비어있는지만 체크하기 위한 함수
@@ -369,104 +504,6 @@ async generateCandidateResult(ctx , name, electionId) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /**
-   *
-   * generateBallot
-   *
-   * Creates a ballot in the world state, and updates voter ballot and castBallot properties.
-   * 
-   * @param ctx - the context of the transaction
-   * @param votableItems - The different political parties and candidates you can vote for, which are on the ballot.
-   * @param election - the election we are generating a ballot for. All ballots are the same for an election.
-   * @param voter - the voter object
-   * @returns - nothing - but updates the world state with a ballot for a particular voter object
-   */
-  async generateBallot(ctx, votableItems, election, voter) {
-
-    //generate ballot
-    let ballot = await new Ballot(ctx, votableItems, election, voter.voterId);
-    
-    //set reference to voters ballot
-    voter.ballot = ballot.ballotId;
-    voter.ballotCreated = true;
-
-    // //update state with ballot object we just created
-    await ctx.stub.putState(ballot.ballotId, Buffer.from(JSON.stringify(ballot)));
-
-    await ctx.stub.putState(voter.voterId, Buffer.from(JSON.stringify(voter)));
-
-  }
-
-
-  /**
-   *
-   * createVoter
-   *
-   * Creates a voter in the world state, based on the args given.
-   *  
-   * @param args.voterId - the Id the voter, used as the key to store the voter object
-   * @param args.registrarId - the registrar the voter is registered for
-   * @param args.firstName - first name of voter
-   * @param args.lastName - last name of voter
-   * @returns - nothing - but updates the world state with a voter
-   */
-  async createVoter(ctx, args) {
-
-    args = JSON.parse(args);
-
-    //create a new voter
-    let newVoter = await new Voter(args.voterId, args.department);
-
-    //update state with new voter
-    await ctx.stub.putState(newVoter.voterId, Buffer.from(JSON.stringify(newVoter)));
-
-    //query state for elections
-    let currElections = JSON.parse(await this.queryByObjectType(ctx, 'election'));
-
-    if (currElections.length === 0) {
-      let response = {};
-      response.error = 'no elections. Run the init() function first.';
-      return response;
-    }
-
-    //get the election that is created in the init function
-    let currElection = currElections[0];
-
-    let votableItems = JSON.parse(await this.queryByObjectType(ctx, 'votableItem'));
-    
-    //generate ballot with the given votableItems
-    await this.generateBallot(ctx, votableItems, currElection, newVoter);
-
-    let response = `voter with voterId ${newVoter.voterId} is updated in the world state`;
-    return response;
-  }
 
 
 
@@ -533,189 +570,10 @@ async generateCandidateResult(ctx , name, electionId) {
 
   }
 
-  /**
-   *
-   * castVote
-   * 
-   * First to checks that a particular voterId has not voted before, and then 
-   * checks if it is a valid election time, and if it is, we increment the 
-   * count of the political party that was picked by the voter and update 
-   * the world state. 
-   * 
-   * @param electionId - the electionId of the election we want to vote in
-   * @param voterId - the voterId of the voter that wants to vote
-   * @param votableCandidate - the Id of the candidate the voter has selected.
-   * @returns an array which has the winning briefs of the ballot. 
-  학생05: 후보자에게 투표한다
-   */
-  async castVote(ctx, args) {
-    args = JSON.parse(args);
-
-    //get the political party the voter voted for, also the key
-    let votableCandidate = args.picked;
-
-    //check to make sure the election exists 총책01: E01 등록된 선거가 없을 경우
-    let electionExists = await this.myAssetExists(ctx, args.electionId);
-
-    if (electionExists) {
-
-      //make sure we have an election
-      let electionAsBytes = await ctx.stub.getState(args.electionId);
-      let election = await JSON.parse(electionAsBytes);
-      let voterAsBytes = await ctx.stub.getState(args.voterId);
-      let voter = await JSON.parse(voterAsBytes);
-      console.log(votableCandidate);
-      if (voter.totalElectionCast) {
-        let response = {};
-        response.error = '이미 총학선거를 진행하셨습니다.';
-
-        return response;
-      }
-      
-
-      //parse date objects -- 현재 시간 하드코딩 추후 수정 필요 - 수정 시작
-
-      let currentTime = await new Date();
-      let parsedCurrentTime = await Date.parse(currentTime);
-      let electionStart = await Date.parse(election.startDate);
-      let electionEnd = await Date.parse(election.endDate);
-
-      
-
-      //only allow vote if the election has started 
-      if (parsedCurrentTime >= electionStart && parsedCurrentTime < electionEnd) {
-
-        let votableExists = await this.myAssetExists(ctx, votableCandidate);
-        if (!votableExists) {
-          let response = {};
-          response.error = '선택하신 후보자가 존재하지 않습니다!';
-          return response;
-        }
-
-        //get the votable object from the state - with the votableCandidate the user picked
-        let votableAsBytes = await ctx.stub.getState(votableCandidate);
-        let votable = await JSON.parse(votableAsBytes);
-
-        //increase the vote of the political party that was picked by the voter
-        await votable.count++;
-
-        //update the state with the new vote count
-        let result = await ctx.stub.putState(votableCandidate, Buffer.from(JSON.stringify(votable)));
-        console.log(result);
-
-        //make sure this voter cannot vote again! 
-        voter.totalElectionCast = true;
-        voter.picked = {};
-        voter.picked = args.picked;
-
-        //update state to say that this voter has voted, and who they picked
-        let response = await ctx.stub.putState(voter.voterId, Buffer.from(JSON.stringify(voter)));
-        console.log(response);
-
-       
-        
-
-        return voter;
-
-      } else {
-        let response = {};
-        response.error = 'the election is not open now!';
-        return response;
-      }
-
-    } else {
-      let response = {};
-      response.error = 'the election or the voter does not exist!';
-      return response;
-    }
-  }
-
-  
 
 
 
 
-/*
-단과대 선거 
-*/
-  async castDepartmentVote(ctx, args) {
-    args = JSON.parse(args);
-
-    //get the political party the voter voted for, also the key
-    let votableCandidate = args.picked;
-
-    //check to make sure the election exists 총책01: E01 등록된 선거가 없을 경우
-    let electionExists = await this.myAssetExists(ctx, args.electionId);
-
-    if (electionExists) {
-
-      //make sure we have an election
-      let electionAsBytes = await ctx.stub.getState(args.electionId);
-      let election = await JSON.parse(electionAsBytes);
-      let voterAsBytes = await ctx.stub.getState(args.voterId);
-      let voter = await JSON.parse(voterAsBytes);
-
-      if (voter.departmentElectionCast) {
-        let response = {};
-        response.error = '이미 단과대선거를 진행하셨습니다.';
-        return response;
-      }
-      
-
-      //parse date objects -- 현재 시간 하드코딩 추후 수정 필요
-      let currentTime = await await new Date();
-      let parsedCurrentTime = await Date.parse(currentTime);
-      let electionStart = await Date.parse(election.startDate);
-      let electionEnd = await Date.parse(election.endDate);
-
-      //only allow vote if the election has started 
-      if (parsedCurrentTime >= electionStart && parsedCurrentTime < electionEnd) {
-
-        let votableExists = await this.myAssetExists(ctx, votableCandidate);
-        if (!votableExists) {
-          let response = {};
-          response.error = '현재 선택하신 후보가 존재하지 않습니다. 기술팀에 문의해주세요!';
-          return response;
-        }
-
-        //get the votable object from the state - with the votableCandidate the user picked
-        let votableAsBytes = await ctx.stub.getState(votableCandidate);
-        let votable = await JSON.parse(votableAsBytes);
-
-        //increase the vote of the political party that was picked by the voter 같은 단과대인지 확인후 투표진행
-        if(votable.description === voter.department ) {
-          await votable.count++;
-        } else {
-          let response = {};
-          response.error = '소속한 단과대가 아닙니다!';
-          return response;
-        }
-        //update the state with the new vote count
-        let result = await ctx.stub.putState(votableCandidate, Buffer.from(JSON.stringify(votable)));
-        console.log(result);
-
-        //make sure this voter cannot vote again! 
-        voter.departmentElectionCast = true;
-        voter.departmentPicked = {};
-        voter.departmentPicked = args.picked;
-
-        //update state to say that this voter has voted, and who they picked
-        let response = await ctx.stub.putState(voter.voterId, Buffer.from(JSON.stringify(voter)));
-        console.log(response);
-        return voter;
-
-      } else {
-        let response = {};
-        response.error = '현재 선거기간이 아닙니다!';
-        return response;
-      }
-
-    } else {
-      let response = {};
-      response.error = '1분이 지난후에도 선거가 진행되지 않으면 기술팀에 문의해주세요!';
-      return response;
-    }
-  }
 
   /**
    * Query and return all key value pairs in the world state.
