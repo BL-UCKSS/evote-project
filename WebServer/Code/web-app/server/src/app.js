@@ -134,7 +134,7 @@ function connectDB() {
     });
 
     CandidateSchema.static('removeCandidate', function(electId){
-      return this.deleteOne({electionid:electId});      
+      return this.deleteMany({electionid:electId});      
     });
 
     AdminSchema.static('findById', function(adminid, callback) {
@@ -981,10 +981,60 @@ app.post('/process/removeElection', async(req,res) => {
   console.log('removeElection 호출됨');
   let electionid = req.body.electionid || req.query.electionid;
   console.log('electionid : '+ electionid);
+  let args = {
+    electionId : electionid
+  };
+  args = JSON.stringify(args);
+  args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'deleteElection', electionid);
+  let response = await network.invoke(networkObj, false, 'deleteElection', args);
+  response = JSON.parse(response);
   if(database){
-    removeCandidate(database, electionid);
+    if(response.success){
+      //이미지 삭제하기
+      loadCandidateByElectId(database, electionid, function(err, docs) {
+        if(err){
+          console.log('에러 발생.');
+          let context = {error:'Error is occured'};
+          res.send(context);
+          return;
+        }                      
+        if(docs){
+          for(let i=0; i<docs.length; i++){
+            let filePath = __dirname + '/../public/img/' + docs[i]._doc.icon;
+            fs.unlink(filePath, function(err){
+              console.log(docs[i]._doc.icon + ' 파일 지워짐');
+              if (err) {console.log(err);}
+            });
+            filePath = __dirname + '/../public/img/' + docs[i]._doc.profile1;
+            fs.unlink(filePath, function(err){
+              console.log(docs[i]._doc.profile1 + ' 파일 지워짐');
+              if (err) {console.log(err);}
+            });
+            filePath = __dirname + '/../public/img/' + docs[i]._doc.profile2;
+            fs.unlink(filePath, function(err){
+              console.log(docs[i]._doc.profile2 + ' 파일 지워짐');
+              if (err) {console.log(err);}
+            });
+          }
+        }else{
+          //선거가 존재하지 않을 때
+          let response = {};
+          response.error = '선거가 존재하지 않습니다.';
+          res.send(response);
+        }
+      });
+      //DB에도 선거 및 후보자 정보 삭제
+      await removeCandidate(database, electionid);
+      let response = {};
+      response.success = '선거 정보가 삭제되었습니다.';
+      res.send(response);
+    }else{
+      //데이터베이스 오류
+      let response = {};
+      response.error = '데이터베이스 오류';
+      res.send(response);
+    }
   }else{
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
@@ -992,9 +1042,6 @@ app.post('/process/removeElection', async(req,res) => {
     res.send(context);
     return;    
   }
-  let context = JSON.parse(JSON.parse(response));
-  res.send(context);
-  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
 app.post('/modifyvote', async (req, res) => {
