@@ -30,7 +30,7 @@
             <% /* 등록된 선거 조건으로 출력해야함 */ %>
             <% var t2 = new Date(list[i].Record.startDate) %>
             <% var t3 = new Date(list[i].Record.endDate) %>
-            <% if(t1 < t2 && t1 > t3) { %>
+            <% if(t1 < t2 && t1 < t3) { %>
         <div class="manage-carousel-item-content" onclick="changeTitle('regElecModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
             <div class="manage-carousel-item-content-1">
                 <div class="manage-carousel-item-content-2"><%= String(list[i].Record.startDate).substring(0,10) %> <%= String(list[i].Record.startDate).substring(11,16) %> ~ <%= String(list[i].Record.endDate).substring(0,10) %> <%= String(list[i].Record.endDate).substring(11,16) %></div>
@@ -51,7 +51,7 @@
             <% var t2 = new Date(list[i].Record.startDate) %>
             <% var t3 = new Date(list[i].Record.endDate) %>
             <% if(t1 >= t2 && t1 <= t3) { %>
-        <div class="manage-carousel-item-content" style="cursor:default;" onclick="alert('진행 중인 선거는 수정하거나 삭제할 수 없습니다.');return false;">
+        <div class="manage-carousel-item-content" onclick="changeTitle('exitElectionModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
             <div class="manage-carousel-item-content-1">
                 <div class="manage-carousel-item-content-2"><%= String(list[i].Record.startDate).substring(0,10) %> <%= String(list[i].Record.startDate).substring(11,16) %> ~ <%= String(list[i].Record.endDate).substring(0,10) %> <%= String(list[i].Record.endDate).substring(11,16) %></div>
                 <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
@@ -109,6 +109,51 @@
                     <div style="display:none;" id="modalElectId"></div>
                     <div style="font-size:small;">
                         선거가 삭제되었습니다.
+                    </div>
+                </div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="goUrl('/adminManage');">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- modal start -->
+    <div class="modal fade" id="exitElectionModal" tabindex="-1" role="dialog" aria-labelledby="exitElectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac">
+                    <div style="font-size:medium;">
+                        선거를 종료하시겠습니까?
+                        <div style="font-size: small;">
+                            강제로 종료하실 경우, 모든 데이터가 삭제됩니다.<br>
+                            (후보자 정보, 발급된 투표지 등)
+                        </div>
+                    </div>
+                    <div style="font-size:small;" id="modalTitle">
+                        2020 상명대학교 총학생회 선거
+                    </div>
+                    <div style="display:none;" id="modalElectId"></div>
+                </div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="remove();">종료</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- modal start -->
+    <div class="modal fade" id="electionExitedModal" tabindex="-1" role="dialog" aria-labelledby="electionExitedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac">
+                    <div style="font-size:medium;" id="modalTitle">
+                        2020 상명대학교 사범대 학생회 선거
+                    </div>
+                    <div style="display:none;" id="modalElectId"></div>
+                    <div style="font-size:small;">
+                        선거가 종료되었습니다.
                     </div>
                 </div>
                 <div class="modal-footer jac">

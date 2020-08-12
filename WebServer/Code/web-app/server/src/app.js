@@ -982,7 +982,7 @@ app.post('/process/removeElection', async(req,res) => {
   let electionid = req.body.electionid || req.query.electionid;
   console.log('electionid : '+ electionid);
   let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'deleteMyAsset', electionid);
+  let response = await network.invoke(networkObj, true, 'deleteElection', electionid);
   if(database){
     removeCandidate(database, electionid);
   }else{
