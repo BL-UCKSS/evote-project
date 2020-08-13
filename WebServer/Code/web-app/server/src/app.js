@@ -30,8 +30,8 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.query.fname;
-    cb(null, name + file.mimetype.split('/')[1]);
+    let name = req.body.name;
+    cb(null, name + '_' + file.originalname);
   }
 });
 const upload = multer({storage: storage});
@@ -1103,12 +1103,9 @@ app.post('/modifyvote', async (req, res) => {
 });
 
 app.post('/process/modifyvote', async (req, res) => {
+  //upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}])
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
-  upload(req, res).then(function(file){
-    console.log(file);
-  }, function(err){
-    console.log(err);
-  });
+  
   /*
   // ledger에 등록된 선거 수정
   let len = req.body.isMulti;
@@ -1169,6 +1166,7 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
   let len = req.body.isMulti;
+  console.log('len = ' + len);
   let hname = req.body.hname;
   if(!Array.isArray(hname)){
     hname = [hname];
@@ -1191,7 +1189,6 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     return;
   } 
   console.log('createElection response : ' + typeof response + ' => ' + response);
-  //response = JSON.parse(response);
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
@@ -1199,21 +1196,21 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     for(let i=0; i<len;i+=1){
       let data = {
         electionid:electionId,
-        hname:req.body.hname[i],
+        hname: Array.isArray(req.body.hname) ? req.body.hanme[i] : req.body.hname,
         icon:req.files.image[i].filename,
-        link:req.body.link[i],
-        hakbun1:req.body.no1[i],
-        name1:req.body.sname1[i],
-        dept1:req.body.dept1[i],
-        grade1:req.body.grade1[i],
+        link:Array.isArray(req.body.link) ? req.body.link[i] : req.body.link,
+        hakbun1:Array.isArray(req.body.no1) ? req.body.no1[i] : req.body.no1,
+        name1:Array.isArray(req.body.sname1) ? req.body.sname1[i] : req.body.sname1,
+        dept1:Array.isArray(req.body.dept1) ? req.body.dept1[i] : req.body.dept1,
+        grade1:Array.isArray(req.body.grade1) ? req.body.grade1[i] : req.body.grade1,
         profile1:req.files.image1[i].filename,
-        hakbun2:req.body.no2[i],
-        name2:req.body.sname2[i],
-        dept2:req.body.dept2[i],
-        grade2:req.body.grade2[i],
+        hakbun2:Array.isArray(req.body.no2) ? req.body.no2[i] : req.body.no2,
+        name2:Array.isArray(req.body.sname2) ? req.body.sname2[i] : req.body.sname2,
+        dept2:Array.isArray(req.body.dept2) ? req.body.dept2[i] : req.body.dept2,
+        grade2:Array.isArray(req.body.grade2) ? req.body.grade2[i] : req.body.grade2,
         profile2:req.files.image2[i].filename,
       };
-      registerCandidate(database, data);
+      await registerCandidate(database, data);
     }
   }else{
     console.log('에러 발생.');
