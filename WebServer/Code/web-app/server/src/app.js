@@ -134,7 +134,7 @@ function connectDB() {
     });
 
     CandidateSchema.static('removeCandidate', function(electId){
-      return this.deleteOne({electionid:electId});      
+      return this.deleteMany({electionid:electId});      
     });
 
     AdminSchema.static('findById', function(adminid, callback) {
@@ -982,23 +982,59 @@ app.post('/process/removeElection', async(req,res) => {
   let electionid = req.body.electionid || req.query.electionid;
   console.log('electionid : '+ electionid);
   let args = {
-    electionId: electionid
+    electionId : electionid
   };
   args = JSON.stringify(args);
   args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'deleteElection', args);
-  // response = JSON.parse(response);
-  // console.log('response: '+response);
-  if (response.error) {
-    console.log('removeElection error : ' + response.error);
-    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
-    return;
-  } 
-  console.log('[chaincode]deleteElection response : ' + typeof response + ' => ' + response);
-  
+  response = JSON.parse(response);
   if(database){
-    removeCandidate(database, electionid);
+    if(response.success){
+      //이미지 삭제하기
+      loadCandidateByElectId(database, electionid, function(err, docs) {
+        if(err){
+          console.log('에러 발생.');
+          let context = {error:'Error is occured'};
+          res.send(context);
+          return;
+        }                      
+        if(docs){
+          for(let i=0; i<docs.length; i++){
+            let filePath = __dirname + '/../public/img/' + docs[i]._doc.icon;
+            fs.unlink(filePath, function(err){
+              console.log(docs[i]._doc.icon + ' 파일 지워짐');
+              if (err) {console.log(err);}
+            });
+            filePath = __dirname + '/../public/img/' + docs[i]._doc.profile1;
+            fs.unlink(filePath, function(err){
+              console.log(docs[i]._doc.profile1 + ' 파일 지워짐');
+              if (err) {console.log(err);}
+            });
+            filePath = __dirname + '/../public/img/' + docs[i]._doc.profile2;
+            fs.unlink(filePath, function(err){
+              console.log(docs[i]._doc.profile2 + ' 파일 지워짐');
+              if (err) {console.log(err);}
+            });
+          }
+        }else{
+          //선거가 존재하지 않을 때
+          let response = {};
+          response.error = '선거가 존재하지 않습니다.';
+          res.send(response);
+        }
+      });
+      //DB에도 선거 및 후보자 정보 삭제
+      await removeCandidate(database, electionid);
+      let response = {};
+      response.success = '선거 정보가 삭제되었습니다.';
+      res.send(response);
+    }else{
+      //데이터베이스 오류
+      let response = {};
+      response.error = '데이터베이스 오류';
+      res.send(response);
+    }
   }else{
     console.log('에러 발생.');
     //데이터베이스 연결 안됨
@@ -1006,20 +1042,17 @@ app.post('/process/removeElection', async(req,res) => {
     res.send(context);
     return;    
   }
-  let context = JSON.parse(JSON.parse(response));
-  res.send(context);
-  // res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
 app.post('/modifyvote', async (req, res) => {
   let electionid = req.body.electionid || req.query.electionid;
-  console.log(electionid);
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-  let list = JSON.parse(JSON.parse(response));
+  console.log('modifyvote 호출됨.');
+  console.log('electionid : ' + electionid);
   let array = [];
-    
-  loadCandidateByElectId(database, electionid, function(err, docs) {
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let election = await network.invoke(networkObj, true, 'readMyAsset', electionid);
+  election = JSON.parse(election);
+  loadCandidateByElectId(database, election.electionId, function(err, docs) {
     if(err){
       console.log('에러 발생.');
       let context = {error:'Error is occured'};
@@ -1029,7 +1062,6 @@ app.post('/modifyvote', async (req, res) => {
     if(docs){
       for(let i=0; i<docs.length; i++){
         let data = {
-          electionid: docs[i]._doc.electionid,
           hname: docs[i]._doc.hname,
           icon: docs[i]._doc.icon,
           link: docs[i]._doc.link,
@@ -1047,10 +1079,16 @@ app.post('/modifyvote', async (req, res) => {
         array.push(data);
       }
       console.log(array);
+      let univList = ['총학생회','인문사회과학대학','사범대학','경영경제대학','융합공과대학','문화예술대학'];
+      const idx = univList.indexOf(election.univ);
+      if(idx > -1) {
+        univList.splice(idx, 1);
+      }
       let context = {
         session:req.session,
-        list:list,
-        candidateData:array
+        electionData:election,
+        candidateData:array,
+        univList:univList
       };
     
       htmlrender(req, res, 'modifyvote', context);
@@ -1063,25 +1101,97 @@ app.post('/modifyvote', async (req, res) => {
     }
   });
 });
-//참고로, 후보자 사진 또는 운동본부 사진을 바꾸지 않았을 때는 원래 값 그대로 유지하도록 BE에서 구현해줘야함. by 김동규
-app.post('/process/modifyvote', async (req, res) => {
+
+app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}]), async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
   // ledger에 등록된 선거 수정
+  let len = req.body.isMulti;
   let args = {
-    electionid: req.body.electionid,
+    electionId: req.body.electionid,
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
-    enddate: req.body.enddate
+    enddate: req.body.enddate,
+    candidates: req.body.hname
   };
   args = JSON.stringify(args);
   args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'modifyElection', args);
+  response = JSON.parse(response);
   if (response.error) {
-    res.send(response.error);
-  } else {
-    res.send(response);
+    console.log('modifyElection error : ' + response.error);
+    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
+    return;
+  }
+  console.log('modifyElection response : ' + typeof response + ' => ' + JSON.stringify(response));
+  if(database){
+    // 사진파일들의 이름이 수정되었다면 원래의 파일은 지운다.
+    loadCandidateByElectId(database, req.body.electionid, function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }                      
+      if(docs){
+        for(let i=0; i<docs.length; i++){
+          let filePath1 = __dirname + '/../public/img/' + docs[i]._doc.icon;
+          let filePath2 = __dirname + '/../public/img/' + docs[i]._doc.profile1;
+          let filePath3 = __dirname + '/../public/img/' + docs[i]._doc.profile2;
+          if(docs[i]._doc.icon !== req.files.image[i].filename){
+            fs.unlink(filePath1, function(errr){
+              if (errr) {console.log(errr);}
+            });
+          }
+          if(docs[i]._doc.profile1 !== req.files.image1[i].filename){
+            fs.unlink(filePath2, function(errr){
+              if (errr) {console.log(errr);}
+            });
+          }
+          if(docs[i]._doc.profile2 !== req.files.image2[i].filename){
+            fs.unlink(filePath3, function(errr){
+              if (errr) {console.log(errr);}
+            });
+          }
+        }
+      }else{
+        //선거가 존재하지 않을 때
+        let response = {};
+        response.error = '선거가 존재하지 않습니다.';
+        res.send(response);
+      }
+    });
+
+    // DB에 선거 및 후보자 정보를 삭제한다.
+    await removeCandidate(database, req.body.electionid);
+
+    // DB에 선거 및 후보자 정보를 추가한다.
+    for(let i=0; i<len;i+=1){
+      let data = {
+        electionid:req.body.electionid,
+        hname:req.body.hname[i],
+        icon:req.files.image[i].filename,
+        link:req.body.link[i],
+        hakbun1:req.body.no1[i],
+        name1:req.body.sname1[i],
+        dept1:req.body.dept1[i],
+        grade1:req.body.grade1[i],
+        profile1:req.files.image1[i].filename,
+        hakbun2:req.body.no2[i],
+        name2:req.body.sname2[i],
+        dept2:req.body.dept2[i],
+        grade2:req.body.grade2[i],
+        profile2:req.files.image2[i].filename,
+      };
+      registerCandidate(database, data);
+    }
+  }else{
+    console.log('에러 발생.');
+    //데이터베이스 연결 안됨
+    let context = {error:'Database is not connected'};
+    res.send(context);
+    return;    
   }
   let context = {
     session:req.session
