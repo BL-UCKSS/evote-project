@@ -1648,7 +1648,7 @@ app.post('/process/login', async (req, res) => {
         if(docs){
           if(docs[0]._doc.password === hashPw){
             if(docs[0]._doc.stat !== '재학'){
-              res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 로그인 가능합니다.\');document.location.href=\'/main\';</script>');
+              res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 로그인 가능합니다.\');document.location.href=\'/login\';</script>');
               return;
             }
             //console.dir(docs);
