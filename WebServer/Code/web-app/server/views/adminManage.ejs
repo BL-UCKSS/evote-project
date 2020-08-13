@@ -92,7 +92,7 @@
                 </div>
                 <div class="modal-footer jac">
                     <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove1" onclick="remove(this.id, 'deleteElectionModal');">삭제</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="remove();">삭제</button>
                 </div>
             </div>
         </div>
@@ -137,7 +137,7 @@
                 </div>
                 <div class="modal-footer jac">
                     <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove2" onclick="remove(this.id, 'exitElectionModal');">종료</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="remove();">종료</button>
                 </div>
             </div>
         </div>
@@ -186,8 +186,8 @@ $(function() {
         $('.carousel-inner > .carousel-item:nth-child(2)').removeClass('active');
     }
 })
-var remove = function(id, hide){
-    var electionid = $('#'+id).parent().parent().find('#modalElectId').text()
+var remove = function(){
+    var electionid = $('#remove').parent().parent().find('#modalElectId').text()
     $.ajax({
         url: '/process/removeElection',
         type: 'post',
@@ -196,10 +196,7 @@ var remove = function(id, hide){
         },
         dataType: 'json',
         success: function(response){
-            hideToggle(hide,'electionDeletedModal');
-        },
-        error: function(err){
-            console.log(err);
+            hideToggle('deleteElectionModal','electionDeletedModal');
         }
     });
 }

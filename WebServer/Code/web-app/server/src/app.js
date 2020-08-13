@@ -706,9 +706,18 @@ app.get('/process/myvote/:election', async (req, res) => {
   }
 });
 app.get('/sign', async (req, res) => {
+  console.log(req.session);
   let univ = req.session.univ;
   let userid = req.session.userid;
+  let stat = req.session.stat;
   let pw = ''; //pw from db
+
+  if (stat != '재학') {
+    console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
+    res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 투표가 가능합니다.\');document.location.href=\'/main\';</script>');
+    return;
+  }
+
   if (database) {
     getHashPw(database, userid, async function(err, docs) {
       if(err){
@@ -1616,6 +1625,7 @@ app.post('/process/login', async (req, res) => {
             //console.dir(docs);
             req.session.userid = paramStdno;
             req.session.univ = docs[0]._doc.univ;
+            req.session.stat = docs[0]._doc.stat;
             req.session.save();
             //console.log(req.session.userid);
             //사용자 로그인 성공
