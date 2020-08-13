@@ -30,8 +30,8 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.body.name;
-    cb(null, name + '_' + file.originalname);
+    let name = req.query.fname;
+    cb(null, name + file.mimetype.split('/')[1]);
   }
 });
 const upload = multer({storage: storage});
@@ -1102,10 +1102,17 @@ app.post('/modifyvote', async (req, res) => {
   });
 });
 
-app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}]), async (req, res) => {
+app.post('/process/modifyvote', async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
+  upload(req, res).then(function(file){
+    console.log(file);
+  }, function(err){
+    console.log(err);
+  });
+  /*
   // ledger에 등록된 선거 수정
   let len = req.body.isMulti;
+  console.log('len = ' + len);
   let args = {
     electionId: req.body.electionid,
     name: req.body.name,
@@ -1126,65 +1133,22 @@ app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{
   }
   console.log('modifyElection response : ' + typeof response + ' => ' + JSON.stringify(response));
   if(database){
-    // 사진파일들의 이름이 수정되었다면 원래의 파일은 지운다.
-    loadCandidateByElectId(database, req.body.electionid, function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }                      
-      if(docs){
-        for(let i=0; i<docs.length; i++){
-          let filePath1 = __dirname + '/../public/img/' + docs[i]._doc.icon;
-          let filePath2 = __dirname + '/../public/img/' + docs[i]._doc.profile1;
-          let filePath3 = __dirname + '/../public/img/' + docs[i]._doc.profile2;
-          if(docs[i]._doc.icon !== req.files.image[i].filename){
-            fs.unlink(filePath1, function(errr){
-              if (errr) {console.log(errr);}
-            });
-          }
-          if(docs[i]._doc.profile1 !== req.files.image1[i].filename){
-            fs.unlink(filePath2, function(errr){
-              if (errr) {console.log(errr);}
-            });
-          }
-          if(docs[i]._doc.profile2 !== req.files.image2[i].filename){
-            fs.unlink(filePath3, function(errr){
-              if (errr) {console.log(errr);}
-            });
-          }
-        }
-      }else{
-        //선거가 존재하지 않을 때
-        let response = {};
-        response.error = '선거가 존재하지 않습니다.';
-        res.send(response);
-      }
-    });
-
-    // DB에 선거 및 후보자 정보를 삭제한다.
-    await removeCandidate(database, req.body.electionid);
-
-    // DB에 선거 및 후보자 정보를 추가한다.
+    // DB에 선거 및 후보자 정보를 수정한다.
     for(let i=0; i<len;i+=1){
       let data = {
         electionid:req.body.electionid,
         hname:req.body.hname[i],
-        icon:req.files.image[i].filename,
         link:req.body.link[i],
         hakbun1:req.body.no1[i],
         name1:req.body.sname1[i],
         dept1:req.body.dept1[i],
         grade1:req.body.grade1[i],
-        profile1:req.files.image1[i].filename,
         hakbun2:req.body.no2[i],
         name2:req.body.sname2[i],
         dept2:req.body.dept2[i],
         grade2:req.body.grade2[i],
-        profile2:req.files.image2[i].filename,
       };
-      registerCandidate(database, data);
+      await registerCandidate(database, data);
     }
   }else{
     console.log('에러 발생.');
@@ -1193,6 +1157,7 @@ app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{
     res.send(context);
     return;    
   }
+  */
   let context = {
     session:req.session
   };
@@ -1204,12 +1169,16 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
   let len = req.body.isMulti;
+  let hname = req.body.hname;
+  if(!Array.isArray(hname)){
+    hname = [hname];
+  }
   let args = {
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    candidates:req.body.hname
+    candidates:hname
   };
   args = JSON.stringify(args);
   args = [args];
