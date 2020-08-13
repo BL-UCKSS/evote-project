@@ -265,16 +265,17 @@
 			var goNextPage = function(id, page){
 				var hide = '#page' + id;
 				var show = '#page' + page;
-				var empty = checkempty(hide);
+				var notEmpty = checkempty(hide);
 				var last_page = $('form > div').length;
-				if(empty || id > page){
+				console.log(notEmpty, id > page);
+				if(notEmpty || id > page){
 					$(hide).css('display', 'none');
 					$(show).css('display', '');
 					if(page == last_page + 1){
 						$(hide).css('display', '');
 						$('#finalRegisterCandidateModal').modal('toggle');
 					}
-				}else{
+				}else if(!notEmpty){
 					alert("값이 입력되지 않았거나 잘못되었습니다. 참고: 학번은 두자리 수로 입력하고 학년은 1~4학년만 표시가능합니다.");
 				}
 				return false;

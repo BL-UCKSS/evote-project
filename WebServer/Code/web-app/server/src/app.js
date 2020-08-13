@@ -981,8 +981,22 @@ app.post('/process/removeElection', async(req,res) => {
   console.log('removeElection 호출됨');
   let electionid = req.body.electionid || req.query.electionid;
   console.log('electionid : '+ electionid);
+  let args = {
+    electionId: electionid
+  };
+  args = JSON.stringify(args);
+  args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'deleteElection', electionid);
+  let response = await network.invoke(networkObj, false, 'deleteElection', args);
+  // response = JSON.parse(response);
+  // console.log('response: '+response);
+  if (response.error) {
+    console.log('removeElection error : ' + response.error);
+    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
+    return;
+  } 
+  console.log('[chaincode]deleteElection response : ' + typeof response + ' => ' + response);
+  
   if(database){
     removeCandidate(database, electionid);
   }else{
@@ -994,7 +1008,7 @@ app.post('/process/removeElection', async(req,res) => {
   }
   let context = JSON.parse(JSON.parse(response));
   res.send(context);
-  res.send(true); // 임시로 무조건 시작 성공하게 만듦.
+  // res.send(true); // 임시로 무조건 시작 성공하게 만듦.
 });
 
 app.post('/modifyvote', async (req, res) => {
