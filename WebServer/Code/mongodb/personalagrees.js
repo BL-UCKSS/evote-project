@@ -1,0 +1,1 @@
+db.getCollection('personalagrees').find({})

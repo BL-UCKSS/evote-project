@@ -30,11 +30,21 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.body.name;
-    cb(null, name + '_' + file.originalname);
+    let name = req.body.name + file.originalname;
+    let c = crypto.createHash('sha256').update(name).digest('hex').substring(0, 10);
+    cb(null, c+'.'+file.mimetype.split('/')[1]);
   }
 });
 const upload = multer({storage: storage});
+const storage2 = multer.diskStorage({
+  destination : (req, file, cb) => {
+    cb(null, 'public/img/');
+  },
+  filename : (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+const upload2 = multer({storage: storage2});
 
 let database;
 let UserSchema;
@@ -131,6 +141,11 @@ function connectDB() {
     CandidateSchema.static('registerCandidate', function(data){
       let candy = new this(data);
       return candy.save();
+    });
+
+    CandidateSchema.static('updateById', function(electionid, data) {
+      return this.update({electionid:electionid}, 
+        {$set : {hname:data.hname,link:data.link,hakbun1:data.hakbun1,name1:data.name1,dept1:data.dept1,grade1:data.grade1,hakbun2:data.hakbun2,name2:data.name2,dept2:data.dept2,grade2:data.grade2}});
     });
 
     CandidateSchema.static('removeCandidate', function(electId){
@@ -230,6 +245,10 @@ let adminEmail = function(database, callback) {
 let updateAdminEmail = async function(database, id, email) {
   console.log('updateAdminEmail 호출됨');
   await AdminModel.updateById(id, email);
+};
+let modifyCandidate = async function(database, id, data) {
+  console.log('updateAdminEmail 호출됨');
+  await CandidateModel.updateById(id, data);
 };
 // SSO 로그인 관련 router
 let authUser = function(database, stdno, password, callback) {
@@ -369,7 +388,8 @@ let registerUser = async function(walletId, gubun, univ){
 	    // eslint-disable-next-line no-mixed-spaces-and-tabs
 	    console.log(response.error);
   } else {
-    let networkObj = await network.connectToNetwork(walletId);
+    console.log('registerUser 호출됨');
+    /*let networkObj = await network.connectToNetwork(walletId);
     if (networkObj.error) {
       console.log(networkObj.error);
     }
@@ -397,7 +417,7 @@ let registerUser = async function(walletId, gubun, univ){
         parsedResponse += '. Use walletId to login above.';
         console.log(parsedResponse);
       }
-    }
+    }*/
   }
 };
 // let loadCandidate = function(database, no, callback) {
@@ -712,7 +732,7 @@ app.get('/sign', async (req, res) => {
   let stat = req.session.stat;
   let pw = ''; //pw from db
 
-  if (stat != '재학') {
+  if (stat !== '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
     res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 투표가 가능합니다.\');document.location.href=\'/main\';</script>');
     return;
@@ -1053,6 +1073,10 @@ app.post('/process/removeElection', async(req,res) => {
   }
 });
 
+app.post('/process/upload_image', upload2.array('image'), async(req,res) => {
+  console.log('/process/upload_image 호출됨');
+});
+
 app.post('/modifyvote', async (req, res) => {
   let electionid = req.body.electionid || req.query.electionid;
   console.log('modifyvote 호출됨.');
@@ -1087,7 +1111,7 @@ app.post('/modifyvote', async (req, res) => {
         };
         array.push(data);
       }
-      console.log(array);
+      //console.log(array);
       let univList = ['총학생회','인문사회과학대학','사범대학','경영경제대학','융합공과대학','문화예술대학'];
       const idx = univList.indexOf(election.univ);
       if(idx > -1) {
@@ -1111,17 +1135,24 @@ app.post('/modifyvote', async (req, res) => {
   });
 });
 
-app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}]), async (req, res) => {
+app.post('/process/modifyvote', async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
+  console.log(req.files);
+  
   // ledger에 등록된 선거 수정
   let len = req.body.isMulti;
+  console.log('len = ' + len);
+  let hname = req.body.hname;
+  if(!Array.isArray(hname)){
+    hname = [hname];
+  }
   let args = {
     electionId: req.body.electionid,
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    candidates: req.body.hname
+    candidates:hname
   };
   args = JSON.stringify(args);
   args = [args];
@@ -1135,65 +1166,21 @@ app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{
   }
   console.log('modifyElection response : ' + typeof response + ' => ' + JSON.stringify(response));
   if(database){
-    // 사진파일들의 이름이 수정되었다면 원래의 파일은 지운다.
-    loadCandidateByElectId(database, req.body.electionid, function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }                      
-      if(docs){
-        for(let i=0; i<docs.length; i++){
-          let filePath1 = __dirname + '/../public/img/' + docs[i]._doc.icon;
-          let filePath2 = __dirname + '/../public/img/' + docs[i]._doc.profile1;
-          let filePath3 = __dirname + '/../public/img/' + docs[i]._doc.profile2;
-          if(docs[i]._doc.icon !== req.files.image[i].filename){
-            fs.unlink(filePath1, function(errr){
-              if (errr) {console.log(errr);}
-            });
-          }
-          if(docs[i]._doc.profile1 !== req.files.image1[i].filename){
-            fs.unlink(filePath2, function(errr){
-              if (errr) {console.log(errr);}
-            });
-          }
-          if(docs[i]._doc.profile2 !== req.files.image2[i].filename){
-            fs.unlink(filePath3, function(errr){
-              if (errr) {console.log(errr);}
-            });
-          }
-        }
-      }else{
-        //선거가 존재하지 않을 때
-        let response = {};
-        response.error = '선거가 존재하지 않습니다.';
-        res.send(response);
-      }
-    });
-
-    // DB에 선거 및 후보자 정보를 삭제한다.
-    await removeCandidate(database, req.body.electionid);
-
-    // DB에 선거 및 후보자 정보를 추가한다.
+    // DB에 선거 및 후보자 정보를 수정한다.
     for(let i=0; i<len;i+=1){
       let data = {
-        electionid:req.body.electionid,
         hname:req.body.hname[i],
-        icon:req.files.image[i].filename,
         link:req.body.link[i],
         hakbun1:req.body.no1[i],
         name1:req.body.sname1[i],
         dept1:req.body.dept1[i],
         grade1:req.body.grade1[i],
-        profile1:req.files.image1[i].filename,
         hakbun2:req.body.no2[i],
         name2:req.body.sname2[i],
         dept2:req.body.dept2[i],
         grade2:req.body.grade2[i],
-        profile2:req.files.image2[i].filename,
       };
-      registerCandidate(database, data);
+      await modifyCandidate(database, req.body.electionid, data);
     }
   }else{
     console.log('에러 발생.');
@@ -1202,6 +1189,7 @@ app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{
     res.send(context);
     return;    
   }
+  
   let context = {
     session:req.session
   };
@@ -1213,12 +1201,17 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
   let len = req.body.isMulti;
+  console.log('len = ' + len);
+  let hname = req.body.hname;
+  if(!Array.isArray(hname)){
+    hname = [hname];
+  }
   let args = {
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    candidates:req.body.hname
+    candidates:hname
   };
   args = JSON.stringify(args);
   args = [args];
@@ -1231,7 +1224,6 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     return;
   } 
   console.log('createElection response : ' + typeof response + ' => ' + response);
-  //response = JSON.parse(response);
   // DB에 저장한다.
   if(database){
     // DB에 req.body의 값들을 삽입한다.
@@ -1239,21 +1231,21 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     for(let i=0; i<len;i+=1){
       let data = {
         electionid:electionId,
-        hname:req.body.hname[i],
+        hname: Array.isArray(req.body.hname) ? req.body.hname[i] : req.body.hname,
         icon:req.files.image[i].filename,
-        link:req.body.link[i],
-        hakbun1:req.body.no1[i],
-        name1:req.body.sname1[i],
-        dept1:req.body.dept1[i],
-        grade1:req.body.grade1[i],
+        link:Array.isArray(req.body.link) ? req.body.link[i] : req.body.link,
+        hakbun1:Array.isArray(req.body.no1) ? req.body.no1[i] : req.body.no1,
+        name1:Array.isArray(req.body.sname1) ? req.body.sname1[i] : req.body.sname1,
+        dept1:Array.isArray(req.body.dept1) ? req.body.dept1[i] : req.body.dept1,
+        grade1:Array.isArray(req.body.grade1) ? req.body.grade1[i] : req.body.grade1,
         profile1:req.files.image1[i].filename,
-        hakbun2:req.body.no2[i],
-        name2:req.body.sname2[i],
-        dept2:req.body.dept2[i],
-        grade2:req.body.grade2[i],
+        hakbun2:Array.isArray(req.body.no2) ? req.body.no2[i] : req.body.no2,
+        name2:Array.isArray(req.body.sname2) ? req.body.sname2[i] : req.body.sname2,
+        dept2:Array.isArray(req.body.dept2) ? req.body.dept2[i] : req.body.dept2,
+        grade2:Array.isArray(req.body.grade2) ? req.body.grade2[i] : req.body.grade2,
         profile2:req.files.image2[i].filename,
       };
-      registerCandidate(database, data);
+      await registerCandidate(database, data);
     }
   }else{
     console.log('에러 발생.');
@@ -1656,6 +1648,10 @@ app.post('/process/login', async (req, res) => {
                     
         if(docs){
           if(docs[0]._doc.password === hashPw){
+            if(docs[0]._doc.stat !== '재학'){
+              res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 로그인 가능합니다.\');document.location.href=\'/login\';</script>');
+              return;
+            }
             //console.dir(docs);
             req.session.userid = paramStdno;
             req.session.univ = docs[0]._doc.univ;
