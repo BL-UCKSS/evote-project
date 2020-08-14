@@ -478,6 +478,38 @@ a:link {
     padding-left: 10px;
 }
 
+.myvoteresult-card {
+    width: 100%;
+    margin-top: 20px;
+    background-color: #fafafa;
+    border-radius: 2px;
+    box-shadow: 3px 3px 8px 0px #0000003a;
+    padding: 10px;
+}
+
+.myvoteresult-card-span {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.myvoteresult-card-span2 {
+    font-size: 12px;
+    color: #9E9FA1;
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
+
+.myvotresult-card-contentbox {
+    margin-bottom: 10px;
+}
+
+.myvotresult-card-content {
+    font-size: 13px;
+    font-weight: bold;
+    text-align: left;
+    padding-bottom: 3px;
+}
+
 /* adminManage */
 .manage-carousel-slide {
     height: 550px;
