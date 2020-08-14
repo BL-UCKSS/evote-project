@@ -388,7 +388,8 @@ let registerUser = async function(walletId, gubun, univ){
 	    // eslint-disable-next-line no-mixed-spaces-and-tabs
 	    console.log(response.error);
   } else {
-    let networkObj = await network.connectToNetwork(walletId);
+    console.log('registerUser 호출됨');
+    /*let networkObj = await network.connectToNetwork(walletId);
     if (networkObj.error) {
       console.log(networkObj.error);
     }
@@ -416,7 +417,7 @@ let registerUser = async function(walletId, gubun, univ){
         parsedResponse += '. Use walletId to login above.';
         console.log(parsedResponse);
       }
-    }
+    }*/
   }
 };
 // let loadCandidate = function(database, no, callback) {
