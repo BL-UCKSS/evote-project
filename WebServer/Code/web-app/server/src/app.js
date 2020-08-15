@@ -540,89 +540,11 @@ app.get('/myvote', async (req, res) => {
     return;    
   }
 });
-app.get('/process/myvote/:election', async (req, res) => {
-  console.log('/process/myvte/:election 라우팅 함수 호출됨.');
-
-  let userid = req.session.userid;
-  let pw = ''; //pw from db
-  if (database) {
-    getHashPw(database, userid, async function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs){
-        pw = docs;
-        let useridpw = userid + pw;
-        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-        let nolist = false;
-        let arr = [];
-        response = JSON.parse(response);
-        if (response.error) {
-          console.log(response.error);
-          nolist = true;
-        }
-        if(response.length === 0){
-          nolist = true;
-        }
-        let year = new Date();
-        year = String(year.getFullYear());
-        for(let i=0; i<response.length; i++){
-          if(response[i].totalElectionCast){      //총학생회 투표를 했는지 안했는지 검사
-            arr.append(year + response[i].totalElectionPicked); //어떤 후보자를 투표했는지 해당 년도와 함께 arr에 추가 (ex. 2020브릿지)
-          }
-        }
-        //arr 는 votableId 모음 집임
-        let res1 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem'); 
-        res1 = JSON.parse(JSON.parse(res1));
-        arr = [];
-        for(let i=0; i<res1.length; i++){
-          let len = res1[i].Key.length;               //후보자 개수
-          let str = res1[i].Key.substring(4, len);    //ex. 2020브릿지 에서 브릿지만 추출하여 str에 저장
-          arr.push({
-            election: res1[i].Record.electionId,
-            name: str
-          });
-        }
-        //arr : electionid, name
-        for(let i=0; i<arr.length; i++){
-          let res2 = await network.invoke(networkObj, true, 'readMyAsset', arr[i].election);
-          res2 = JSON.parse(res2);
-          arr[i].election = res2.name;
-        }
-        let context = {
-          session:req.session,
-          list:arr,
-          nolist:nolist
-        };
-        htmlrender(req, res, 'myvote', context);
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'no user'};
-        console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
-        return;
-      }
-    });  
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
-  }
-});
 //참여한 선거의 결과를 확인
-app.get('/myvoteresult', async (req, res) => {
+app.get('/voteresult', async (req, res) => {
   let userid = req.session.userid;
   let pw = '';
-  let total = 12; //재학생 수
+
   if (database) {
     getHashPw(database, userid, async function(err, docs) {
       if (err){
@@ -635,72 +557,40 @@ app.get('/myvoteresult', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+
+        //블록체인으로부터 완료된 election과 투표율, 해당 CandidateResult과 투표율을 받아올 예정
         let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-        let nolist = false;
-        let arr = [];
+        let date = new Date().toLocaleString();   //2020-8-15 4:52:22 PM
+
+        //선거 종료 날짜 이전일 경우 (모든 선거의 시작 날짜/종료 날짜는 일치한다.)
+        let checkdate = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+        checkdate = JSON.parse(JSON.parse(checkdate));
+        let compare = new Date(checkdate[0].Record.endDate);
+        checkdate = compare.toLocaleString();     //date와 형이 일치함
+
+        if(date < checkdate){
+          console.log('선거 결과 조회 기간이 아닙니다.');
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'선거 결과 조회 기간이 아닙니다. '+checkdate+'부터 \');document.location.href=\'/main\';</script>');
+          return;
+        }
+
+        //선거 종료 날짜 이후일 경우
+        let args = {
+          date: date
+        };
+        // 완료된 election과 투표율, 해당 CandidateResult과 투표율이 json형식으로 리턴될 예정
+        let response = await network.invoke(networkObj, true, 'voteResult', args);
         response = JSON.parse(response);
+
         if (response.error) {
           console.log(response.error);
-          nolist = true;
-        }
-        if(response.length === 0){
-          nolist = true;
         }
         
-        for(let i=0; i<response.length; i++){
-          if(response[i].totalElectionCast){    //총학생회 투표를 했는지 검사
-            arr.append(response[i].totalElectionPicked);  //어떤 후보에 투표했는지 (ex. 브릿지)
-          }
-        }
-        //총학생회
-        let res1 = await network.invoke(networkObj, true, 'readMyAsset', walletid); 
-        res1 = JSON.parse(res1);
-        let name;
-        if(res1.totalElectionCast){
-          name = res1.totalElectionPicked;
-          let res2 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
-          res2 = JSON.parse(JSON.parse(res2));
-          let electionid;
-          for(let i=0; i<res2.length; i++){
-            if(year+name === res2[i].Key){
-              electionid = res2[i].Record.electionId;
-            }
-          }
-          let res3 = await network.invoke(networkObj, true, 'readMyAsset', electionid);
-          res3 = JSON.parse(res3);
-          arr.push({
-            election:res3.name,
-            name:name
-          });
-        }
-        //단과대
-        if(res1.departmentElectionCast){
-          name = res1.departmentElectionPicked;
-          let res2 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
-          res2 = JSON.parse(JSON.parse(res2));
-          let electionid;
-          for(let i=0; i<res2.length; i++){
-            if(year+name === res2[i].Key){
-              electionid = res2[i].Record.electionId;
-            }
-          }
-          let res3 = await network.invoke(networkObj, true, 'readMyAsset', electionid);
-          res3 = JSON.parse(res3);
-          arr.push({
-            election:res3.name,
-            name:name
-          });
-        }
-        let context = {
-          session:req.session,
-          list:arr,
-          nolist:nolist
-        };
-        htmlrender(req, res, 'myvote', context);
+        let context = {data:data};
+        
+        htmlrender(req, res, 'voteresult', context);
       }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
+        console.log('에러 발생. 사용자의 데이터가 조회되지 않음.');
         let context = {error:'no user'};
         console.log(context);
         res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
@@ -708,49 +598,11 @@ app.get('/myvoteresult', async (req, res) => {
       }
     });  
   }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
+    console.log('에러 발생. 데이터베이스에 연결되지 않음.');
     let context = {error:'Database is not connected'};
     res.send(context);
     return;    
   }
-
-  // //adminNow
-  // let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-  // let parsedElection = await JSON.parse(resElection);
-  // parsedElection = await JSON.parse(parsedElection);
-  
-  // let now = new Date();
-  // //선거 목록 출력 후 선거별로 투표율 계산 및 출력
-  // for (let i in parsedElection){
-  //   let count = 0;
-  //   let t1 = new Date(parsedElection[i].Record.startDate);
-  //   let t2 = new Date(parsedElection[i].Record.endDate);
-  //   if(now >= t1 && now <= t2){ 
-  //     //해당 선거의 투표율을 확인해야하지만, 현재 querybyobjecttype voter는 type을 구분할 수 없음.votableItem
-  //     let parsedVotablItems = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
-  //     parsedVotablItems = JSON.parse(JSON.parse(parsedVotablItems));
-  //     for(let j=0; j<parsedVotablItems.length; j++){
-  //       count += parsedVotablItems[j].Record.count;
-  //     }
-  //     let avg = count / total * 100;
-  //     let nowTime = new Date().toISOString();
-  //     if(parsedElection[i].Record.endDate > nowTime){
-  //       arr.push({
-  //         name: parsedElection[i].Record.name,
-  //         enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
-  //         avg: avg.toFixed(2),
-  //       });
-  //     }
-  //   }
-  // }
-  
-  // let context = {
-  //   session:req.session,
-  //   list: arr
-  // };
-
-  htmlrender(req, res, 'myvoteresult', context);
 });
 app.get('/sign', async (req, res) => {
   // console.log(req.session);
@@ -783,7 +635,7 @@ app.get('/sign', async (req, res) => {
         //Failed to submit transaction: TypeError: Cannot read property 'evaluateTransaction' of undefined
         let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
         response = JSON.parse(response);
-        console.log('여기@@@@@@@@@@@@@@@@@@@@@@@@@'+response);
+
         if (response.error) {
           console.log(response.error);
         }
