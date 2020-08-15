@@ -48,10 +48,8 @@ const upload2 = multer({storage: storage2});
 
 let database;
 let UserSchema;
-let PersonalAgreeSchema;
 let CandidateSchema;
 let UserModel;
-let PersonalAgreeModel;
 let CandidateModel;
 let AdminSchema;
 let AdminModel;
@@ -78,14 +76,6 @@ function connectDB() {
       email: {type:String, required:true},
     });
     console.log('UserSchema 정의함.');
-
-    PersonalAgreeSchema = mongoose.Schema({
-      stdno: {type:String, required:true, unique:true},
-      name: {type:String, index:'hashed', required:false},
-      dept: {type:String, required:false},
-      univ: {type:String, required:false},
-    });
-    console.log('PersonalAgreeSchema 정의함.');
 
     CandidateSchema = mongoose.Schema({
       electionid: {type:String, required:true},
@@ -122,14 +112,6 @@ function connectDB() {
       return this.find({}, callback);        
     });
 
-    PersonalAgreeSchema.static('findById', function(stdno, callback){
-      return this.find({stdno:stdno}, callback);
-    });
-
-    PersonalAgreeSchema.static('findAll', function(callback){
-      return this.find({}, callback);        
-    });
-
     CandidateSchema.static('findById', function(no, callback){
       return this.find({no:no}, callback);
     });
@@ -163,9 +145,6 @@ function connectDB() {
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
 
-    PersonalAgreeModel = mongoose.model('personalagree', PersonalAgreeSchema);
-    console.log('PersonalAgreeSchema 정의함.');
-      
     CandidateModel = mongoose.model('candidates', CandidateSchema);
     console.log('CandidateModel 정의함.');
 
@@ -297,73 +276,7 @@ let authAdmin = function(database, id, pw, callback) {
     }
   });
 };
-//사용자를 개인정보처리동의 DB에 추가하는 함수
-let personalAgree = function(database, stdno, callback) {
-  
-  let pAgree = new PersonalAgreeModel({stdno:stdno});
-  console.log('personalAgree 호출됨 : ' + stdno);
-  
-  pAgree.save(function(err) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-    console.log('('+ stdno +') 개인정보처리동의 데이터 추가함.');
-    callback(null, pAgree);
-  });
-};
-//사용자가 개인정보처리에 동의했는지 확인하는 함수(vote 페이지에서)
-let checkAgree = function(database, stdno, callback){
-  console.log('checkAgree 호출됨 : ' + stdno);
 
-  PersonalAgreeModel.findById(stdno, function(err, result) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-
-    console.log('학번 %s로 검색됨.', stdno);
-    console.log(result);
-    
-    if(result.length > 0){      //사용자가 DB에 존재
-      callback(null, result);
-    }else{
-      console.log('학번 일치하는 사용자 없음.');
-      callback(null, {error:'no user'});
-    }
-  });
-};
-//사용자가 개인정보처리에 동의했는지 확인하는 함수(sign 페이지에서)
-let existAgree = function(database, stdno, callback){
-  console.log('existAgree 호출됨 : ' + stdno);
-
-  //개인정보처리에 동의했는지 확인
-  PersonalAgreeModel.findById(stdno, function(err, result) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-
-    console.log('학번 %s로 검색됨.', stdno);
-    
-    if(result.length > 0){      //사용자가 이미 동의함
-      console.log('(' +stdno+ ')님이 이미 개인정보처리 동의를 완료했습니다.');
-      callback(null, result);
-    }else{ 
-      console.log('학번 일치하는 사용자 없음.');
-      personalAgree(database, stdno, function(err){
-        if(err) {
-          callback(err, null);
-          return;
-        }
-        else {
-          console.log('(' +stdno+ ')님의 개인정보처리 동의를 완료했습니다.');
-          callback(null, result);
-        }
-      });
-    }
-  });
-};
 let loadCandidateByElectId = function(database, electId, callback) {
   console.log('loadCandidateByElectId 호출됨 : ' + electId);
   
@@ -1270,73 +1183,6 @@ app.post('/help', async (req, res) => {
   htmlrender(req, res, 'suggestion', context);
 });
 
-app.post('/process/personalagree', async (req, res) => {
-  console.log('/process/personalagree 라우팅 함수 호출됨.');
-
-  let paramStdno = req.session.userid;
-  console.log('요청 파라미터 : ' + paramStdno);    
-  
-  if (database) {
-    personalAgree(database, paramStdno, function(err, docs) {
-      if(err){
-        console.log(err);
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }                  
-      if(docs){
-        //사용자 개인정보처리동의 성공
-        let context = {success:'agree successful'};
-        res.send(context);
-        return;
-      }
-    });  
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
-  }
-});
-
-app.post('/process/checkagree', async (req, res) => {
-  console.log('/process/checkagree 라우팅 함수 호출됨.');
-
-  let paramStdno = req.body.voterId || req.query.voterId;
-  console.log('요청 파라미터 : ' + paramStdno);    
-  
-  if (database) {
-    checkAgree(database, paramStdno, function(err, docs) {
-      if(err){
-        console.log(err);
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-                  
-      if(docs){
-        let context = {votable:true};
-        if(!docs.error){
-          context = {votable:false};
-        }
-        res.send(context);        
-        return;
-      }
-    });  
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
-  }
-});
-
 app.post('/process/existagree/:univ', async (req, res) => {
   console.log('/process/existagree 라우팅 함수 호출됨.');
 
@@ -1344,84 +1190,62 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let univ = req.params.univ;
   console.log('요청 파라미터 : ' + paramStdno);    
   
-  if (database) {
-    //사용자가 사전에 동의했는지 체크 
-    // 동의하지 않았다면 DB에 삽입. 이미 동의했을 경우, 바로 vote페이지로
-    existAgree(database, paramStdno, async function(err, docs) {
-      if(err){
-        console.log(err);
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs){
-        //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
-        //총학생회 선거 정보를 불러와야 함. -> 선거이름, 시작시간, 종료시간 
-        //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
-        let year = new Date();
-        let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
-        if(!electId){
-          console.log('에러 발생.');
-          let context = {error:'선거가 존재하지 않음'};
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-          return;
-        }
-        let array = [];
-        // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-        loadCandidateByElectId(database, electId, function(err, docs) {
-          if(err){
-            console.log('에러 발생.');
-            let context = {error:'Error is occured'};
-            res.send(context);
-            return;
-          }         
-          if(docs){
-            for(let i=0; i<docs.length; i++){
-              let data = {
-                electionid: docs[i]._doc.electionid,
-                hname: docs[i]._doc.hname,
-                icon: docs[i]._doc.icon,
-                link: docs[i]._doc.link,
-                hakbun1: docs[i]._doc.hakbun1,
-                name1: docs[i]._doc.name1,
-                dept1: docs[i]._doc.dept1,
-                grade1: docs[i]._doc.grade1,
-                profile1: docs[i]._doc.profile1,
-                hakbun2: docs[i]._doc.hakbun2,
-                name2: docs[i]._doc.name2,
-                dept2: docs[i]._doc.dept2,
-                grade2: docs[i]._doc.grade2,
-                profile2: docs[i]._doc.profile2,
-              };
-              array.push(data);
-            }
-            let context = {
-              list: array,
-              session: req.session,
-              univ:univ
-            };
-
-            htmlrender(req, res, 'vote', context);
-            return;
-          }else{
-            console.log('에러 발생.');
-            //사용자 데이터 조회 안됨
-            let context = {error:'기호 없음'};
-            res.send(context);
-            return;
-          }
-        });
-      }
-    });  
-  }else {
+  //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
+  //총학생회 선거 정보를 불러와야 함. -> 선거이름, 시작시간, 종료시간 
+  //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
+  let year = new Date();
+  let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
+  if(!electId){
     console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+    let context = {error:'선거가 존재하지 않음'};
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+    return;
   }
+  let array = [];
+  // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
+  loadCandidateByElectId(database, electId, function(err, docs) {
+    if(err){
+      console.log('에러 발생.');
+      let context = {error:'Error is occured'};
+      res.send(context);
+      return;
+    }         
+    if(docs){
+      for(let i=0; i<docs.length; i++){
+        let data = {
+          electionid: docs[i]._doc.electionid,
+          hname: docs[i]._doc.hname,
+          icon: docs[i]._doc.icon,
+          link: docs[i]._doc.link,
+          hakbun1: docs[i]._doc.hakbun1,
+          name1: docs[i]._doc.name1,
+          dept1: docs[i]._doc.dept1,
+          grade1: docs[i]._doc.grade1,
+          profile1: docs[i]._doc.profile1,
+          hakbun2: docs[i]._doc.hakbun2,
+          name2: docs[i]._doc.name2,
+          dept2: docs[i]._doc.dept2,
+          grade2: docs[i]._doc.grade2,
+          profile2: docs[i]._doc.profile2,
+        };
+        array.push(data);
+      }
+      let context = {
+        list: array,
+        session: req.session,
+        univ:univ
+      };
+
+      htmlrender(req, res, 'vote', context);
+      return;
+    }else{
+      console.log('에러 발생.');
+      //사용자 데이터 조회 안됨
+      let context = {error:'기호 없음'};
+      res.send(context);
+      return;
+    }
+  });
 });
 
 app.post('/process/vote2/:univ', async (req, res) => {
@@ -1430,85 +1254,60 @@ app.post('/process/vote2/:univ', async (req, res) => {
   let paramStdno = req.session.userid;  
   let univ = req.params.univ;
   
-  if (database) {
-    //사용자가 개인정보처리 동의했는지 체크 
-    checkAgree(database, paramStdno, async function(err, docs) {
-      if(err){
-        console.log(err);
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs){ //사용자 확인 후  있음 result, 없음 error
-        if(docs === {error: 'no user'}){
-          console.log('('+paramStdno+')사용자가 개인정보처리에 동의하지 않았습니다.');
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'개인정보처리 약관에 동의하셔야 투표가 가능합니다.\');document.location.href=\'/sign\';</script>');
-        }
-        //단과대 선거id 찾기
-        let year = new Date();
-        console.log('세션 univ : ' + req.session.univ);
-        let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
-        if(!electId){
-          console.log('에러 발생.');
-          let context = {error:req.session.univ+'선거가 존재하지 않음'};
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-          return;
-        }
-        let array = [];
-        // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-        loadCandidateByElectId(database, electId, function(err, docs) {
-          if(err){
-            console.log('에러 발생.');
-            let context = {error:'Error is occured'};
-            res.send(context);
-            return;
-          }                      
-          if(docs){
-            for(let i=0; i<docs.length; i++){
-              let data = {
-                hakbun1: docs[i]._doc.hakbun1,
-                hakbun2: docs[i]._doc.hakbun2,
-                name1: docs[i]._doc.name1,
-                name2: docs[i]._doc.name2,
-                dept1: docs[i]._doc.dept1,
-                dept2: docs[i]._doc.dept2,
-                grade1: docs[i]._doc.grade1,
-                grade2: docs[i]._doc.grade2,
-                profile1: docs[i]._doc.profile1,
-                profile2: docs[i]._doc.profile2,
-                hname: docs[i]._doc.hname,
-                icon: docs[i]._doc.icon,
-                link: docs[i]._doc.link,
-              };
-              array.push(data);
-            }
-            let context = {
-              list: array,
-              session: req.session,
-              electId: electId,
-              univ:univ
-            };
-            htmlrender(req, res, 'vote2', context);            
-            return;
-          }else{
-            console.log('에러 발생.');
-            //사용자 데이터 조회 안됨
-            let context = {error:'기호 없음'};
-            res.send(context);
-            return;
-          }
-        });
-      }
-    });  
-  }else {
+  //단과대 선거id 찾기
+  let year = new Date();
+  console.log('세션 univ : ' + req.session.univ);
+  let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
+  if(!electId){
     console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+    let context = {error:req.session.univ+'선거가 존재하지 않음'};
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+    return;
   }
+  let array = [];
+  // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
+  loadCandidateByElectId(database, electId, function(err, docs) {
+    if(err){
+      console.log('에러 발생.');
+      let context = {error:'Error is occured'};
+      res.send(context);
+      return;
+    }                      
+    if(docs){
+      for(let i=0; i<docs.length; i++){
+        let data = {
+          hakbun1: docs[i]._doc.hakbun1,
+          hakbun2: docs[i]._doc.hakbun2,
+          name1: docs[i]._doc.name1,
+          name2: docs[i]._doc.name2,
+          dept1: docs[i]._doc.dept1,
+          dept2: docs[i]._doc.dept2,
+          grade1: docs[i]._doc.grade1,
+          grade2: docs[i]._doc.grade2,
+          profile1: docs[i]._doc.profile1,
+          profile2: docs[i]._doc.profile2,
+          hname: docs[i]._doc.hname,
+          icon: docs[i]._doc.icon,
+          link: docs[i]._doc.link,
+        };
+        array.push(data);
+      }
+      let context = {
+        list: array,
+        session: req.session,
+        electId: electId,
+        univ:univ
+      };
+      htmlrender(req, res, 'vote2', context);            
+      return;
+    }else{
+      console.log('에러 발생.');
+      //사용자 데이터 조회 안됨
+      let context = {error:'기호 없음'};
+      res.send(context);
+      return;
+    }
+  });
 });
 
 app.post('/process/finvote/:univ', async (req, res) => {
