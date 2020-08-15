@@ -30,21 +30,11 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.body.name + file.originalname;
-    let c = crypto.createHash('sha256').update(name).digest('hex').substring(0, 10);
-    cb(null, c+'.'+file.mimetype.split('/')[1]);
+    let name = req.body.name;
+    cb(null, name + '_' + file.originalname);
   }
 });
 const upload = multer({storage: storage});
-const storage2 = multer.diskStorage({
-  destination : (req, file, cb) => {
-    cb(null, 'public/img/');
-  },
-  filename : (req, file, cb) => {
-    cb(null, file.originalname);
-  }
-});
-const upload2 = multer({storage: storage2});
 
 let database;
 let UserSchema;
@@ -127,11 +117,6 @@ function connectDB() {
     CandidateSchema.static('registerCandidate', function(data){
       let candy = new this(data);
       return candy.save();
-    });
-
-    CandidateSchema.static('updateById', function(electionid, data) {
-      return this.update({electionid:electionid}, 
-        {$set : {hname:data.hname,link:data.link,hakbun1:data.hakbun1,name1:data.name1,dept1:data.dept1,grade1:data.grade1,hakbun2:data.hakbun2,name2:data.name2,dept2:data.dept2,grade2:data.grade2}});
     });
 
     CandidateSchema.static('removeCandidate', function(electId){
@@ -479,70 +464,57 @@ app.get('/myvote', async (req, res) => {
     return;    
   }
 });
-app.get('/process/myvote/:election', async (req, res) => {
-  console.log('/process/myvte/:election 라우팅 함수 호출됨.');
-
+//참여한 선거의 결과를 확인
+app.get('/voteresult', async (req, res) => {
   let userid = req.session.userid;
-  let pw = ''; //pw from db
+  let pw = '';
+
   if (database) {
     getHashPw(database, userid, async function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        //에러발생
+      if (err){
+        console.log('에러 발생');
         let context = {error:'Error is occured'};
         res.send(context);
         return;
       }
-      if(docs){
+      if(docs) {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+
+        //블록체인으로부터 완료된 election과 투표율, 해당 CandidateResult과 투표율을 받아올 예정
         let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-        let nolist = false;
-        let arr = [];
+        let date = new Date().toLocaleString();   //2020-8-15 4:52:22 PM
+
+        //선거 종료 날짜 이전일 경우 (모든 선거의 시작 날짜/종료 날짜는 일치한다.)
+        let checkdate = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+        checkdate = JSON.parse(JSON.parse(checkdate));
+        let compare = new Date(checkdate[0].Record.endDate);
+        checkdate = compare.toLocaleString();     //date와 형이 일치함
+
+        if(date < checkdate){
+          console.log('선거 결과 조회 기간이 아닙니다.');
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'선거 결과 조회 기간이 아닙니다. '+checkdate+'부터 \');document.location.href=\'/main\';</script>');
+          return;
+        }
+
+        //선거 종료 날짜 이후일 경우
+        let args = {
+          date: date
+        };
+        // 완료된 election과 투표율, 해당 CandidateResult과 투표율이 json형식으로 리턴될 예정
+        let response = await network.invoke(networkObj, true, 'voteResult', args);
         response = JSON.parse(response);
+
         if (response.error) {
           console.log(response.error);
-          nolist = true;
         }
-        if(response.length === 0){
-          nolist = true;
-        }
-        let year = new Date();
-        year = String(year.getFullYear());
-        for(let i=0; i<response.length; i++){
-          if(response[i].totalElectionCast){
-            arr.append(year + response[i].totalElectionPicked);
-          }
-        }
-        //arr 는 votableId 모음 집임
-        let res1 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem'); 
-        res1 = JSON.parse(JSON.parse(res1));
-        arr = [];
-        for(let i=0; i<res1.length; i++){
-          let len = res1[i].Key.length;
-          let str = res1[i].Key.substring(4, len);
-          arr.push({
-            election: res1[i].Record.electionId,
-            name: str
-          });
-        }
-        //arr : electionid, name
-        for(let i=0; i<arr.length; i++){
-          let res2 = await network.invoke(networkObj, true, 'readMyAsset', arr[i].election);
-          res2 = JSON.parse(res2);
-          arr[i].election = res2.name;
-        }
-        let context = {
-          session:req.session,
-          list:arr,
-          nolist:nolist
-        };
-        htmlrender(req, res, 'myvote', context);
+        
+        let context = {data:data};
+        
+        htmlrender(req, res, 'voteresult', context);
       }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
+        console.log('에러 발생. 사용자의 데이터가 조회되지 않음.');
         let context = {error:'no user'};
         console.log(context);
         res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
@@ -550,21 +522,20 @@ app.get('/process/myvote/:election', async (req, res) => {
       }
     });  
   }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
+    console.log('에러 발생. 데이터베이스에 연결되지 않음.');
     let context = {error:'Database is not connected'};
     res.send(context);
     return;    
   }
 });
 app.get('/sign', async (req, res) => {
-  console.log(req.session);
+  // console.log(req.session);
   let univ = req.session.univ;
   let userid = req.session.userid;
   let stat = req.session.stat;
   let pw = ''; //pw from db
 
-  if (stat !== '재학') {
+  if (stat != '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
     res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 투표가 가능합니다.\');document.location.href=\'/main\';</script>');
     return;
@@ -583,9 +554,12 @@ app.get('/sign', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+        //지금 여기서 wallet이 생성되지 않았다고 뜸
         let networkObj = await network.connectToNetwork(walletid);
+        //Failed to submit transaction: TypeError: Cannot read property 'evaluateTransaction' of undefined
         let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
         response = JSON.parse(response);
+
         if (response.error) {
           console.log(response.error);
         }
@@ -892,10 +866,6 @@ app.post('/process/removeElection', async(req,res) => {
   }
 });
 
-app.post('/process/upload_image', upload2.array('image'), async(req,res) => {
-  console.log('/process/upload_image 호출됨');
-});
-
 app.post('/modifyvote', async (req, res) => {
   let electionid = req.body.electionid || req.query.electionid;
   console.log('modifyvote 호출됨.');
@@ -930,7 +900,7 @@ app.post('/modifyvote', async (req, res) => {
         };
         array.push(data);
       }
-      //console.log(array);
+      console.log(array);
       let univList = ['총학생회','인문사회과학대학','사범대학','경영경제대학','융합공과대학','문화예술대학'];
       const idx = univList.indexOf(election.univ);
       if(idx > -1) {
@@ -954,24 +924,17 @@ app.post('/modifyvote', async (req, res) => {
   });*/
 });
 
-app.post('/process/modifyvote', async (req, res) => {
+app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}]), async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
-  console.log(req.files);
-  
   // ledger에 등록된 선거 수정
   let len = req.body.isMulti;
-  console.log('len = ' + len);
-  let hname = req.body.hname;
-  if(!Array.isArray(hname)){
-    hname = [hname];
-  }
   let args = {
     electionId: req.body.electionid,
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    candidates:hname
+    candidates: req.body.hname
   };
   args = JSON.stringify(args);
   args = [args];
@@ -1000,7 +963,6 @@ app.post('/process/modifyvote', async (req, res) => {
     };
     await modifyCandidate(req.body.electionid, data);
   }
-  
   let context = {
     session:req.session
   };
@@ -1012,17 +974,12 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
   let len = req.body.isMulti;
-  console.log('len = ' + len);
-  let hname = req.body.hname;
-  if(!Array.isArray(hname)){
-    hname = [hname];
-  }
   let args = {
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    candidates:hname
+    candidates:req.body.hname
   };
   args = JSON.stringify(args);
   args = [args];
@@ -1335,10 +1292,6 @@ app.post('/process/login', async (req, res) => {
                     
         if(docs){
           if(docs[0]._doc.password === hashPw){
-            if(docs[0]._doc.stat !== '재학'){
-              res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 로그인 가능합니다.\');document.location.href=\'/login\';</script>');
-              return;
-            }
             //console.dir(docs);
             req.session.userid = paramStdno;
             req.session.univ = docs[0]._doc.univ;

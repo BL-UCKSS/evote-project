@@ -60,7 +60,7 @@
 	    			<p class="registertext">선거운동본부 명칭</p>
 	    			<div class="form-group">
 					    <input type="text" class="form-control" style="height: 24px;" id="hname" name="hname" placeholder="선거운동본부 명칭을 입력해 주세요."  ></div>
-	    			<p class="registertext">소견문</p>
+	    			<p class="registertext">공약문</p>
 	    			<div class="form-group">
 					    <input type="text" class="form-control" style="height: 24px;" id="link" name="link" placeholder="소견문 링크를 입력해 주세요."  ></div>
 				</div>
@@ -244,6 +244,9 @@
 						return false;
 					}
 				}
+				if($(hide+' #univ').val() != false){
+					return false;
+				}
 				if($(hide+' #no1').length != 0){
 					var no1 = $(hide+' #no1').val();
 					var grade1 = $(hide+' #grade1').val();
@@ -275,7 +278,7 @@
 						$('#finalRegisterCandidateModal').modal('toggle');
 					}
 				}else{
-					alert("값이 입력되지 않았거나 잘못되었습니다. 참고: 학번은 두자리 수로 입력하고 학년은 1~4학년만 표시가능합니다.");
+					alert("값이 입력되지 않았거나 잘못되었습니다. (참고: 학번은 두자리 수, 학년은 1~4만 표시가능)");
 				}
 				return false;
 			}
