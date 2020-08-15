@@ -463,6 +463,7 @@ app.get('/adminManage', async (req, res) => {
   htmlrender(req, res, 'adminManage', context);
 });
 app.get('/myvote', async (req, res) => {
+  console.log('/myvote 호출됨');
   let userid = req.session.userid;
   let pw = ''; //pw from db
   if (database) {
@@ -479,68 +480,18 @@ app.get('/myvote', async (req, res) => {
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
         let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-        let nolist = false;
-        let arr = [];
+        let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
         response = JSON.parse(response);
+        //임시로 response 출력
+        console.log(JSON.stringify(response));
         if (response.error) {
           console.log(response.error);
-          nolist = true;
-        }
-        if(response.length === 0){
-          nolist = true;
-        }
-        let year = new Date();
-        year = String(year.getFullYear());
-        for(let i=0; i<response.length; i++){
-          if(response[i].totalElectionCast){
-            arr.append(year + response[i].totalElectionPicked);
-          }
-        }
-        arr = [];
-        //총학생회
-        let res1 = await network.invoke(networkObj, true, 'readMyAsset', walletid); 
-        res1 = JSON.parse(res1);
-        let name;
-        if(res1.totalElectionCast){
-          name = res1.totalElectionPicked;
-          let res2 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
-          res2 = JSON.parse(JSON.parse(res2));
-          let electionid;
-          for(let i=0; i<res2.length; i++){
-            if(year+name === res2[i].Key){
-              electionid = res2[i].Record.electionId;
-            }
-          }
-          let res3 = await network.invoke(networkObj, true, 'readMyAsset', electionid);
-          res3 = JSON.parse(res3);
-          arr.push({
-            election:res3.name,
-            name:name
-          });
-        }
-        //단과대
-        if(res1.departmentElectionCast){
-          name = res1.departmentElectionPicked;
-          let res2 = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
-          res2 = JSON.parse(JSON.parse(res2));
-          let electionid;
-          for(let i=0; i<res2.length; i++){
-            if(year+name === res2[i].Key){
-              electionid = res2[i].Record.electionId;
-            }
-          }
-          let res3 = await network.invoke(networkObj, true, 'readMyAsset', electionid);
-          res3 = JSON.parse(res3);
-          arr.push({
-            election:res3.name,
-            name:name
-          });
+          res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
+          return;
         }
         let context = {
           session:req.session,
-          list:arr,
-          nolist:nolist
+          list:[]
         };
         htmlrender(req, res, 'myvote', context);
       }else{
