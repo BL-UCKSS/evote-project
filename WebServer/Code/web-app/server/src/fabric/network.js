@@ -122,7 +122,7 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
         console.log(func);
         console.log(typeof args);
         
-        args = JSON.parse(args[0]);
+        //args = JSON.parse(args[0]);
         
         //console.log(util.inspect(args));
         args = JSON.stringify(args);

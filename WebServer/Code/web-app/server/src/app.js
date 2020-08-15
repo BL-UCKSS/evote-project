@@ -48,9 +48,9 @@ const upload2 = multer({storage: storage2});
 
 let database;
 let UserSchema;
-let CandidateSchema;
+//let CandidateSchema;
 let UserModel;
-let CandidateModel;
+//let CandidateModel;
 let AdminSchema;
 let AdminModel;
 
@@ -77,7 +77,7 @@ function connectDB() {
     });
     console.log('UserSchema 정의함.');
 
-    CandidateSchema = mongoose.Schema({
+    /*CandidateSchema = mongoose.Schema({
       electionid: {type:String, required:true},
       hname: {type:String, required:true},
       icon: {type:String, required:true},
@@ -93,7 +93,7 @@ function connectDB() {
       grade2: {type:Number, required:true},
       profile2: {type:String, required:true},
     });
-    console.log('CandidateSchema 정의함.');
+    console.log('CandidateSchema 정의함.');*/
 
     AdminSchema = mongoose.Schema({
       id: {type:String, required:true, unique:true},
@@ -107,12 +107,16 @@ function connectDB() {
     UserSchema.static('findById', function(stdno, callback) {
       return this.find({stdno:stdno}, callback);        
     });
+
+    UserSchema.static('findById2', function(stdno) {
+      return this.find({stdno:stdno});        
+    });
           
     UserSchema.static('findAll', function(callback){
       return this.find({}, callback);        
     });
 
-    CandidateSchema.static('findById', function(no, callback){
+    /*CandidateSchema.static('findById', function(no, callback){
       return this.find({no:no}, callback);
     });
 
@@ -132,7 +136,7 @@ function connectDB() {
 
     CandidateSchema.static('removeCandidate', function(electId){
       return this.deleteMany({electionid:electId});      
-    });
+    });*/
 
     AdminSchema.static('findById', function(adminid, callback) {
       return this.find({id:adminid}, callback);        
@@ -145,8 +149,8 @@ function connectDB() {
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
 
-    CandidateModel = mongoose.model('candidates', CandidateSchema);
-    console.log('CandidateModel 정의함.');
+    /*CandidateModel = mongoose.model('candidates', CandidateSchema);
+    console.log('CandidateModel 정의함.');*/
 
     AdminModel = mongoose.model('adminusers', AdminSchema);
     console.log('AdminModel 정의함.');
@@ -197,13 +201,20 @@ let getHashPw = function(database, stdno, callback) {
     }
   });
 };
-let registerCandidate = async function(database, data) {
-  console.log('registerCandidate 호출됨');
-  await CandidateModel.registerCandidate(data);
+let getHashPw2 = async function(stdno) {
+  console.log('getHashPw2 호출됨 : ' + stdno);
+  let data = await UserModel.findById2(stdno);
+  let useridpw = stdno + data[0].password;
+  let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+  return walletid;
 };
-let removeCandidate = async function(database, data) {
+let registerCandidate = async function(data) {
+  console.log('registerCandidate 호출됨');
+  //await CandidateModel.registerCandidate(data);
+};
+let removeCandidate = async function(data) {
   console.log('removeCandidate 호출됨');
-  await CandidateModel.removeCandidate(data);
+  //await CandidateModel.removeCandidate(data);
 };
 let adminEmail = function(database, callback) {
   console.log('adminEmail 호출됨');
@@ -225,9 +236,9 @@ let updateAdminEmail = async function(database, id, email) {
   console.log('updateAdminEmail 호출됨');
   await AdminModel.updateById(id, email);
 };
-let modifyCandidate = async function(database, id, data) {
+let modifyCandidate = async function(id, data) {
   console.log('updateAdminEmail 호출됨');
-  await CandidateModel.updateById(id, data);
+  //await CandidateModel.updateById(id, data);
 };
 // SSO 로그인 관련 router
 let authUser = function(database, stdno, password, callback) {
@@ -277,10 +288,10 @@ let authAdmin = function(database, id, pw, callback) {
   });
 };
 
-let loadCandidateByElectId = function(database, electId, callback) {
+let loadCandidateByElectId = function(electId, callback) {
   console.log('loadCandidateByElectId 호출됨 : ' + electId);
   
-  CandidateModel.findByElectId(electId, function(err, result) {
+  /*CandidateModel.findByElectId(electId, function(err, result) {
     if(err) {
       callback(err, null);
       return;
@@ -291,7 +302,7 @@ let loadCandidateByElectId = function(database, electId, callback) {
       console.log('일치하는 기호 없음.');
       callback(null, null);
     }
-  });
+  });*/
   
 };
 
@@ -302,53 +313,9 @@ let registerUser = async function(walletId, gubun, univ){
 	    console.log(response.error);
   } else {
     console.log('registerUser 호출됨');
-    /*let networkObj = await network.connectToNetwork(walletId);
-    if (networkObj.error) {
-      console.log(networkObj.error);
-    }
-    let year = new Date();
-    year = String(year.getFullYear());
-    let argument = JSON.stringify({voterId:walletId, department:univ, year:year}); 
-    let args = [argument];
-
-    //connect to network and update the state with voterId
-    let invokeResponse;
-    if (gubun === 'user'){
-	      invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
-    }else if(gubun === 'admin'){
-      console.log('admin logged in');
-    }else{
-      console.log('error');
-      return;
-    }
-    if(invokeResponse){
-      if (invokeResponse.error) {
-        console.log(invokeResponse.error);
-      } else {
-        //console.log('after network.invoke ');
-        let parsedResponse = JSON.parse(invokeResponse);
-        parsedResponse += '. Use walletId to login above.';
-        console.log(parsedResponse);
-      }
-    }*/
   }
 };
-// let loadCandidate = function(database, no, callback) {
-//   console.log('loadCandidate 호출됨 : ' + no);
-  
-//   CandidateModel.findById(no, function(err, result) {
-//     if(err) {
-//       callback(err, null);
-//       return;
-//     }
-//     if(result.length > 0){
-//       callback(null, result);
-//     }else{
-//       console.log('일치하는 기호 없음.');
-//       callback(null, null);
-//     }
-//   });
-// };
+
 const htmlrender = function(req, res, fname, context){
   req.app.render(fname, context, function(err, html){
     if(err){
@@ -484,6 +451,7 @@ app.get('/myvote', async (req, res) => {
         response = JSON.parse(response);
         //임시로 response 출력
         console.log(JSON.stringify(response));
+        // 어떤 response 인지 확인하고 구현하기.
         if (response.error) {
           console.log(response.error);
           res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
@@ -781,7 +749,7 @@ app.get('/castBallot/:electId', async (req, res) => {
     //electId 조회
     electId = req.params.electId;
     // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-    loadCandidateByElectId(database, electId, function(err, docs) {
+    /*loadCandidateByElectId(electId, function(err, docs) {
       if(err){
         console.log('에러 발생.');
         let context = {error:'Error is occured'};
@@ -823,7 +791,7 @@ app.get('/castBallot/:electId', async (req, res) => {
         res.send(context);
         return;
       }
-    });
+    });*/
     
   }else {
     console.log('에러 발생.');
@@ -882,58 +850,45 @@ app.post('/process/removeElection', async(req,res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'deleteElection', args);
   response = JSON.parse(response);
-  if(database){
-    if(response.success){
-      //이미지 삭제하기
-      loadCandidateByElectId(database, electionid, function(err, docs) {
-        if(err){
-          console.log('에러 발생.');
-          let context = {error:'Error is occured'};
-          res.send(context);
-          return;
-        }                      
-        if(docs){
-          for(let i=0; i<docs.length; i++){
-            let filePath = __dirname + '/../public/img/' + docs[i]._doc.icon;
-            fs.unlink(filePath, function(err){
-              console.log(docs[i]._doc.icon + ' 파일 지워짐');
-              if (err) {console.log(err);}
-            });
-            filePath = __dirname + '/../public/img/' + docs[i]._doc.profile1;
-            fs.unlink(filePath, function(err){
-              console.log(docs[i]._doc.profile1 + ' 파일 지워짐');
-              if (err) {console.log(err);}
-            });
-            filePath = __dirname + '/../public/img/' + docs[i]._doc.profile2;
-            fs.unlink(filePath, function(err){
-              console.log(docs[i]._doc.profile2 + ' 파일 지워짐');
-              if (err) {console.log(err);}
-            });
-          }
-        }else{
-          //선거가 존재하지 않을 때
-          let response = {};
-          response.error = '선거가 존재하지 않습니다.';
-          res.send(response);
+  if(response.success){
+    //이미지 삭제하기
+    /*loadCandidateByElectId(electionid, function(err, docs) {
+      if(err){
+        console.log('에러 발생.');
+        let context = {error:'Error is occured'};
+        res.send(context);
+        return;
+      }                      
+      if(docs){
+        for(let i=0; i<docs.length; i++){
+          let filePath = __dirname + '/../public/img/' + docs[i]._doc.icon;
+          fs.unlink(filePath, function(err){
+            console.log(docs[i]._doc.icon + ' 파일 지워짐');
+            if (err) {console.log(err);}
+          });
+          filePath = __dirname + '/../public/img/' + docs[i]._doc.profile1;
+          fs.unlink(filePath, function(err){
+            console.log(docs[i]._doc.profile1 + ' 파일 지워짐');
+            if (err) {console.log(err);}
+          });
+          filePath = __dirname + '/../public/img/' + docs[i]._doc.profile2;
+          fs.unlink(filePath, function(err){
+            console.log(docs[i]._doc.profile2 + ' 파일 지워짐');
+            if (err) {console.log(err);}
+          });
         }
-      });
-      //DB에도 선거 및 후보자 정보 삭제
-      await removeCandidate(database, electionid);
-      let response = {};
-      response.success = '선거 정보가 삭제되었습니다.';
-      res.send(response);
-    }else{
-      //데이터베이스 오류
-      let response = {};
-      response.error = '데이터베이스 오류';
-      res.send(response);
-    }
-  }else{
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+      }else{
+        //선거가 존재하지 않을 때
+        let response = {};
+        response.error = '선거가 존재하지 않습니다.';
+        res.send(response);
+      }
+    });*/
+    //DB에도 선거 및 후보자 정보 삭제
+    //await removeCandidate(electionid);
+    let response = {};
+    response.success = '선거 정보가 삭제되었습니다.';
+    res.send(response);
   }
 });
 
@@ -949,7 +904,7 @@ app.post('/modifyvote', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let election = await network.invoke(networkObj, true, 'readMyAsset', electionid);
   election = JSON.parse(election);
-  loadCandidateByElectId(database, election.electionId, function(err, docs) {
+  /*loadCandidateByElectId(election.electionId, function(err, docs) {
     if(err){
       console.log('에러 발생.');
       let context = {error:'Error is occured'};
@@ -996,7 +951,7 @@ app.post('/modifyvote', async (req, res) => {
       res.send(context);
       return;
     }
-  });
+  });*/
 });
 
 app.post('/process/modifyvote', async (req, res) => {
@@ -1029,29 +984,21 @@ app.post('/process/modifyvote', async (req, res) => {
     return;
   }
   console.log('modifyElection response : ' + typeof response + ' => ' + JSON.stringify(response));
-  if(database){
-    // DB에 선거 및 후보자 정보를 수정한다.
-    for(let i=0; i<len;i+=1){
-      let data = {
-        hname:req.body.hname[i],
-        link:req.body.link[i],
-        hakbun1:req.body.no1[i],
-        name1:req.body.sname1[i],
-        dept1:req.body.dept1[i],
-        grade1:req.body.grade1[i],
-        hakbun2:req.body.no2[i],
-        name2:req.body.sname2[i],
-        dept2:req.body.dept2[i],
-        grade2:req.body.grade2[i],
-      };
-      await modifyCandidate(database, req.body.electionid, data);
-    }
-  }else{
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+  // DB에 선거 및 후보자 정보를 수정한다.
+  for(let i=0; i<len;i+=1){
+    let data = {
+      hname:req.body.hname[i],
+      link:req.body.link[i],
+      hakbun1:req.body.no1[i],
+      name1:req.body.sname1[i],
+      dept1:req.body.dept1[i],
+      grade1:req.body.grade1[i],
+      hakbun2:req.body.no2[i],
+      name2:req.body.sname2[i],
+      dept2:req.body.dept2[i],
+      grade2:req.body.grade2[i],
+    };
+    await modifyCandidate(req.body.electionid, data);
   }
   
   let context = {
@@ -1088,35 +1035,26 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     return;
   } 
   console.log('createElection response : ' + typeof response + ' => ' + response);
-  // DB에 저장한다.
-  if(database){
-    // DB에 req.body의 값들을 삽입한다.
-    let electionId = response.success;
-    for(let i=0; i<len;i+=1){
-      let data = {
-        electionid:electionId,
-        hname: Array.isArray(req.body.hname) ? req.body.hname[i] : req.body.hname,
-        icon:req.files.image[i].filename,
-        link:Array.isArray(req.body.link) ? req.body.link[i] : req.body.link,
-        hakbun1:Array.isArray(req.body.no1) ? req.body.no1[i] : req.body.no1,
-        name1:Array.isArray(req.body.sname1) ? req.body.sname1[i] : req.body.sname1,
-        dept1:Array.isArray(req.body.dept1) ? req.body.dept1[i] : req.body.dept1,
-        grade1:Array.isArray(req.body.grade1) ? req.body.grade1[i] : req.body.grade1,
-        profile1:req.files.image1[i].filename,
-        hakbun2:Array.isArray(req.body.no2) ? req.body.no2[i] : req.body.no2,
-        name2:Array.isArray(req.body.sname2) ? req.body.sname2[i] : req.body.sname2,
-        dept2:Array.isArray(req.body.dept2) ? req.body.dept2[i] : req.body.dept2,
-        grade2:Array.isArray(req.body.grade2) ? req.body.grade2[i] : req.body.grade2,
-        profile2:req.files.image2[i].filename,
-      };
-      await registerCandidate(database, data);
-    }
-  }else{
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+  // DB에 req.body의 값들을 삽입한다.
+  let electionId = response.success;
+  for(let i=0; i<len;i+=1){
+    let data = {
+      electionid:electionId,
+      hname: Array.isArray(req.body.hname) ? req.body.hname[i] : req.body.hname,
+      icon:req.files.image[i].filename,
+      link:Array.isArray(req.body.link) ? req.body.link[i] : req.body.link,
+      hakbun1:Array.isArray(req.body.no1) ? req.body.no1[i] : req.body.no1,
+      name1:Array.isArray(req.body.sname1) ? req.body.sname1[i] : req.body.sname1,
+      dept1:Array.isArray(req.body.dept1) ? req.body.dept1[i] : req.body.dept1,
+      grade1:Array.isArray(req.body.grade1) ? req.body.grade1[i] : req.body.grade1,
+      profile1:req.files.image1[i].filename,
+      hakbun2:Array.isArray(req.body.no2) ? req.body.no2[i] : req.body.no2,
+      name2:Array.isArray(req.body.sname2) ? req.body.sname2[i] : req.body.sname2,
+      dept2:Array.isArray(req.body.dept2) ? req.body.dept2[i] : req.body.dept2,
+      grade2:Array.isArray(req.body.grade2) ? req.body.grade2[i] : req.body.grade2,
+      profile2:req.files.image2[i].filename,
+    };
+    await registerCandidate(data);
   }
   let context = {
     session:req.session
@@ -1141,9 +1079,6 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let univ = req.params.univ;
   console.log('요청 파라미터 : ' + paramStdno);    
   
-  //DB불러와서 context에 넘겨줘야할 것들 : 후보자(Candidate) 정보
-  //총학생회 선거 정보를 불러와야 함. -> 선거이름, 시작시간, 종료시간 
-  //총학생회 선거 if(year == Date.now() && gubun == "총학") 일 때 첫번째로 출력됨.
   let year = new Date();
   let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
   if(!electId){
@@ -1152,9 +1087,17 @@ app.post('/process/existagree/:univ', async (req, res) => {
     res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
     return;
   }
-  let array = [];
+  let args = {
+    electionId: electId
+  };
+  //args = [args];
+  let walletid = await getHashPw2(paramStdno);
+  let networkObj = await network.connectToNetwork(walletid);
+  let response = await network.invoke(networkObj, false, 'createVBallot', args); //args = walletid, candidateid
+  response = JSON.parse(response);
+  console.log(response);
   // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-  loadCandidateByElectId(database, electId, function(err, docs) {
+  /*loadCandidateByElectId(electId, function(err, docs) {
     if(err){
       console.log('에러 발생.');
       let context = {error:'Error is occured'};
@@ -1196,7 +1139,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
       res.send(context);
       return;
     }
-  });
+  });*/
 });
 
 app.post('/process/vote2/:univ', async (req, res) => {
@@ -1217,7 +1160,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
   }
   let array = [];
   // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-  loadCandidateByElectId(database, electId, function(err, docs) {
+  /*loadCandidateByElectId(electId, function(err, docs) {
     if(err){
       console.log('에러 발생.');
       let context = {error:'Error is occured'};
@@ -1258,7 +1201,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
       res.send(context);
       return;
     }
-  });
+  });*/
 });
 
 app.post('/process/finvote/:univ', async (req, res) => {
