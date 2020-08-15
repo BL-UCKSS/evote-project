@@ -1461,8 +1461,6 @@ app.post('/process/finvote/:univ', async (req, res) => {
   //[현재] "브릿지" 형식으로 넘어옴 (req.body.candidates)
   let paramballot = req.body.candidates;
   let userid = req.session.userid;
-  let univ = req.params.univ;
-  let electId = req.body.electId;
   let pw = ''; //pw from db
 
   if (database) {
@@ -1482,18 +1480,14 @@ app.post('/process/finvote/:univ', async (req, res) => {
 
         // 블록체인에 투표 데이터 전송
         let networkObj = await network.connectToNetwork(walletid);
-        let currentTime = new Date();
         let data = {
-          walletid:walletid,
-          electionId:electId,
-          picked:picked,
-          currentTime:currentTime,
-          univ:univ
+          walletId:walletid,
+          candidateId:picked,
         };
         data = JSON.stringify(data);
         let args = [data];
         console.log(args);
-        let response = await network.invoke(networkObj, false, 'castVote', args); //args = voterId, electionId, picked
+        let response = await network.invoke(networkObj, false, 'castVote', args); //args = walletid, candidateid
         response = JSON.parse(response);
         if (response.error) {
           console.log(response.error);
