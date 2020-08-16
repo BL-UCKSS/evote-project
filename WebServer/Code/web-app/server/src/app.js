@@ -622,7 +622,7 @@ app.get('/castBallot/:electId', async (req, res) => {
           grade2: candidate.success[i].Record.grade2,
           profile1: candidate.success[i].Record.profile1,
           profile2: candidate.success[i].Record.profile2,
-          hname: candidate.success[i].Record.hname,
+          hname: candidate.success[i].Record.name,
           icon: candidate.success[i].Record.icon,
           link: candidate.success[i].Record.link,
         };
@@ -714,7 +714,7 @@ app.post('/modifyvote', async (req, res) => {
   if(candidate.success){
     for(let i=0; i<candidate.success.length; i++){
       let data = {
-        hname: candidate.success[i].Record.hname,
+        hname: candidate.success[i].Record.name,
         icon: candidate.success[i].Record.icon,
         link: candidate.success[i].Record.link,
         hakbun1: candidate.success[i].Record.hakbun1,
@@ -902,10 +902,16 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
+    let gigwon = '';
     for(let i=0; i<candidate.success.length; i++){
+      if(candidate.success[i].Record.name === '기권'){
+        gigwon = candidate.success[i].Record.candidateId;
+        continue;
+      }
       let data = {
+        candidateId: candidate.success[i].Record.candidateId,
         electionid: candidate.success[i].Record.electionid,
-        hname: candidate.success[i].Record.hname,
+        hname: candidate.success[i].Record.name,
         icon: candidate.success[i].Record.icon,
         link: candidate.success[i].Record.link,
         hakbun1: candidate.success[i].Record.hakbun1,
@@ -924,7 +930,8 @@ app.post('/process/existagree/:univ', async (req, res) => {
     let context = {
       list: array,
       session: req.session,
-      univ:univ
+      univ:univ,
+      gigwon:gigwon
     };
 
     htmlrender(req, res, 'vote', context);
@@ -958,7 +965,12 @@ app.post('/process/vote2/:univ', async (req, res) => {
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
+    let gigwon = '';
     for(let i=0; i<candidate.success.length; i++){
+      if(candidate.success[i].Record.name === '기권'){
+        gigwon = candidate.success[i].Record.candidateId;
+        continue;
+      }
       let data = {
         hakbun1: candidate.success[i].Record.hakbun1,
         hakbun2: candidate.success[i].Record.hakbun2,
@@ -970,7 +982,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
         grade2: candidate.success[i].Record.grade2,
         profile1: candidate.success[i].Record.profile1,
         profile2: candidate.success[i].Record.profile2,
-        hname: candidate.success[i].Record.hname,
+        hname: candidate.success[i].Record.name,
         icon: candidate.success[i].Record.icon,
         link: candidate.success[i].Record.link,
       };
@@ -980,7 +992,8 @@ app.post('/process/vote2/:univ', async (req, res) => {
       list: array,
       session: req.session,
       electId: electId,
-      univ:univ
+      univ:univ,
+      gigwon:gigwon
     };
     htmlrender(req, res, 'vote2', context);            
     return;
