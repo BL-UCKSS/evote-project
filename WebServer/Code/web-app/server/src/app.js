@@ -19,6 +19,8 @@ const appAdmin = config.appAdmin;
 
 let network = require('./fabric/network.js');
 let mongoose = require('mongoose');
+const { response } = require('express');
+const { DH_NOT_SUITABLE_GENERATOR } = require('constants');
 const storage = multer.diskStorage({
   destination : (req, file, cb) => {
     cb(null, 'public/img/');
@@ -290,7 +292,14 @@ app.get('/adminMain', async (req, res) => {
 });
 
 app.get('/adminNow', async (req, res) => {
-  let TotalNum = 10; //재학생 수
+  let totalNum = 10; //재학생 수
+  let deptNum = 0;
+  //단과대별로 재학생 수 가져오기
+  if(req.session.univ === '융합공과대학'){
+    deptNum = 10;
+  }else{
+    deptNum = 10;
+  }
   let arr = [];
   let networkObj = await network.connectToNetwork(appAdmin);
   let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
@@ -305,15 +314,24 @@ app.get('/adminNow', async (req, res) => {
     if(now >= t1 && now <= t2){ 
       let args = {
         electionId: parsedElection[i].Key,
-        TotalNum: TotalNum
+        totalNum: totalNum,
+        deptNum: deptNum
       };
-      let resp = await network.invoke(networkObj, true, 'queryCurrentTimeTurnout', args);
+      networkObj = await network.connectToNetwork(appAdmin);
+      let resp = await network.invoke(networkObj, false, 'queryCurrentTimeTurnout', args);
+      resp = JSON.parse(resp);
       let avg = resp.success;
-      arr.push({
-        name: parsedElection[i].Record.name,
-        enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
-        avg: avg.toFixed(2),
-      });
+      avg = parseFloat(avg);
+      if(response.error){
+        console.log('에러!');
+        return;
+      }else{
+        arr.push({
+          name: parsedElection[i].Record.name,
+          enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
+          avg: avg === 0 || avg === '0' ? avg : avg.toFixed(2),
+        });
+      }
     }
   }
   let context = {
