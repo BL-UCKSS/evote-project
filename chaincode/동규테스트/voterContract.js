@@ -702,7 +702,7 @@ args - {"electionId":"dsff", "TotalNum":int}
 */
 
 async queryCurrentTimeTurnout(ctx, args) {
-
+  args = JSON.parse(args);
   const election = await this.readMyAsset(ctx, args.electionId);
   let currentTimeTurnout;
   let candidateResults = await this.queryCandidateResults(ctx, election.electionId);
