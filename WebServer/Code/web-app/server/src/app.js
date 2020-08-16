@@ -328,7 +328,6 @@ app.get('/adminManage', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let list = JSON.parse(JSON.parse(response));
-  //console.log('response : ' + JSON.stringify(list));
   if(response.error){
     console.log('adminManage error : ' + response.error);
   }
@@ -345,29 +344,32 @@ app.get('/myvote', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
   response = JSON.parse(response);
-  // 어떤 response 인지 확인하고 구현하기.
-  // 만약 response.error === '투표를 하지 않았습니다.' 이라면, list = []
+  let list;
   if (response.error) {
-    console.log(response.error);
-    res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
+    list = [];
+    let context = {
+      session:req.session,
+      list:list
+    };
+    htmlrender(req, res, 'myvote', context);
+    return;
+  }else{
+    let elections = response.success;
+    for(let i=0; i<elections.length; i++){
+      let data = {
+        election : elections[i].election,
+        picked : elections[i].picked
+      };
+      list.push(data);
+    }
+
+    let context = {
+      session:req.session,
+      list:list
+    };
+    htmlrender(req, res, 'myvote', context);
     return;
   }
-  let elections = response.success;
-  let list = [];
-  //아래에 내 투표 결과들 넘겨주는 코드 작성하기!!!!!
-  for(let i=0; i<elections.length; i++){
-    let data = {
-      election : elections[i].election,
-      picked : elections[i].picked
-    };
-    list.push(data);
-  }
-
-  let context = {
-    session:req.session,
-    list:list
-  };
-  htmlrender(req, res, 'myvote', context);
 });
 //참여한 선거의 결과를 확인
 app.get('/voteresult', async (req, res) => {
@@ -454,6 +456,11 @@ app.get('/sign', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let vBallot = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
   vBallot = JSON.parse(vBallot);
+  if(vBallot.error){
+    let context = {error:'투표할 수 있는 선거가 없습니다.'};
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+    return;
+  }
   let electionCast;
   if(vBallot.slot1 !== 'NULL'){ //보궐 선거는 어떻게 할건데? 이미 종료된 선거 인지 확인해야함.(아직 구현안함)
     electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot1);
