@@ -819,8 +819,8 @@ app.post('/process/removeElection', async(req,res) => {
   let args = {
     electionId : electionid
   };
-  args = JSON.stringify(args);
-  args = [args];
+  //args = JSON.stringify(args);
+  //args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'deleteElection', args);
   response = JSON.parse(response);
