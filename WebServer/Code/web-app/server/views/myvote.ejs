@@ -17,12 +17,12 @@
 			<% } else { %>
 			<% for(var i=0;i<list.length; i++) { %>
 				<% //선거 결과 확인하기 %>
-			<div class="myvote-card" onclick="location.href ='/process/myvote/<%=list[i].election%>'">
+			<div class="myvote-card">
 				<span class="myvote-card-title">
-					<%= list[i].election %>
+					<%= list[i].election.name %>
 				</span>
 				<span class="myvote-card-content">
-					<%= list[i].name %>
+					<%= list[i].picked %>
 				</span>
 			</div>
 			<% } %>

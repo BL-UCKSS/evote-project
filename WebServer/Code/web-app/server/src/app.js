@@ -342,25 +342,30 @@ app.get('/myvote', async (req, res) => {
   console.log('/myvote 호출됨');
   let userid = req.session.userid;
   let walletid = await getHashPw2(userid);
-  //let networkObj = await network.connectToNetwork(walletid);
-  //let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
-  //response = JSON.parse(response);
+  let networkObj = await network.connectToNetwork(walletid);
+  let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
+  response = JSON.parse(response);
   // 어떤 response 인지 확인하고 구현하기.
   // 만약 response.error === '투표를 하지 않았습니다.' 이라면, list = []
-  /*if (response.error) {
+  if (response.error) {
     console.log(response.error);
     res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
     return;
   }
-  console.log(JSON.stringify(response.success));*/
+  let elections = response.success;
+  let list = [];
   //아래에 내 투표 결과들 넘겨주는 코드 작성하기!!!!!
-  /*
-
-  */
+  for(let i=0; i<elections.length; i++){
+    let data = {
+      election : elections[i].election,
+      picked : elections[i].picked
+    };
+    list.push(data);
+  }
 
   let context = {
     session:req.session,
-    list:[]
+    list:list
   };
   htmlrender(req, res, 'myvote', context);
 });
