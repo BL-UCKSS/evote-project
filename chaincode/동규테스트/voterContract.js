@@ -578,8 +578,8 @@ async generateCandidateResult(ctx ,  args , electionId) {
     let myBallot = await this.checkMyVBallot(ctx, args.walletId);
     let voterId;
     for(let i=0; i<myBallot.length; i++){
-      if(myBallot.election.univ === univ){
-        voterId = myBallot.voterId;
+      if(myBallot.success[i].election.univ === univ){
+        voterId = myBallot.success[i].voterId;
         break;
       }
     }
