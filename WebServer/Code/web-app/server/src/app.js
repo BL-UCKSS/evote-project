@@ -433,11 +433,11 @@ app.get('/voteresult', async (req, res) => {
   }
 });
 app.get('/sign', async (req, res) => {
-  // console.log(req.session);
   let univ = req.session.univ;
   let userid = req.session.userid;
   let stat = req.session.stat;
-  let pw = ''; //pw from db
+  let pass = true;
+  let electId;
 
   if (stat !== '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
@@ -445,95 +445,59 @@ app.get('/sign', async (req, res) => {
     return;
   }
 
-  if (database) {
-    getHashPw(database, userid, async function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs){
-        pw = docs;
-        let useridpw = userid + pw;
-        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        //지금 여기서 wallet이 생성되지 않았다고 뜸
-        let networkObj = await network.connectToNetwork(walletid);
-        //Failed to submit transaction: TypeError: Cannot read property 'evaluateTransaction' of undefined
-        let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-        response = JSON.parse(response);
-
-        if (response.error) {
-          console.log(response.error);
-        }
-        if(!response.totalElectionCast){
-          univ = '총학생회';
-          let year = new Date();
-          let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
-          if(!electId){
-            console.log('에러 발생.');
-            let context = {error:req.session.univ+' 선거가 존재하지 않음'};
-            res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-            return;
-          }
-        }else if(!response.departmentElectionCast){
-          univ = req.session.univ;
-          let year = new Date();
-          let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
-          if(!electId){
-            console.log('에러 발생.');
-            let context = {error:req.session.univ+' 선거가 존재하지 않음'};
-            res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-            return;
-          }
-        }else{
-          console.log('이미 모든 투표를 완료하였습니다.');
-          response.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
-          return;
-        }
-
-        //투표 기간이 되었는지 확인하기
-        let ress = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-        let list = JSON.parse(JSON.parse(ress));
-        let curDate = new Date();
-        let year = String(curDate.getFullYear());
-        for(let i=0; i<list.length; i++){
-          if(String(list[i].Record.startDate).substring(0,4) === year && list[i].Record.univ === univ){
-            let t1 = new Date(list[i].Record.startDate);
-            let t2 = new Date(list[i].Record.endDate);
-            if(curDate >= t1 && curDate <= t2){
-              console.log('투표기간입니다.');
-              break;
-            }else{
-              console.log('투표 기간이 아닙니다.');
-              res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
-              return;
-            }
-          }
-        }
-
-        let context = {
-          session:req.session,
-          univ:univ
-        };
-        htmlrender(req, res, 'sign', context);
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'no user'};
-        console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
-        return;
-      }
-    });  
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+  let walletid = await getHashPw2(userid);
+  let networkObj = await network.connectToNetwork(walletid);
+  let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+  response = JSON.parse(response);
+  if(!response.totalElectionCast){
+    univ = '총학생회';
+    let year = new Date();
+    electId = await getElectIdByYearUniv(year.getFullYear(), univ);
+    if(!electId){
+      console.log('에러 발생.');
+      let context = {error:'투표할 수 있는 선거가 없습니다.'};
+      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+      return;
+    }else{
+      pass = false;
+    }
   }
+  if(!response.departmentElectionCast && pass){
+    univ = req.session.univ;
+    let year = new Date();
+    electId = await getElectIdByYearUniv(year.getFullYear(), univ);
+    if(!electId){
+      console.log('에러 발생.');
+      let context = {error:req.session.univ+' 선거가 존재하지 않음'};
+      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+      return;
+    }
+  }else if(pass){
+    console.log('이미 모든 투표를 완료하였습니다.');
+    response.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
+    return;
+  }
+
+  //투표 기간이 되었는지 확인하기
+  let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
+  let election = JSON.parse(ress);
+  let curDate = new Date();
+  let t1 = new Date(election.startDate);
+  let t2 = new Date(election.endDate);
+  if(curDate >= t1 && curDate <= t2 && election.univ === univ){
+    console.log('투표기간입니다.');
+  }else{
+    console.log('투표 기간이 아닙니다.');
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
+    return;
+  }
+
+  let context = {
+    session:req.session,
+    univ:univ
+  };
+  htmlrender(req, res, 'sign', context);
+      
   
 });
 
@@ -896,9 +860,10 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let response = await network.invoke(networkObj, false, 'createVBallot', args); //args = walletid
   response = JSON.parse(response);
-  console.log(response);
-  // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-  networkObj = await network.connectToNetwork(appAdmin);
+  if(response.error){
+    console.log(response.error);
+    return;
+  }
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
@@ -972,6 +937,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
         continue;
       }
       let data = {
+        candidateId: candidate.success[i].Record.candidateId,
         hakbun1: candidate.success[i].Record.hakbun1,
         hakbun2: candidate.success[i].Record.hakbun2,
         name1: candidate.success[i].Record.name1,
@@ -1012,59 +978,30 @@ app.post('/process/finvote/:univ', async (req, res) => {
   //[현재] "브릿지" 형식으로 넘어옴 (req.body.candidates)
   //[수정] "asdfjkaefafjel" 또는 ["saejglkaekgja", "awjkegjka;ke"] 형식으로 넘어와야함.
   let paramballot = req.body.candidates;
+  let univ = req.params.univ;
   let userid = req.session.userid;
-  let pw = ''; //pw from db
+  let walletid = await getHashPw2(userid);
+  let candidateid = paramballot;
 
-  if (database) {
-    getHashPw(database, userid, async function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs){
-        pw = docs;
-        let useridpw = userid + pw;
-        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        let candidateid = Array.isArray(paramballot) === true ? paramballot : [paramballot];
-
-        // 블록체인에 투표 데이터 전송
-        let networkObj = await network.connectToNetwork(walletid);
-        let data = {
-          voterId:walletid,
-          candidateId:candidateid,
-        };
-        data = JSON.stringify(data);
-        let args = [data];
-        console.log(args);
-        let response = await network.invoke(networkObj, false, 'castVote', args); //args = walletid, candidateid
-        response = JSON.parse(response);
-        if (response.error) {
-          console.log(response.error);
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+response.error+'\');document.location.href=\'/main\';</script>');
-          return;
-        } else {
-          console.log(response);
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표가 완료되었습니다. 다음 투표를 진행하시려면 투표하기를 눌러주십시오.\');document.location.href=\'/main\';</script>');
-          return;
-        }
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'no user'};
-        console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
-        return;
-      }
-    });
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+  // 블록체인에 투표 데이터 전송
+  let args = {
+    walletId:walletid,
+    candidateId:candidateid,
+    univ:univ
+  };
+  console.log('args : ' + JSON.stringify(args));
+  let networkObj = await network.connectToNetwork(walletid);
+  let response = await network.invoke(networkObj, false, 'castVote', args); 
+  response = JSON.parse(response);
+  console.log(JSON.stringify(response));
+  if (response.error) {
+    console.log(response.error);
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+response.error+'\');document.location.href=\'/main\';</script>');
+    return;
+  } else {
+    console.log(response);
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표가 완료되었습니다. 다음 투표를 진행하시려면 투표하기를 다시 눌러주십시오.\');document.location.href=\'/main\';</script>');
+    return;
   }
 });
 
