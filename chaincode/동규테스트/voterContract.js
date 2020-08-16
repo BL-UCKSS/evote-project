@@ -577,7 +577,7 @@ async generateCandidateResult(ctx ,  args , electionId) {
     let univ = args.univ;
     let myBallot = await this.checkMyVBallot(ctx, args.walletId);
     let voterId;
-    for(let i=0; i<myBallot.length; i++){
+    for(let i=0; i<myBallot.success.length; i++){
       if(myBallot.success[i].election.univ === univ){
         voterId = myBallot.success[i].voterId;
         break;
@@ -599,33 +599,33 @@ async generateCandidateResult(ctx ,  args , electionId) {
         return response;
       }
 
-        let candidateExists = await this.myAssetExists(ctx,candidateId);
-        if (!candidateExists) {
-          let response = {};
-          response.error = '선택하신 후보자가 존재하지 않습니다!';
-          return response;
-        }
-
-        //get the candidate object from the state - with the Candidate the user picked //candidateId 안맞으면 뻑날수 있음
-        let candidateAsBytes = await ctx.stub.getState(candidateId);
-        let candidate = await JSON.parse(candidateAsBytes);
-
-        //increase the vote of the political party that was picked by the voter
-        await candidate.count++;
-
-        //update the state with the new vote count
-        await ctx.stub.putState(candidateId, Buffer.from(JSON.stringify(candidate)));
-
-        //make sure this voter cannot vote again! 이름이 들어가게 수정
-        vBallot.picked = candidate.name;
-
-        //update state to say that this voter has voted, and who they picked
-        await ctx.stub.putState(vBallot.voterId, Buffer.from(JSON.stringify(vBallot)));
-
+      let candidateExists = await this.myAssetExists(ctx,candidateId);
+      if (!candidateExists) {
         let response = {};
-        response.success = vBallot.voterId;
+        response.error = '선택하신 후보자가 존재하지 않습니다!';
         return response;
+      }
 
+      //get the candidate object from the state - with the Candidate the user picked //candidateId 안맞으면 뻑날수 있음
+      let candidateAsBytes = await ctx.stub.getState(candidateId);
+      let candidate = await JSON.parse(candidateAsBytes);
+
+      //increase the vote of the political party that was picked by the voter
+      await candidate.count++;
+
+      //update the state with the new vote count
+      await ctx.stub.putState(candidateId, Buffer.from(JSON.stringify(candidate)));
+
+      //make sure this voter cannot vote again! 이름이 들어가게 수정
+      vBallot.picked = candidate.name;
+
+      //update state to say that this voter has voted, and who they picked
+      await ctx.stub.putState(vBallot.voterId, Buffer.from(JSON.stringify(vBallot)));
+
+      let response = {};
+      response.success = vBallot.voterId;
+      return response;
+        
     } else {
       let response = {};
       response.error = '현재 선거 기간이 아닙니다';
