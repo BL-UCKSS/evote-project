@@ -303,7 +303,6 @@ app.get('/adminNow', async (req, res) => {
     let t1 = new Date(parsedElection[i].Record.startDate);
     let t2 = new Date(parsedElection[i].Record.endDate);
     if(now >= t1 && now <= t2){ 
-      //해당 선거의 투표율을 확인해야하지만, 현재 querybyobjecttype voter는 type을 구분할 수 없음.votableItem
       let args = {
         electionId: parsedElection[i].Key,
         TotalNum: TotalNum
@@ -342,52 +341,27 @@ app.get('/adminManage', async (req, res) => {
 app.get('/myvote', async (req, res) => {
   console.log('/myvote 호출됨');
   let userid = req.session.userid;
-  let pw = ''; //pw from db
-  if (database) {
-    getHashPw(database, userid, async function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        //에러발생
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs){
-        pw = docs;
-        let useridpw = userid + pw;
-        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
-        response = JSON.parse(response);
-        //임시로 response 출력
-        console.log(JSON.stringify(response));
-        // 어떤 response 인지 확인하고 구현하기.
-        if (response.error) {
-          console.log(response.error);
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
-          return;
-        }
-        let context = {
-          session:req.session,
-          list:[]
-        };
-        htmlrender(req, res, 'myvote', context);
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'no user'};
-        console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
-        return;
-      }
-    });  
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+  let walletid = await getHashPw2(userid);
+  let networkObj = await network.connectToNetwork(walletid);
+  let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
+  response = JSON.parse(response);
+  // 어떤 response 인지 확인하고 구현하기.
+  if (response.error) {
+    console.log(response.error);
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
+    return;
   }
+  console.log(JSON.stringify(response.success));
+  //아래에 내 투표 결과들 넘겨주는 코드 작성하기!!!!!
+  /*
+  
+  */
+
+  let context = {
+    session:req.session,
+    list:[]
+  };
+  htmlrender(req, res, 'myvote', context);
 });
 //참여한 선거의 결과를 확인
 app.get('/voteresult', async (req, res) => {
