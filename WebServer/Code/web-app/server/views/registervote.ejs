@@ -23,7 +23,6 @@
 					<p class="registertext">선거 종류</p>
 					<div class="form-group">
 						<select class="custom-select form-control" id="univSelect" name="univ">
-							<option selected>선택하세요...</option>
 							<option value="총학생회">총학생회</option>
 							<option value="인문사회과학대학">인문사회과학대학</option>
 							<option value="사범대학">사범대학</option>
@@ -243,9 +242,6 @@
 					if(test[i].value == '' || test[i].value.length == 0){
 						return false;
 					}
-				}
-				if($(hide+' #univ').val() != false){
-					return false;
 				}
 				if($(hide+' #no1').length != 0){
 					var no1 = $(hide+' #no1').val();
