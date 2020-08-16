@@ -452,9 +452,34 @@ app.get('/sign', async (req, res) => {
 
   let walletid = await getHashPw2(userid);
   let networkObj = await network.connectToNetwork(walletid);
-  let response = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-  response = JSON.parse(response);
-  if(!response.totalElectionCast){
+  let vBallot = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+  vBallot = JSON.parse(vBallot);
+  let electionCast;
+  if(vBallot.slot1 !== 'NULL'){ //보궐 선거는 어떻게 할건데? 이미 종료된 선거 인지 확인해야함.(아직 구현안함)
+    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot1);
+  }else if(vBallot.slot2 !== 'NULL'){
+    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot2);
+  }else if(vBallot.slot3 !== 'NULL'){
+    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot3);
+  }else if(vBallot.slot4 !== 'NULL'){
+    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot4);
+  }
+  
+  electionCast = JSON.parse(electionCast);
+  let totalElectionCast;
+  let departmentElectionCast;
+  if(electionCast.error){
+    console.log(electionCast.error);
+    return;
+  }
+  if(electionCast){
+    if(electionCast.election.univ === '총학생회'){
+      totalElectionCast = electionCast.picked;
+    }else{ //단과대
+      departmentElectionCast = electionCast.picked;
+    }
+  }
+  if(totalElectionCast === 'NULL'){
     univ = '총학생회';
     let year = new Date();
     electId = await getElectIdByYearUniv(year.getFullYear(), univ);
@@ -467,7 +492,7 @@ app.get('/sign', async (req, res) => {
       pass = false;
     }
   }
-  if(!response.departmentElectionCast && pass){
+  if(departmentElectionCast === 'NULL' && pass){
     univ = req.session.univ;
     let year = new Date();
     electId = await getElectIdByYearUniv(year.getFullYear(), univ);
@@ -479,7 +504,7 @@ app.get('/sign', async (req, res) => {
     }
   }else if(pass){
     console.log('이미 모든 투표를 완료하였습니다.');
-    response.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
     return;
   }
 
