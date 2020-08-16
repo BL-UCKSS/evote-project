@@ -509,12 +509,14 @@ async generateCandidateResult(ctx ,  args , electionId) {
        if (student.slot1 !== "NULL") {
          let vBallot1 = await this.readMyAsset(ctx, student.slot1);
          let reVBallot1 ={};
+          reVBallot1.voterId = student.slot1; //동규가 추가함
           reVBallot1.election = vBallot1.election;
           reVBallot1.picked = vBallot1.picked;
          queryResults.push(reVBallot1);
        }else if (student.slot2 !== "NULL"){
         let vBallot2 = await this.readMyAsset(ctx, student.slot2);
         let reVBallot2 ={};
+        reVBallot2.voterId = student.slot2; //동규가 추가함
         reVBallot2.election = vBallot2.election;
         reVBallot2.picked = vBallot2.picked;
         queryResults.push(reVBallot2);
@@ -522,6 +524,7 @@ async generateCandidateResult(ctx ,  args , electionId) {
        } else if (student.slot3 !== "NULL"){
         let vBallot3 = await this.readMyAsset(ctx, student.slot3);
         let reVBallot3 ={};
+        reVBallot3.voterId = student.slot3; //동규가 추가함
         reVBallot3.election = vBallot3.election;
         reVBallot3.picked = vBallot3.picked;
         queryResults.push(reVBallot3);
@@ -529,6 +532,7 @@ async generateCandidateResult(ctx ,  args , electionId) {
        } else if (student.slot4 !== "NULL"){
         let vBallot4 = await this.readMyAsset(ctx, student.slot4);
         let reVBallot4 ={};
+        reVBallot4.voterId = student.slot4; //동규가 추가함
         reVBallot4.election = vBallot4.election;
         reVBallot4.picked = vBallot4.picked;
         queryResults.push(reVBallot4);
@@ -569,8 +573,20 @@ async generateCandidateResult(ctx ,  args , electionId) {
     //get the political party the voter voted for, also the key
     let candidateId = args.candidateId;
 
+    //동규가 추가함
+    let univ = args.univ;
+    let myBallot = await this.checkMyVBallot(ctx, args.walletId);
+    let voterId;
+    for(let i=0; i<myBallot.length; i++){
+      if(myBallot.election.univ === univ){
+        voterId = myBallot.voterId;
+        break;
+      }
+    }
+
+    // 동규가 수정함. args.voterId => voterId 로 변경함
     //check to make sure the election exists 
-    let vBallot = await this.readMyAsset(ctx, args.voterId);
+    let vBallot = await this.readMyAsset(ctx, voterId);
 
     if (await this.validateAfterDate(vBallot.election.startDate) && await this.validatePreviousDate(vBallot.election.endDate)) {
       //let vBallot = await this.readMyAsset(ctx, args.voterId);
