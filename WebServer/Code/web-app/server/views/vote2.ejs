@@ -25,7 +25,7 @@
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <div class="input-group-text">
-                                    <input type="radio" name="candidates" id="giho_giveup" value="기권">
+                                    <input type="radio" name="candidates" id="giho_giveup" value="<%= gigwon %>">
                                 </div>
                             </div>
                             <label class="form-control giho" for="giho_giveup">기권</label>
@@ -35,7 +35,7 @@
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <div class="input-group-text">
-                                    <input type="radio" name="candidates" id="giho_<%= i+1 %>" value="<%= list[i].hname%>">
+                                    <input type="radio" name="candidates" id="giho_<%= i+1 %>" value="<%= list[i].candidateId%>">
                                 </div>
                             </div>
                             <label class="form-control giho" for="giho_<%= i+1 %>">기호 <%= i+1 %>번 <%= list[i].hname %></label>
