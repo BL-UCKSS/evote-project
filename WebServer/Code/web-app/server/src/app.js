@@ -362,9 +362,8 @@ app.get('/myvote', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
   response = JSON.parse(response);
-  let list;
+  let list = [];
   if (response.error) {
-    list = [];
     let context = {
       session:req.session,
       list:list
@@ -474,9 +473,33 @@ app.get('/sign', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let vBallot = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
   vBallot = JSON.parse(vBallot);
+  if(vBallot.error){ //투표용지가 없는 경우 => 투표를 한 적이 없는 경우
+    console.log('vBallot error : ' + vBallot.error);
+    let year = new Date();
+    electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+    if(!electId){
+      console.log('에러 발생.');
+      let context = {error:'선거가 존재하지 않음'};
+      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+      return;
+    }
+    let args = {
+      walletId: walletid,
+      electionId: electId
+    };
+    let networkObj = await network.connectToNetwork(walletid);
+    let response = await network.invoke(networkObj, false, 'createVBallot', args); //args = walletid
+    response = JSON.parse(response);
+    if(response.error){
+      console.log(response.error);
+      return;
+    }
+  }
+  networkObj = await network.connectToNetwork(walletid);
+  vBallot = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+  vBallot = JSON.parse(vBallot);
   if(vBallot.error){
-    let context = {error:'투표할 수 있는 선거가 없습니다.'};
-    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+    console.log('vBallot error : ' + vBallot.error);
     return;
   }
   let electionCast;
@@ -913,18 +936,8 @@ app.post('/process/existagree/:univ', async (req, res) => {
     return;
   }
   let walletid = await getHashPw2(paramStdno);
-  let args = {
-    walletId: walletid,
-    electionId: electId
-  };
   let array = [];
   let networkObj = await network.connectToNetwork(walletid);
-  let response = await network.invoke(networkObj, false, 'createVBallot', args); //args = walletid
-  response = JSON.parse(response);
-  if(response.error){
-    console.log(response.error);
-    return;
-  }
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
