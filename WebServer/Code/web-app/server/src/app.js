@@ -535,7 +535,7 @@ app.get('/sign', async (req, res) => {
   let stat = req.session.stat;
   let pw = ''; //pw from db
 
-  if (stat != '재학') {
+  if (stat !== '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
     res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'재학중인 학생만 투표가 가능합니다.\');document.location.href=\'/main\';</script>');
     return;
@@ -974,30 +974,10 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
   // ledger에 선거 등록
   // electionid 같은 경우엔 체인코드에서 처리해도됨
   let len = req.body.isMulti;
-  let args = {
-    name: req.body.name,
-    univ: req.body.univ,
-    startdate: req.body.startdate,
-    enddate: req.body.enddate,
-    candidates:req.body.hname
-  };
-  args = JSON.stringify(args);
-  args = [args];
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, false, 'createElection', args);
-  response = JSON.parse(response);
-  if (response.error) {
-    console.log('registervote error : ' + response.error);
-    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
-    return;
-  } 
-  console.log('createElection response : ' + typeof response + ' => ' + response);
-  // DB에 req.body의 값들을 삽입한다.
-  let electionId = response.success;
+  let arr = [];
   for(let i=0; i<len;i+=1){
     let data = {
-      electionid:electionId,
-      hname: Array.isArray(req.body.hname) ? req.body.hname[i] : req.body.hname,
+      name: Array.isArray(req.body.hname) ? req.body.hname[i] : req.body.hname,
       icon:req.files.image[i].filename,
       link:Array.isArray(req.body.link) ? req.body.link[i] : req.body.link,
       hakbun1:Array.isArray(req.body.no1) ? req.body.no1[i] : req.body.no1,
@@ -1011,8 +991,29 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
       grade2:Array.isArray(req.body.grade2) ? req.body.grade2[i] : req.body.grade2,
       profile2:req.files.image2[i].filename,
     };
-    await registerCandidate(data);
+    arr.push(data);
   }
+
+  let args = {
+    name: req.body.name,
+    univ: req.body.univ,
+    startdate: req.body.startdate,
+    enddate: req.body.enddate,
+    candidates:arr
+  };
+
+  //args = JSON.stringify(args);
+  //args = [args];
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let response = await network.invoke(networkObj, false, 'createElection', args);
+  response = JSON.parse(response);
+  if (response.error) {
+    console.log('registervote error : ' + response.error);
+    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
+    return;
+  } 
+  console.log('createElection response : ' + typeof response + ' => ' + response);
+
   let context = {
     session:req.session
   };
@@ -1111,7 +1112,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
   let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
   if(!electId){
     console.log('에러 발생.');
-    let context = {error:req.session.univ+'선거가 존재하지 않음'};
+    let context = {error:'선거가 존재하지 않음'};
     res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
     return;
   }
