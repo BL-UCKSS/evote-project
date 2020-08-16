@@ -614,15 +614,13 @@ async generateCandidateResult(ctx ,  args , electionId) {
         await candidate.count++;
 
         //update the state with the new vote count
-        let result = await ctx.stub.putState(candidateId, Buffer.from(JSON.stringify(candidate)));
-        console.log(result);
+        await ctx.stub.putState(candidateId, Buffer.from(JSON.stringify(candidate)));
 
         //make sure this voter cannot vote again! 이름이 들어가게 수정
         vBallot.picked = candidate.name;
 
         //update state to say that this voter has voted, and who they picked
-        let resp = await ctx.stub.putState(vBallot.voterId, Buffer.from(JSON.stringify(vBallot)));
-        console.log(resp);
+        await ctx.stub.putState(vBallot.voterId, Buffer.from(JSON.stringify(vBallot)));
 
         let response = {};
         response.success = vBallot.voterId;
