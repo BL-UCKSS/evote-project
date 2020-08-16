@@ -1,6 +1,3 @@
-/* eslint-disable no-mixed-spaces-and-tabs */
-/* eslint-disable no-tabs */
-/* eslint-disable require-atomic-updates */
 'use strict';
 
 const express = require('express');
@@ -13,14 +10,11 @@ const crypto = require('crypto');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const expressSession = require('express-session');
-//const morgan = require('morgan');
-//const util = require('util');
 
 const configPath = path.join(process.cwd(), './config.json');
 const configJSON = fs.readFileSync(configPath, 'utf8');
 const config = JSON.parse(configJSON);
 
-//use this identity to query
 const appAdmin = config.appAdmin;
 
 let network = require('./fabric/network.js');
@@ -30,17 +24,25 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.body.name;
-    cb(null, name + '_' + file.originalname);
+    let name = req.body.name + file.originalname;
+    let c = crypto.createHash('sha256').update(name).digest('hex').substring(0, 10);
+    cb(null, c+'.'+file.mimetype.split('/')[1]);
   }
 });
 const upload = multer({storage: storage});
+const storage2 = multer.diskStorage({
+  destination : (req, file, cb) => {
+    cb(null, 'public/img/');
+  },
+  filename : (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+const upload2 = multer({storage: storage2});
 
 let database;
 let UserSchema;
-//let CandidateSchema;
 let UserModel;
-//let CandidateModel;
 let AdminSchema;
 let AdminModel;
 
@@ -55,7 +57,6 @@ function connectDB() {
   database.on('open', function() {
     console.log('데이터베이스에 연결됨 : ' + databaseUrl);
       
-          
     UserSchema = mongoose.Schema({
       stdno: {type:String, required:true, unique:true},
       password: {type:String, required:true},
@@ -67,24 +68,6 @@ function connectDB() {
     });
     console.log('UserSchema 정의함.');
 
-    /*CandidateSchema = mongoose.Schema({
-      electionid: {type:String, required:true},
-      hname: {type:String, required:true},
-      icon: {type:String, required:true},
-      link: {type:String, required:false},
-      hakbun1: {type:Number, required:true},
-      name1: {type:String, index:'hashed', required:true},
-      dept1: {type:String, required:true},
-      grade1: {type:Number, required:true},
-      profile1: {type:String, required:true},
-      hakbun2: {type:Number, required:true},
-      name2: {type:String, index:'hashed', required:true},
-      dept2: {type:String, required:true},
-      grade2: {type:Number, required:true},
-      profile2: {type:String, required:true},
-    });
-    console.log('CandidateSchema 정의함.');*/
-
     AdminSchema = mongoose.Schema({
       id: {type:String, required:true, unique:true},
       pw: {type:String, required:true},
@@ -93,7 +76,6 @@ function connectDB() {
     });
     console.log('AdminSchema 정의함.');
       
-    //함수 등록(이후 모델 객체에서 사용가능)
     UserSchema.static('findById', function(stdno, callback) {
       return this.find({stdno:stdno}, callback);        
     });
@@ -106,23 +88,6 @@ function connectDB() {
       return this.find({}, callback);        
     });
 
-    /*CandidateSchema.static('findById', function(no, callback){
-      return this.find({no:no}, callback);
-    });
-
-    CandidateSchema.static('findByElectId', function(electId,callback){
-      return this.find({electionid:electId}, callback);        
-    });
-
-    CandidateSchema.static('registerCandidate', function(data){
-      let candy = new this(data);
-      return candy.save();
-    });
-
-    CandidateSchema.static('removeCandidate', function(electId){
-      return this.deleteMany({electionid:electId});      
-    });*/
-
     AdminSchema.static('findById', function(adminid, callback) {
       return this.find({id:adminid}, callback);        
     });
@@ -133,9 +98,6 @@ function connectDB() {
   
     UserModel = mongoose.model('ssousers', UserSchema);
     console.log('UserModel 정의함.');
-
-    /*CandidateModel = mongoose.model('candidates', CandidateSchema);
-    console.log('CandidateModel 정의함.');*/
 
     AdminModel = mongoose.model('adminusers', AdminSchema);
     console.log('AdminModel 정의함.');
@@ -193,14 +155,6 @@ let getHashPw2 = async function(stdno) {
   let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
   return walletid;
 };
-let registerCandidate = async function(data) {
-  console.log('registerCandidate 호출됨');
-  //await CandidateModel.registerCandidate(data);
-};
-let removeCandidate = async function(data) {
-  console.log('removeCandidate 호출됨');
-  //await CandidateModel.removeCandidate(data);
-};
 let adminEmail = function(database, callback) {
   console.log('adminEmail 호출됨');
   
@@ -221,10 +175,7 @@ let updateAdminEmail = async function(database, id, email) {
   console.log('updateAdminEmail 호출됨');
   await AdminModel.updateById(id, email);
 };
-let modifyCandidate = async function(id, data) {
-  console.log('updateAdminEmail 호출됨');
-  //await CandidateModel.updateById(id, data);
-};
+
 // SSO 로그인 관련 router
 let authUser = function(database, stdno, password, callback) {
   console.log('authUser 호출됨 : ' + stdno + ', ' + password);
@@ -273,29 +224,10 @@ let authAdmin = function(database, id, pw, callback) {
   });
 };
 
-let loadCandidateByElectId = function(electId, callback) {
-  console.log('loadCandidateByElectId 호출됨 : ' + electId);
-  
-  /*CandidateModel.findByElectId(electId, function(err, result) {
-    if(err) {
-      callback(err, null);
-      return;
-    }
-    if(result.length > 0){
-      callback(null, result);
-    }else{
-      console.log('일치하는 기호 없음.');
-      callback(null, null);
-    }
-  });*/
-  
-};
-
 let registerUser = async function(walletId, gubun, univ){
   let response = await network.registerVoter(walletId);
   if (response.error) {
-	    // eslint-disable-next-line no-mixed-spaces-and-tabs
-	    console.log(response.error);
+    console.log(response.error);
   } else {
     console.log('registerUser 호출됨');
   }
@@ -316,7 +248,6 @@ const htmlrender = function(req, res, fname, context){
 };
 
 const app = express();
-//app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 app.use(cors());
@@ -359,7 +290,7 @@ app.get('/adminMain', async (req, res) => {
 });
 
 app.get('/adminNow', async (req, res) => {
-  let total = 12; //재학생 수
+  let TotalNum = 10; //재학생 수
   let arr = [];
   let networkObj = await network.connectToNetwork(appAdmin);
   let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
@@ -369,33 +300,27 @@ app.get('/adminNow', async (req, res) => {
   let now = new Date();
   //선거 목록 출력 후 선거별로 투표율 계산 및 출력
   for (let i in parsedElection){
-    let count = 0;
     let t1 = new Date(parsedElection[i].Record.startDate);
     let t2 = new Date(parsedElection[i].Record.endDate);
     if(now >= t1 && now <= t2){ 
       //해당 선거의 투표율을 확인해야하지만, 현재 querybyobjecttype voter는 type을 구분할 수 없음.votableItem
-      let parsedVotablItems = await network.invoke(networkObj, true, 'queryByObjectType', 'votableItem');
-      parsedVotablItems = JSON.parse(JSON.parse(parsedVotablItems));
-      for(let j=0; j<parsedVotablItems.length; j++){
-        count += parsedVotablItems[j].Record.count;
-      }
-      let avg = count / total * 100;
-      let nowTime = new Date().toISOString();
-      if(parsedElection[i].Record.endDate > nowTime){
-        arr.push({
-          name: parsedElection[i].Record.name,
-          enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
-          avg: avg.toFixed(2),
-        });
-      }
+      let args = {
+        electionId: parsedElection[i].Key,
+        TotalNum: TotalNum
+      };
+      let resp = await network.invoke(networkObj, true, 'queryCurrentTimeTurnout', args);
+      let avg = resp.success;
+      arr.push({
+        name: parsedElection[i].Record.name,
+        enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
+        avg: avg.toFixed(2),
+      });
     }
   }
-  
   let context = {
     session:req.session,
     list: arr
   };
-
   htmlrender(req, res, 'adminNow', context);
 });
 
@@ -693,88 +618,51 @@ app.get('/logout', async (req, res) => {
 });
 
 // vote 관련 router
-app.get('/queryallpage', async (req, res) => {
-  let context = {session:req.session};
-  htmlrender(req, res, 'queryall', context);
-});
-
-app.get('/querybytype', async (req, res) => {
-  let context = {session:req.session};
-  htmlrender(req, res, 'querybytype', context);
-});
-
-app.get('/querybykey', async (req, res) => {
-  let context = {session:req.session};
-  htmlrender(req, res, 'querybykey', context);
-});
-
-app.get('/checkrating', async (req, res) => {
-  let context = {session:req.session};
-  htmlrender(req, res, 'checkrating', context);
-});
-
 app.get('/castBallot/:electId', async (req, res) => {
-
+  let userid = req.session.userid;
   let array = new Array();
   let context;
   let data;
-  let electId;
+  let electId = req.params.electId;
   if (database) {
-    //electId 조회
-    electId = req.params.electId;
-    // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-    /*loadCandidateByElectId(electId, function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-                  
-      if(docs){
-        // console.dir(docs);
-        for(let i=0; i<docs.length; i++){
-          data = {
-            no: i+1,
-            hakbun1: docs[i]._doc.hakbun1,
-            hakbun2: docs[i]._doc.hakbun2,
-            name1: docs[i]._doc.name1,
-            name2: docs[i]._doc.name2,
-            dept1: docs[i]._doc.dept1,
-            dept2: docs[i]._doc.dept2,
-            grade1: docs[i]._doc.grade1,
-            grade2: docs[i]._doc.grade2,
-            profile1: docs[i]._doc.profile1,
-            profile2: docs[i]._doc.profile2,
-            hname: docs[i]._doc.hname,
-            icon: docs[i]._doc.icon,
-            link: docs[i]._doc.link,
-          };
-          array.push(data);
-        }
-        context = {
-          contents: array,
-          session: req.session
+    let walletid = getHashPw2(userid);
+    let networkObj = await network.connectToNetwork(walletid);
+    let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
+    candidate = JSON.parse(candidate);
+    if(candidate.success){
+      for(let i=0; i<candidate.success.length; i++){
+        data = {
+          no: i+1,
+          hakbun1: candidate.success[i].Record.hakbun1,
+          hakbun2: candidate.success[i].Record.hakbun2,
+          name1: candidate.success[i].Record.name1,
+          name2: candidate.success[i].Record.name2,
+          dept1: candidate.success[i].Record.dept1,
+          dept2: candidate.success[i].Record.dept2,
+          grade1: candidate.success[i].Record.grade1,
+          grade2: candidate.success[i].Record.grade2,
+          profile1: candidate.success[i].Record.profile1,
+          profile2: candidate.success[i].Record.profile2,
+          hname: candidate.success[i].Record.hname,
+          icon: candidate.success[i].Record.icon,
+          link: candidate.success[i].Record.link,
         };
-        console.log(context);
-        htmlrender(req, res, 'vote', context);
-      }else{
-        console.log('에러 발생.');
-        //사용자 데이터 조회 안됨
-        let context = {error:'기호 없음'};
-        res.send(context);
-        return;
+        array.push(data);
       }
-    });*/
-    
-  }else {
-    console.log('에러 발생.');
-    //데이터베이스 연결 안됨
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
+      context = {
+        contents: array,
+        session: req.session
+      };
+      console.log(context);
+      htmlrender(req, res, 'vote', context);
+    }else{
+      console.log('에러 발생.');
+      //사용자 데이터 조회 안됨
+      let context = {error:'기호 없음'};
+      res.send(context);
+      return;
+    }
   }
-  
 });
 
 app.get('/personalAgree', async (req, res) => {
@@ -785,33 +673,6 @@ app.get('/personalAgree', async (req, res) => {
   htmlrender(req, res, 'personalAgree', context);
 });
 
-app.get('/getDate', async (req, res) => {
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryAll', '');
-  let parsedResponse = await JSON.parse(response);
-  res.send(parsedResponse);
-});
-
-//get all assets in world state
-app.get('/queryAll', async (req, res) => {
-
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryAll', '');
-  let parsedResponse = await JSON.parse(response);
-  res.send(parsedResponse);
-
-});
-
-app.get('/getCurrentStanding', async (req, res) => {
-
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'voter');
-  let parsedResponse = await JSON.parse(response);
-  ////console.log(parsedResponse);
-  res.send(parsedResponse);
-
-});
-
 app.post('/process/removeElection', async(req,res) => {
   console.log('removeElection 호출됨');
   let electionid = req.body.electionid || req.query.electionid;
@@ -819,51 +680,45 @@ app.post('/process/removeElection', async(req,res) => {
   let args = {
     electionId : electionid
   };
-  //args = JSON.stringify(args);
-  //args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, false, 'deleteElection', args);
-  response = JSON.parse(response);
-  if(response.success){
-    //이미지 삭제하기
-    /*loadCandidateByElectId(electionid, function(err, docs) {
-      if(err){
-        console.log('에러 발생.');
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }                      
-      if(docs){
-        for(let i=0; i<docs.length; i++){
-          let filePath = __dirname + '/../public/img/' + docs[i]._doc.icon;
-          fs.unlink(filePath, function(err){
-            console.log(docs[i]._doc.icon + ' 파일 지워짐');
-            if (err) {console.log(err);}
-          });
-          filePath = __dirname + '/../public/img/' + docs[i]._doc.profile1;
-          fs.unlink(filePath, function(err){
-            console.log(docs[i]._doc.profile1 + ' 파일 지워짐');
-            if (err) {console.log(err);}
-          });
-          filePath = __dirname + '/../public/img/' + docs[i]._doc.profile2;
-          fs.unlink(filePath, function(err){
-            console.log(docs[i]._doc.profile2 + ' 파일 지워짐');
-            if (err) {console.log(err);}
-          });
-        }
-      }else{
-        //선거가 존재하지 않을 때
-        let response = {};
-        response.error = '선거가 존재하지 않습니다.';
-        res.send(response);
+  let resp = await network.invoke(networkObj, false, 'deleteElection', args);
+  resp = JSON.parse(resp);
+  if(resp.success){
+    let networkObj = await network.connectToNetwork(appAdmin);
+    let response = await network.invoke(networkObj, true, 'getCandidateInfo', electionid);
+    response = JSON.parse(response);
+    if(response.success){
+      for(let i=0; i<response.success.length; i++){
+        let filePath = __dirname + '/../public/img/' + response.success[i].Record.icon;
+        fs.unlink(filePath, function(err){
+          console.log(response.success[i].Record.icon + ' 파일 지워짐');
+          if (err) {console.log(err);}
+        });
+        filePath = __dirname + '/../public/img/' + response.success[i].Record.profile1;
+        fs.unlink(filePath, function(err){
+          console.log(response.success[i].Record.profile1 + ' 파일 지워짐');
+          if (err) {console.log(err);}
+        });
+        filePath = __dirname + '/../public/img/' + response.success[i].Record.profile2;
+        fs.unlink(filePath, function(err){
+          console.log(response.success[i].Record.profile2 + ' 파일 지워짐');
+          if (err) {console.log(err);}
+        });
       }
-    });*/
-    //DB에도 선거 및 후보자 정보 삭제
-    //await removeCandidate(electionid);
-    let response = {};
-    response.success = '선거 정보가 삭제되었습니다.';
-    res.send(response);
+    }else{
+      //선거가 존재하지 않을 때
+      let response = {};
+      response.error = '선거가 존재하지 않습니다.';
+      res.send(response);
+    }
+    let resp = {};
+    resp.success = '선거 정보가 삭제되었습니다.';
+    res.send(resp);
   }
+});
+
+app.post('/process/upload_image', upload2.array('image'), async(req,res) => {
+  console.log('/process/upload_image 호출됨.');
 });
 
 app.post('/modifyvote', async (req, res) => {
@@ -874,70 +729,98 @@ app.post('/modifyvote', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let election = await network.invoke(networkObj, true, 'readMyAsset', electionid);
   election = JSON.parse(election);
-  /*loadCandidateByElectId(election.electionId, function(err, docs) {
-    if(err){
-      console.log('에러 발생.');
-      let context = {error:'Error is occured'};
-      res.send(context);
-      return;
-    }                      
-    if(docs){
-      for(let i=0; i<docs.length; i++){
-        let data = {
-          hname: docs[i]._doc.hname,
-          icon: docs[i]._doc.icon,
-          link: docs[i]._doc.link,
-          hakbun1: docs[i]._doc.hakbun1,
-          name1: docs[i]._doc.name1,
-          dept1: docs[i]._doc.dept1,
-          grade1: docs[i]._doc.grade1,
-          profile1: docs[i]._doc.profile1,
-          hakbun2: docs[i]._doc.hakbun2,
-          name2: docs[i]._doc.name2,
-          dept2: docs[i]._doc.dept2,
-          grade2: docs[i]._doc.grade2,
-          profile2: docs[i]._doc.profile2,
-        };
-        array.push(data);
-      }
-      console.log(array);
-      let univList = ['총학생회','인문사회과학대학','사범대학','경영경제대학','융합공과대학','문화예술대학'];
-      const idx = univList.indexOf(election.univ);
-      if(idx > -1) {
-        univList.splice(idx, 1);
-      }
-      let context = {
-        session:req.session,
-        electionData:election,
-        candidateData:array,
-        univList:univList
+  networkObj = await network.connectToNetwork(appAdmin);
+  let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electionid);
+  candidate = JSON.parse(candidate);
+  if(candidate.success){
+    for(let i=0; i<candidate.success.length; i++){
+      let data = {
+        hname: candidate.success[i].Record.hname,
+        icon: candidate.success[i].Record.icon,
+        link: candidate.success[i].Record.link,
+        hakbun1: candidate.success[i].Record.hakbun1,
+        name1: candidate.success[i].Record.name1,
+        dept1: candidate.success[i].Record.dept1,
+        grade1: candidate.success[i].Record.grade1,
+        profile1: candidate.success[i].Record.profile1,
+        hakbun2: candidate.success[i].Record.hakbun2,
+        name2: candidate.success[i].Record.name2,
+        dept2: candidate.success[i].Record.dept2,
+        grade2: candidate.success[i].Record.grade2,
+        profile2: candidate.success[i].Record.profile2,
       };
-    
-      htmlrender(req, res, 'modifyvote', context);
-    }else{
-      console.log('에러 발생.');
-      //사용자 데이터 조회 안됨
-      let context = {error:'기호 없음'};
-      res.send(context);
-      return;
+      array.push(data);
     }
-  });*/
+    let univList = ['총학생회','인문사회과학대학','사범대학','경영경제대학','융합공과대학','문화예술대학'];
+    const idx = univList.indexOf(election.univ);
+    if(idx > -1) {
+      univList.splice(idx, 1);
+    }
+    let context = {
+      session:req.session,
+      electionData:election,
+      candidateData:array,
+      univList:univList
+    };
+  
+    htmlrender(req, res, 'modifyvote', context);
+  }else{
+    console.log('에러 발생.');
+    //사용자 데이터 조회 안됨
+    let context = {error:'기호 없음'};
+    res.send(context);
+    return;
+  }
 });
 
-app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{name:'image2'}]), async (req, res) => {
+app.post('/process/modifyvote', async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
+  console.log(req.files);
+  
   // ledger에 등록된 선거 수정
   let len = req.body.isMulti;
+  console.log('len = ' + len);
+  let candidates = [];
+  // DB에 선거 및 후보자 정보를 수정한다.
+  if(len === 1){
+    let data = {
+      hname:req.body.hname,
+      link:req.body.link,
+      hakbun1:req.body.no1,
+      name1:req.body.sname1,
+      dept1:req.body.dept1,
+      grade1:req.body.grade1,
+      hakbun2:req.body.no2,
+      name2:req.body.sname2,
+      dept2:req.body.dept2,
+      grade2:req.body.grade2,
+    };
+    candidates.push(data);
+  }else{
+    for(let i=0; i<len; i++){
+      let data = {
+        hname:req.body.hname[i],
+        link:req.body.link[i],
+        hakbun1:req.body.no1[i],
+        name1:req.body.sname1[i],
+        dept1:req.body.dept1[i],
+        grade1:req.body.grade1[i],
+        hakbun2:req.body.no2[i],
+        name2:req.body.sname2[i],
+        dept2:req.body.dept2[i],
+        grade2:req.body.grade2[i],
+      };
+      candidates.push(data);
+    }
+  }
   let args = {
     electionId: req.body.electionid,
     name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
-    candidates: req.body.hname
+    candidates: candidates
   };
-  args = JSON.stringify(args);
-  args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'modifyElection', args);
   response = JSON.parse(response);
@@ -947,22 +830,6 @@ app.post('/process/modifyvote', upload.fields([{name: 'image'},{name:'image1'},{
     return;
   }
   console.log('modifyElection response : ' + typeof response + ' => ' + JSON.stringify(response));
-  // DB에 선거 및 후보자 정보를 수정한다.
-  for(let i=0; i<len;i+=1){
-    let data = {
-      hname:req.body.hname[i],
-      link:req.body.link[i],
-      hakbun1:req.body.no1[i],
-      name1:req.body.sname1[i],
-      dept1:req.body.dept1[i],
-      grade1:req.body.grade1[i],
-      hakbun2:req.body.no2[i],
-      name2:req.body.sname2[i],
-      dept2:req.body.dept2[i],
-      grade2:req.body.grade2[i],
-    };
-    await modifyCandidate(req.body.electionid, data);
-  }
   let context = {
     session:req.session
   };
@@ -993,7 +860,6 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     };
     arr.push(data);
   }
-
   let args = {
     name: req.body.name,
     univ: req.body.univ,
@@ -1001,9 +867,6 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     enddate: req.body.enddate,
     candidates:arr
   };
-
-  //args = JSON.stringify(args);
-  //args = [args];
   let networkObj = await network.connectToNetwork(appAdmin);
   let response = await network.invoke(networkObj, false, 'createElection', args);
   response = JSON.parse(response);
@@ -1048,6 +911,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let args = {
     electionId: electId
   };
+  let array = [];
   //args = [args];
   let walletid = await getHashPw2(paramStdno);
   let networkObj = await network.connectToNetwork(walletid);
@@ -1055,55 +919,48 @@ app.post('/process/existagree/:univ', async (req, res) => {
   response = JSON.parse(response);
   console.log(response);
   // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-  /*loadCandidateByElectId(electId, function(err, docs) {
-    if(err){
-      console.log('에러 발생.');
-      let context = {error:'Error is occured'};
-      res.send(context);
-      return;
-    }         
-    if(docs){
-      for(let i=0; i<docs.length; i++){
-        let data = {
-          electionid: docs[i]._doc.electionid,
-          hname: docs[i]._doc.hname,
-          icon: docs[i]._doc.icon,
-          link: docs[i]._doc.link,
-          hakbun1: docs[i]._doc.hakbun1,
-          name1: docs[i]._doc.name1,
-          dept1: docs[i]._doc.dept1,
-          grade1: docs[i]._doc.grade1,
-          profile1: docs[i]._doc.profile1,
-          hakbun2: docs[i]._doc.hakbun2,
-          name2: docs[i]._doc.name2,
-          dept2: docs[i]._doc.dept2,
-          grade2: docs[i]._doc.grade2,
-          profile2: docs[i]._doc.profile2,
-        };
-        array.push(data);
-      }
-      let context = {
-        list: array,
-        session: req.session,
-        univ:univ
+  networkObj = await network.connectToNetwork(appAdmin);
+  let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
+  candidate = JSON.parse(candidate);
+  if(candidate.success){
+    for(let i=0; i<candidate.success.length; i++){
+      let data = {
+        electionid: candidate.success[i].Record.electionid,
+        hname: candidate.success[i].Record.hname,
+        icon: candidate.success[i].Record.icon,
+        link: candidate.success[i].Record.link,
+        hakbun1: candidate.success[i].Record.hakbun1,
+        name1: candidate.success[i].Record.name1,
+        dept1: candidate.success[i].Record.dept1,
+        grade1: candidate.success[i].Record.grade1,
+        profile1: candidate.success[i].Record.profile1,
+        hakbun2: candidate.success[i].Record.hakbun2,
+        name2: candidate.success[i].Record.name2,
+        dept2: candidate.success[i].Record.dept2,
+        grade2: candidate.success[i].Record.grade2,
+        profile2: candidate.success[i].Record.profile2,
       };
-
-      htmlrender(req, res, 'vote', context);
-      return;
-    }else{
-      console.log('에러 발생.');
-      //사용자 데이터 조회 안됨
-      let context = {error:'기호 없음'};
-      res.send(context);
-      return;
+      array.push(data);
     }
-  });*/
+    let context = {
+      list: array,
+      session: req.session,
+      univ:univ
+    };
+
+    htmlrender(req, res, 'vote', context);
+    return;
+  }else{
+    console.log('에러 발생.');
+    //사용자 데이터 조회 안됨
+    let context = {error:'기호 없음'};
+    res.send(context);
+    return;
+  }
 });
 
 app.post('/process/vote2/:univ', async (req, res) => {
   console.log('/process/vote2 라우팅 함수 호출됨.');
-
-  let paramStdno = req.session.userid;  
   let univ = req.params.univ;
   
   //단과대 선거id 찾기
@@ -1118,48 +975,43 @@ app.post('/process/vote2/:univ', async (req, res) => {
   }
   let array = [];
   // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-  /*loadCandidateByElectId(electId, function(err, docs) {
-    if(err){
-      console.log('에러 발생.');
-      let context = {error:'Error is occured'};
-      res.send(context);
-      return;
-    }                      
-    if(docs){
-      for(let i=0; i<docs.length; i++){
-        let data = {
-          hakbun1: docs[i]._doc.hakbun1,
-          hakbun2: docs[i]._doc.hakbun2,
-          name1: docs[i]._doc.name1,
-          name2: docs[i]._doc.name2,
-          dept1: docs[i]._doc.dept1,
-          dept2: docs[i]._doc.dept2,
-          grade1: docs[i]._doc.grade1,
-          grade2: docs[i]._doc.grade2,
-          profile1: docs[i]._doc.profile1,
-          profile2: docs[i]._doc.profile2,
-          hname: docs[i]._doc.hname,
-          icon: docs[i]._doc.icon,
-          link: docs[i]._doc.link,
-        };
-        array.push(data);
-      }
-      let context = {
-        list: array,
-        session: req.session,
-        electId: electId,
-        univ:univ
+  let networkObj = await network.connectToNetwork(appAdmin);
+  let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
+  candidate = JSON.parse(candidate);
+  if(candidate.success){
+    for(let i=0; i<candidate.success.length; i++){
+      let data = {
+        hakbun1: candidate.success[i].Record.hakbun1,
+        hakbun2: candidate.success[i].Record.hakbun2,
+        name1: candidate.success[i].Record.name1,
+        name2: candidate.success[i].Record.name2,
+        dept1: candidate.success[i].Record.dept1,
+        dept2: candidate.success[i].Record.dept2,
+        grade1: candidate.success[i].Record.grade1,
+        grade2: candidate.success[i].Record.grade2,
+        profile1: candidate.success[i].Record.profile1,
+        profile2: candidate.success[i].Record.profile2,
+        hname: candidate.success[i].Record.hname,
+        icon: candidate.success[i].Record.icon,
+        link: candidate.success[i].Record.link,
       };
-      htmlrender(req, res, 'vote2', context);            
-      return;
-    }else{
-      console.log('에러 발생.');
-      //사용자 데이터 조회 안됨
-      let context = {error:'기호 없음'};
-      res.send(context);
-      return;
+      array.push(data);
     }
-  });*/
+    let context = {
+      list: array,
+      session: req.session,
+      electId: electId,
+      univ:univ
+    };
+    htmlrender(req, res, 'vote2', context);            
+    return;
+  }else{
+    console.log('에러 발생.');
+    //사용자 데이터 조회 안됨
+    let context = {error:'기호 없음'};
+    res.send(context);
+    return;
+  }
 });
 
 app.post('/process/finvote/:univ', async (req, res) => {
@@ -1332,134 +1184,6 @@ app.post('/process/login', async (req, res) => {
       res.send(context);
       return;    
     }
-  }
-});
-
-//vote for some candidates. This will increase the vote count for the votable objects
-app.post('/castBallot', async (req, res) => {
-  let networkObj = await network.connectToNetwork(req.body.voterId);
-  ////console.log('util inspecting');
-  ////console.log(util.inspect(networkObj));
-  req.body = JSON.stringify(req.body);
-  console.log('req.body');
-  console.log(req.body);
-  let args = [req.body];
-
-  let response = await network.invoke(networkObj, false, 'castVote', args);
-  if (response.error) {
-    res.send(response.error);
-  } else {
-    ////console.log('response: ');
-    ////console.log(response);
-    // let parsedResponse = await JSON.parse(response);
-    res.send(response);
-  }
-});
-
-//query for certain objects within the world state
-app.post('/queryWithQueryString', async (req, res) => {
-  let selected = req.query.selected || req.body.selected;
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', selected);
-  let parsedResponse = await JSON.parse(response);
-  res.send(parsedResponse);
-
-});
-
-
-//get voter info, create voter object, and update state with their voterId
-app.post('/registerVoter', async (req, res) => {
-  ////console.log('req.body: ');
-  ////console.log(req.body);
-  let voterId = req.body.voterId;
-  req.body.univ = req.session.univ;
-  console.log(voterId);
-  //first create the identity for the voter and add to wallet
-  let response = await network.registerVoter(voterId);
-  console.log('response from registerVoter: ');
-  console.log(response);
-  if (response.error) {
-    res.send(response.error);
-  } else {
-    console.log('req.body.voterId');
-    console.log(req.body.voterId);
-    let networkObj = await network.connectToNetwork(voterId);
-    console.log('networkobj: ');
-    console.log(networkObj);
-
-    if (networkObj.error) {
-      res.send(networkObj.error);
-    }
-    ////console.log('network obj');
-    ////console.log(util.inspect(networkObj));
-
-    let year = new Date();
-    req.body.year = String(year.getFullYear());
-    req.body = JSON.stringify(req.body);
-    let args = [req.body];
-    //connect to network and update the state with voterId  
-
-    let invokeResponse = await network.invoke(networkObj, false, 'createVoter', args);
-    
-    if (invokeResponse.error) {
-      res.send(invokeResponse.error);
-    } else {
-
-      //console.log('after network.invoke ');
-      let parsedResponse = JSON.parse(invokeResponse);
-      parsedResponse += '. Use voterId to login above.';
-      res.send(parsedResponse);
-
-    }
-
-  }
-
-
-});
-
-//used as a way to login the voter to the app and make sure they haven't voted before 
-app.post('/validateVoter', async (req, res) => {
-  //console.log('req.body: ');
-  //console.log(req.body);
-  let networkObj = await network.connectToNetwork(req.body.voterId);
-  //console.log('networkobj: ');
-  //console.log(util.inspect(networkObj));
-
-  if (networkObj.error) {
-    res.send(networkObj);
-  }
-
-  let invokeResponse = await network.invoke(networkObj, true, 'readMyAsset', req.body.voterId);
-  if (invokeResponse.error) {
-    res.send(invokeResponse);
-  } else {
-    //console.log('after network.invoke ');
-    let parsedResponse = await JSON.parse(invokeResponse);
-    if (parsedResponse.ballotCast) {
-      let response = {};
-      response.error = 'This voter has already cast a ballot, we cannot allow double-voting!';
-      res.send(response);
-    }
-    // let response = `Voter with voterId ${parsedResponse.voterId} is ready to cast a ballot.`  
-    res.send(parsedResponse);
-  }
-
-});
-
-app.post('/queryByKey', async (req, res) => {
-  //console.log('req.body: ');
-  //console.log(req.body);
-
-  let networkObj = await network.connectToNetwork(appAdmin);
-  //console.log('after network OBj');
-  let response = await network.invoke(networkObj, true, 'readMyAsset', req.body.key);
-  response = JSON.parse(response);
-  if (response.error) {
-    //console.log('inside eRRRRR');
-    res.send(response.error);
-  } else {
-    //console.log('inside ELSE');
-    res.send(response);
   }
 });
 
