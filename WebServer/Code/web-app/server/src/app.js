@@ -342,19 +342,20 @@ app.get('/myvote', async (req, res) => {
   console.log('/myvote 호출됨');
   let userid = req.session.userid;
   let walletid = await getHashPw2(userid);
-  let networkObj = await network.connectToNetwork(walletid);
-  let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
-  response = JSON.parse(response);
+  //let networkObj = await network.connectToNetwork(walletid);
+  //let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
+  //response = JSON.parse(response);
   // 어떤 response 인지 확인하고 구현하기.
-  if (response.error) {
+  // 만약 response.error === '투표를 하지 않았습니다.' 이라면, list = []
+  /*if (response.error) {
     console.log(response.error);
     res.end('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/myvote\';</script>');
     return;
   }
-  console.log(JSON.stringify(response.success));
+  console.log(JSON.stringify(response.success));*/
   //아래에 내 투표 결과들 넘겨주는 코드 작성하기!!!!!
   /*
-  
+
   */
 
   let context = {
@@ -882,14 +883,14 @@ app.post('/process/existagree/:univ', async (req, res) => {
     res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
     return;
   }
+  let walletid = await getHashPw2(paramStdno);
   let args = {
+    walletId: walletid,
     electionId: electId
   };
   let array = [];
-  //args = [args];
-  let walletid = await getHashPw2(paramStdno);
   let networkObj = await network.connectToNetwork(walletid);
-  let response = await network.invoke(networkObj, false, 'createVBallot', args); //args = walletid, candidateid
+  let response = await network.invoke(networkObj, false, 'createVBallot', args); //args = walletid
   response = JSON.parse(response);
   console.log(response);
   // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
@@ -992,6 +993,7 @@ app.post('/process/finvote/:univ', async (req, res) => {
   console.log('/process/finvote 라우팅 함수 호출됨.');
 
   //[현재] "브릿지" 형식으로 넘어옴 (req.body.candidates)
+  //[수정] "asdfjkaefafjel" 또는 ["saejglkaekgja", "awjkegjka;ke"] 형식으로 넘어와야함.
   let paramballot = req.body.candidates;
   let userid = req.session.userid;
   let pw = ''; //pw from db
@@ -1009,13 +1011,13 @@ app.post('/process/finvote/:univ', async (req, res) => {
         pw = docs;
         let useridpw = userid + pw;
         let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-        let picked = paramballot;
+        let candidateid = Array.isArray(paramballot) === true ? paramballot : [paramballot];
 
         // 블록체인에 투표 데이터 전송
         let networkObj = await network.connectToNetwork(walletid);
         let data = {
-          walletId:walletid,
-          candidateId:picked,
+          voterId:walletid,
+          candidateId:candidateid,
         };
         data = JSON.stringify(data);
         let args = [data];
