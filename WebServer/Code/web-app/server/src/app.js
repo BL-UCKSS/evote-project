@@ -661,39 +661,45 @@ app.post('/process/removeElection', async(req,res) => {
     electionId : electionid
   };
   let networkObj = await network.connectToNetwork(appAdmin);
-  let resp = await network.invoke(networkObj, false, 'deleteElection', args);
-  resp = JSON.parse(resp);
-  if(resp.success){
-    let networkObj = await network.connectToNetwork(appAdmin);
-    let response = await network.invoke(networkObj, true, 'getCandidateInfo', electionid);
-    response = JSON.parse(response);
-    if(response.success){
-      for(let i=0; i<response.success.length; i++){
-        let filePath = __dirname + '/../public/img/' + response.success[i].Record.icon;
+  let response = await network.invoke(networkObj, true, 'getCandidateInfo', electionid);
+  response = JSON.parse(response);
+  if(response.success){
+    for(let i=0; i<response.success.length; i++){
+      if(response.success[i].Record.name !== '기권'){
+        let filePath = path.join(__dirname + '/../public/img/' + response.success[i].Record.icon);
         fs.unlink(filePath, function(err){
           console.log(response.success[i].Record.icon + ' 파일 지워짐');
-          if (err) {console.log(err);}
+          //if (err) {console.log(err);}
         });
-        filePath = __dirname + '/../public/img/' + response.success[i].Record.profile1;
+        filePath = path.join(__dirname + '/../public/img/' + response.success[i].Record.profile1);
         fs.unlink(filePath, function(err){
           console.log(response.success[i].Record.profile1 + ' 파일 지워짐');
-          if (err) {console.log(err);}
+          //if (err) {console.log(err);}
         });
-        filePath = __dirname + '/../public/img/' + response.success[i].Record.profile2;
+        filePath = path.join(__dirname + '/../public/img/' + response.success[i].Record.profile2);
         fs.unlink(filePath, function(err){
           console.log(response.success[i].Record.profile2 + ' 파일 지워짐');
-          if (err) {console.log(err);}
+          //if (err) {console.log(err);}
         });
       }
-    }else{
-      //선거가 존재하지 않을 때
-      let response = {};
-      response.error = '선거가 존재하지 않습니다.';
-      res.send(response);
     }
-    let resp = {};
-    resp.success = '선거 정보가 삭제되었습니다.';
-    res.send(resp);
+    networkObj = await network.connectToNetwork(appAdmin);
+    let resp = await network.invoke(networkObj, false, 'deleteElection', args);
+    resp = JSON.parse(resp);
+    if(resp.success){
+      console.log('선거가 삭제되었습니다.');
+      resp = {};
+      resp.success = '선거 정보가 삭제되었습니다.';
+      res.send(resp);
+    }else{
+      console.log(resp.error);
+      return;
+    }
+  }else{
+    //선거가 존재하지 않을 때
+    let response = {};
+    response.error = '선거가 존재하지 않습니다.';
+    res.send(response);
   }
 });
 
