@@ -499,7 +499,7 @@ async generateCandidateResult(ctx ,  args , electionId) {
   async checkMyVBallot(ctx, walletId) {
     // student 존재하는지 확인해보고 없으면 초기화
       let student = await this.readMyAsset(ctx, walletId);
-      if(!student){
+      if(student.error || !student){
         let response = {};
         response.error = "진행한 투표가 없습니다.";
         return response;
