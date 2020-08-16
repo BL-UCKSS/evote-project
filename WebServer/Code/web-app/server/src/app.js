@@ -368,6 +368,8 @@ app.get('/myvote', async (req, res) => {
 app.get('/voteresult', async (req, res) => {
   let userid = req.session.userid;
   let pw = '';
+  let totalNum = 20;
+  let deptNum = 10;
 
   if (database) {
     getHashPw(database, userid, async function(err, docs) {
@@ -400,7 +402,9 @@ app.get('/voteresult', async (req, res) => {
 
         //선거 종료 날짜 이후일 경우
         let args = {
-          date: date
+          date: date,
+          totalNum: totalNum,
+          deptNum: deptNum
         };
         // 완료된 election과 투표율, 해당 CandidateResult과 투표율이 json형식으로 리턴될 예정
         let response = await network.invoke(networkObj, true, 'voteResult', args);
