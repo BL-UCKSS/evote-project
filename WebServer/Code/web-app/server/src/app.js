@@ -935,7 +935,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let electId = await getElectIdByYearUniv(year.getFullYear(), univ);
   if(!electId){
     console.log('에러 발생.');
-    let context = {error:'선거가 존재하지 않음'};
+    let context = {error:'투표할 선거가 존재하지 않음'};
     res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
     return;
   }
@@ -1006,9 +1006,12 @@ app.post('/process/vote2/:univ', async (req, res) => {
     res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
     return;
   }
+  let walletid = await getHashPw2(req.session.userid);
   let array = [];
-  // election id 별로 candidate 구분 구현 시 하드코딩 해제 : i<2
-  let networkObj = await network.connectToNetwork(appAdmin);
+  let networkObj = await network.connectToNetwork(walletid);
+  let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
+  let election = JSON.parse(ress);
+  networkObj = await network.connectToNetwork(appAdmin);
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
@@ -1037,6 +1040,7 @@ app.post('/process/vote2/:univ', async (req, res) => {
       array.push(data);
     }
     let context = {
+      electionName: election.name,
       list: array,
       session: req.session,
       electId: electId,
