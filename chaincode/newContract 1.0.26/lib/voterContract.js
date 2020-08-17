@@ -663,7 +663,7 @@ async queryCandidateResults(ctx, electionId) {
   let name = [];
   let count = []; 
 
-  name.push("voteNum" );
+  name.push("voteNum");
   count.push(0);
 
   let queryResults = await this.queryByObjectTypeReturnList(ctx, "candidateResult");
@@ -675,8 +675,8 @@ async queryCandidateResults(ctx, electionId) {
       }
     }
     let result = {
-      "name": name,
-      "count":count
+      name:name,
+      count:count
     };
   return result;
 }

@@ -21,6 +21,7 @@ let network = require('./fabric/network.js');
 let mongoose = require('mongoose');
 const { response } = require('express');
 const { DH_NOT_SUITABLE_GENERATOR } = require('constants');
+const { parse } = require('path');
 const storage = multer.diskStorage({
   destination : (req, file, cb) => {
     cb(null, 'public/img/');
@@ -360,7 +361,7 @@ app.get('/myvote', async (req, res) => {
   let userid = req.session.userid;
   let walletid = await getHashPw2(userid);
   let networkObj = await network.connectToNetwork(walletid);
-  let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid); //walletid만 넘기겠음
+  let response = await network.invoke(networkObj, true, 'checkMyVBallot', walletid);
   response = JSON.parse(response);
   let list = [];
   if (response.error) {
@@ -388,73 +389,79 @@ app.get('/myvote', async (req, res) => {
     return;
   }
 });
-//참여한 선거의 결과를 확인
+//모든 선거의 결과를 확인
 app.get('/voteresult', async (req, res) => {
-  let userid = req.session.userid;
-  let pw = '';
-  let totalNum = 20;
+  console.log('/voteresult 호출됨');
+  let totalNum = 20;  //임시로 총 학생 수, 단과대 학생수를 하드코딩함
   let deptNum = 10;
+  let arr = [];
 
-  if (database) {
-    getHashPw(database, userid, async function(err, docs) {
-      if (err){
-        console.log('에러 발생');
-        let context = {error:'Error is occured'};
-        res.send(context);
-        return;
-      }
-      if(docs) {
-        pw = docs;
-        let useridpw = userid + pw;
-        let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+  let userid = req.session.userid;
+  let walletid = await getHashPw2(userid);
+  //블록체인으로부터 완료된 election과 투표율, 해당 CandidateResult과 투표율을 받아올 예정
+  let networkObj = await network.connectToNetwork(walletid);
+  let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
+  let parsedElection = await JSON.parse(JSON.parse(resElection));
+  let date = new Date();    //기존엔 local의 시각으로 변경했으나 연산하는 과정이 많아져 생략
+  // let date = new Date().toLocaleString();   //2020-8-15 4:52:22 PM
 
-        //블록체인으로부터 완료된 election과 투표율, 해당 CandidateResult과 투표율을 받아올 예정
-        let networkObj = await network.connectToNetwork(walletid);
-        let date = new Date().toLocaleString();   //2020-8-15 4:52:22 PM
+  //선거 종료 날짜 이전일 경우 조회 불가
+  // if(date < checkdate){
+  //   console.log('선거 결과 조회 기간이 아닙니다.');
+  //   res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'선거 결과 조회 기간이 아닙니다. '+checkdate+'부터 \');document.location.href=\'/main\';</script>');
+  //   return;
+  // }
 
-        //선거 종료 날짜 이전일 경우 (모든 선거의 시작 날짜/종료 날짜는 일치한다.)
-        let checkdate = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-        checkdate = JSON.parse(JSON.parse(checkdate));
-        let compare = new Date(checkdate[0].Record.endDate);
-        checkdate = compare.toLocaleString();     //date와 형이 일치함
+  //선거 종료 날짜 이전일 경우 조회되는 데이터 없도록 구현
+  for (let i in parsedElection){
+    let t1 = new Date(parsedElection[i].Record.startDate.substring(0,4));
+    let year = date.getFullYear();
+    let t2 = new Date(parsedElection[i].Record.endDate);
+    let total;          //선거의 총 참여자 수
+    let totalTurnout;   //선거의 총 투표율
+    let candidateCount = []; //선거의 후보자 목록-투표한 학생 수 (배열)
+    
+    //선거 시작 날짜와 현재 시각의 연도만 비교 (선거는 1년마다 갱신되므로)
+    if(year === t1 && date >= t2) {
+      let electionId = parsedElection[i].Record.electionId;
+      let res = await network.invoke(networkObj, false, 'queryCandidateResults', electionId);
+      res = JSON.parse(res);
+      total = res.count[0];     //선거의 총 참여자 수
 
-        if(date < checkdate){
-          console.log('선거 결과 조회 기간이 아닙니다.');
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'선거 결과 조회 기간이 아닙니다. '+checkdate+'부터 \');document.location.href=\'/main\';</script>');
-          return;
+      //선거의 투표율이 40%가 넘지 않았을 경우, 투표율 무산
+      if(parsedElection[i].Record.univ === "총학생회") {
+        totalTurnout = total/totalNum*100;
+        if(totalTurnout < 40){
+          console.log('('+ parsedElection[i].Record.name+') 해당 선거는 투표율 미달로 인해 무산되었습니다.');
         }
-
-        //선거 종료 날짜 이후일 경우
-        let args = {
-          date: date,
-          totalNum: totalNum,
-          deptNum: deptNum
-        };
-        // 완료된 election과 투표율, 해당 CandidateResult과 투표율이 json형식으로 리턴될 예정
-        let response = await network.invoke(networkObj, true, 'voteResult', args);
-        response = JSON.parse(response);
-
-        if (response.error) {
-          console.log(response.error);
+      } else {    //단과대 학생회 선거일 경우 deptNum 사용
+        totalTurnout = res.count[0]/deptNum*100;
+        if(totalTurnout < 40){
+          console.log('('+ parsedElection[i].Record.name+') 해당 선거는 투표율 미달로 인해 무산되었습니다.');
         }
-        
-        let context = {data:data};
-        
-        htmlrender(req, res, 'voteresult', context);
-      }else{
-        console.log('에러 발생. 사용자의 데이터가 조회되지 않음.');
-        let context = {error:'no user'};
-        console.log(context);
-        res.end('<head><meta charset=\'utf-8\'></head><script>document.location.href=\'/main\';</script>');
-        return;
       }
-    });  
-  }else {
-    console.log('에러 발생. 데이터베이스에 연결되지 않음.');
-    let context = {error:'Database is not connected'};
-    res.send(context);
-    return;    
-  }
+      //각 후보자 별 투표율 계산해서 배열에 저장
+      for (let a=0; a < res.count.length; a++) {
+        if (a ==0){
+          candidateCount[a] = totalTurnout;   //선거 총 투표율
+        }
+        candidateCount[a] = (res.count[a]/total)*100; //후보 별 투표율
+      }
+
+      arr.push({
+        electionName: parsedElection[i].Record.name,    //선거 이름
+        startDate: parsedElection[i].Record.startDate,  //선거 시작날짜
+        endDate: parsedElection[i].Record.endDate,      //선거 종료날짜
+        candidateName: res.name,   //배열형식, 첫번째 값은 voteNum, 선거운동본부 이름
+        count: candidateCount  //배열형식, 첫번째 값만 해당 선거 투표율. 각 후보자 별 투표율
+      });      
+    }
+  }  
+  let context = {
+    session: req.session,
+    list: arr
+  };  
+  htmlrender(req, res, 'voteresult', context);
 });
 app.get('/sign', async (req, res) => {
   let univ = req.session.univ;
