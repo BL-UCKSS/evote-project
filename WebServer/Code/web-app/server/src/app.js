@@ -1092,7 +1092,7 @@ app.post('/process/login', async (req, res) => {
       
   let paramStdno = req.body.voterId || req.query.voterId;
   let paramPassword = req.body.password || req.query.password;
-  let hashPw = crypto.createHash('sha256').update(paramPassword).digest('hex');
+  let hashPw = crypto.createHash('sha256').update(paramPassword).digest('base64');
   console.log('요청 파라미터 : ' + paramStdno + ', ' + hashPw);    
   
   if (paramStdno === 'admin'){ // if admin, 임시로 id가 admin일때로 고정(실제론 adminusers 컬렉션에서 admin id가 맞는지 확인해야함)
