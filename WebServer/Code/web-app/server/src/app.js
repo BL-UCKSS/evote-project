@@ -786,6 +786,9 @@ app.post('/modifyvote', async (req, res) => {
   candidate = JSON.parse(candidate);
   if(candidate.success){
     for(let i=0; i<candidate.success.length; i++){
+      if(candidate.success[i].Record.name === '기권'){
+        continue;
+      }
       let data = {
         hname: candidate.success[i].Record.name,
         icon: candidate.success[i].Record.icon,

@@ -196,7 +196,6 @@
             <% var cnt = 4 %>
             <% if(candidateData.length > 1) { %>
             <% for(var i=1;i<candidateData.length;i++){ %>
-            <% if(candidateData[i].hname !== '기권') { %>
             <% cnt++ %>
             <div id="page<%= cnt %>" style="display:none;">
                 <div class="register-box">
@@ -340,7 +339,6 @@
                     </div>
                 </div>
             </div>
-            <% } %>
             <% } %>
             <% } %>
         </form>
