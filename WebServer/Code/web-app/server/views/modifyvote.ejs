@@ -196,6 +196,7 @@
             <% var cnt = 4 %>
             <% if(candidateData.length > 1) { %>
             <% for(var i=1;i<candidateData.length;i++){ %>
+            <% if(candidateData[i].hname !== '기권') { %>
             <% cnt++ %>
             <div id="page<%= cnt %>" style="display:none;">
                 <div class="register-box">
@@ -341,6 +342,7 @@
             </div>
             <% } %>
             <% } %>
+            <% } %>
         </form>
     </div>
     <!-- ------------------------------------------------------------------------------------------------------------------------------------------------ -->
@@ -352,7 +354,7 @@
             <div class="modal-content small-modal-content vote-modal">
                 <div class="modal-body" style="text-align: center;">
                     <p class="mb1">정말로 취소하시겠습니까?</p>
-                    <p class="mb2">(입력하신 정보는 저장되지 않습니다.)</p>
+                    <p class="mb2">(수정하신 정보는 저장되지 않습니다.)</p>
                 </div>
                 <div class="vote-modal-footer modal-footer">
                     <button type="button" class="cancel-vote btn btn-primary" data-dismiss="modal">취소</button>
