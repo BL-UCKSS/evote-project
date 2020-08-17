@@ -19,9 +19,6 @@ const appAdmin = config.appAdmin;
 
 let network = require('./fabric/network.js');
 let mongoose = require('mongoose');
-const { response } = require('express');
-const { DH_NOT_SUITABLE_GENERATOR } = require('constants');
-const { parse } = require('path');
 const storage = multer.diskStorage({
   destination : (req, file, cb) => {
     cb(null, 'public/img/');
