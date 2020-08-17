@@ -26,10 +26,16 @@
             </div>
             <div class="now-content-result">
                 <div class="progress">
-                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    <% if(list[i].avg > 20) { %>
+                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                        <%= list[i].avg %>%
+                    </div>
+                    <% } else { %>
+                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                     <div style="text-align: center; font-weight:bold;width:100%">
                         <%= list[i].avg %>%
                     </div>
+                    <% } %>
                 </div>
                 
             </div>
