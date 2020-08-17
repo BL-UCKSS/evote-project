@@ -881,7 +881,7 @@ app.post('/process/modifyvote', async (req, res) => {
   response = JSON.parse(response);
   if (response.error) {
     console.log('modifyElection error : ' + response.error);
-    res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
+    res.send('<script>alert("'+response.error+'");document.location.href="/adminMain";</script>');
     return;
   }
   console.log('modifyElection response : ' + typeof response + ' => ' + JSON.stringify(response));

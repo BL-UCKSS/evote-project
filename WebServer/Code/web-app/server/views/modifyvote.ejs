@@ -481,6 +481,18 @@
             return true;
         }
         var goNextPage = function (id, page) {
+            if(id == 1 && page == 2){
+                var now = new Date();
+                var start = new Date($('#startdate').val());
+                var end = new Date($('#enddate').val());
+                if(start.getDate() < now.getDate() + 3){
+                    alert('수정하려는 선거 시작시간을 현재시간 기준으로 3일 이후로 지정해야합니다.')
+                    return false;
+                }else if(end <= start){
+                    alert('수정하려는 선거 종료시간을 시작시간보다 이후여야 합니다.');
+                    return false;
+                }
+            }
             var hide = '#page' + id;
             var show = '#page' + page;
             var empty = checkemptyForModifyVote(hide);
