@@ -225,11 +225,22 @@ let authAdmin = function(database, id, pw, callback) {
 };
 
 let registerUser = async function(walletId, gubun, univ){
+  console.log('registerUser 호출됨');
   let response = await network.registerVoter(walletId);
   if (response.error) {
     console.log(response.error);
-  } else {
-    console.log('registerUser 호출됨');
+    let resp = {};
+    resp.error = response.error;
+    return resp;
+  } else if(response.exists){
+    let resp = {};
+    resp.success = '이미 wallet에 등록되어있습니다.';
+    return resp;
+  }
+  else {
+    let resp = {};
+    resp.success = '성공적으로 wallet에 등록되었습니다.';
+    return resp;
   }
 };
 
@@ -1086,7 +1097,7 @@ app.post('/process/login', async (req, res) => {
   
   if (paramStdno === 'admin'){ // if admin, 임시로 id가 admin일때로 고정(실제론 adminusers 컬렉션에서 admin id가 맞는지 확인해야함)
     if(database){
-      authAdmin(database, paramStdno, hashPw, function(err, docs){
+      authAdmin(database, paramStdno, hashPw, async function(err, docs){
         if(err){
           console.log('에러 발생.');
           let context = {error:'Error is occured'};
@@ -1105,11 +1116,22 @@ app.post('/process/login', async (req, res) => {
             let context = {
               session: req.session
             };
-            //registerUser(paramStdno);
             // wallet은 walletid로 등록
             let useridpw = paramStdno + hashPw;
             let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-            registerUser(walletid, 'admin', 'admin');
+            let response = await registerUser(walletid, 'admin', 'admin');
+            response = JSON.parse(response);
+            if(response.error){
+              console.log(response.error);
+              req.session.destroy(function(){
+                req.session;
+              });
+              res.send('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/login\';</script>');
+              return;
+            }
+            if(response.success){
+              console.log(response.success);
+            }
   
             htmlrender(req, res, 'adminMain', context);
             return;
@@ -1135,7 +1157,7 @@ app.post('/process/login', async (req, res) => {
     }
   }else{ // if not admin
     if (database) {
-      authUser(database, paramStdno, hashPw, function(err, docs) {
+      authUser(database, paramStdno, hashPw, async function(err, docs) {
         if(err){
           console.log('에러 발생.');
           //에러발생
@@ -1156,11 +1178,22 @@ app.post('/process/login', async (req, res) => {
             let context = {
               session: req.session
             };
-            //registerUser(paramStdno);
             // wallet은 walletid로 등록
             let useridpw = paramStdno + hashPw;
             let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
-            registerUser(walletid, 'user', req.session.univ);
+            let response = await registerUser(walletid, 'user', req.session.univ);
+            response = JSON.parse(response);
+            if(response.error){
+              console.log(response.error);
+              req.session.destroy(function(){
+                req.session;
+              });
+              res.send('<head><meta charset=\'utf-8\'></head><script>alert('+response.error+');document.location.href=\'/login\';</script>');
+              return;
+            }
+            if(response.success){
+              console.log(response.success);
+            }
   
             htmlrender(req, res, 'main', context);
             return;
