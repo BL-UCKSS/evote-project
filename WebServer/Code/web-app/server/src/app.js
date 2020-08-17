@@ -152,7 +152,7 @@ let getHashPw2 = async function(stdno) {
   console.log('getHashPw2 호출됨 : ' + stdno);
   let data = await UserModel.findById2(stdno);
   let useridpw = stdno + data[0].password;
-  let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+  let walletid = crypto.createHash('sha256').update(useridpw).digest('hex');
   return walletid;
 };
 let adminEmail = function(database, callback) {
@@ -1092,7 +1092,7 @@ app.post('/process/login', async (req, res) => {
       
   let paramStdno = req.body.voterId || req.query.voterId;
   let paramPassword = req.body.password || req.query.password;
-  let hashPw = crypto.createHash('sha256').update(paramPassword).digest('base64');
+  let hashPw = crypto.createHash('sha256').update(paramPassword).digest('hex');
   console.log('요청 파라미터 : ' + paramStdno + ', ' + hashPw);    
   
   if (paramStdno === 'admin'){ // if admin, 임시로 id가 admin일때로 고정(실제론 adminusers 컬렉션에서 admin id가 맞는지 확인해야함)
@@ -1118,9 +1118,8 @@ app.post('/process/login', async (req, res) => {
             };
             // wallet은 walletid로 등록
             let useridpw = paramStdno + hashPw;
-            let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+            let walletid = crypto.createHash('sha256').update(useridpw).digest('hex');
             let response = await registerUser(walletid, 'admin', 'admin');
-            response = JSON.parse(response);
             if(response.error){
               console.log(response.error);
               req.session.destroy(function(){
@@ -1180,9 +1179,8 @@ app.post('/process/login', async (req, res) => {
             };
             // wallet은 walletid로 등록
             let useridpw = paramStdno + hashPw;
-            let walletid = crypto.createHash('sha256').update(useridpw).digest('base64');
+            let walletid = crypto.createHash('sha256').update(useridpw).digest('hex');
             let response = await registerUser(walletid, 'user', req.session.univ);
-            response = JSON.parse(response);
             if(response.error){
               console.log(response.error);
               req.session.destroy(function(){
