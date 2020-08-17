@@ -467,7 +467,6 @@ app.get('/sign', async (req, res) => {
   let univ = req.session.univ;
   let userid = req.session.userid;
   let stat = req.session.stat;
-  let pass = true;
   let electId;
   let slots = ['slot1', 'slot2', 'slot3', 'slot4'];
   let i = 0;
@@ -535,66 +534,41 @@ app.get('/sign', async (req, res) => {
     return;
   }
   let electionCast;
-  electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[i]]);
-  electionCast = JSON.parse(electionCast);
-  let totalElectionCast;
-  let departmentElectionCast;
-  if(electionCast.error){
-    console.log(electionCast.error);
-    return;
-  }
-  if(electionCast){
-    if(electionCast.election.univ === '총학생회'){
-      totalElectionCast = electionCast.picked;
-    }else{ //단과대
-      departmentElectionCast = electionCast.picked;
+  let election;
+  // 목적: 투표를 하지 않은 VBallot을 찾는다(picked가 없음). 그 VBallot.election을 투표하도록 한다.
+  // student[slots[i]] 를 readMyAsset 하면 VBallot이 나오고, 투표를 했는지 확인할 수 있다.
+  // 투표했다면, i++ 투표를 하지 않았다면 break
+  for(;i<slots.length; i++){
+    if(student[slots[i]] !== 'NULL'){ //투표용지를 발급받았을 경우만
+      networkObj = await network.connectToNetwork(walletid);
+      electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[i]]);
+      electionCast = JSON.parse(electionCast);
+      if(electionCast.picked !== 'NULL'){ //이미 투표했다면
+        continue;
+      }else{ //투표용지를 발급받았지만, 투표를 하지 않았다면
+        //해당 투표용지의 선거를 확인해서 투표를 할 수 있도록 한다.
+        election = electionCast.election;
+        electId = election.electionId;
+        break;
+      }
     }
   }
-  if(totalElectionCast === 'NULL'){
-    univ = '총학생회';
-    let year = new Date();
-    electId = await getElectIdByYearUniv(year.getFullYear(), univ);
-    if(!electId){
-      console.log('에러 발생.');
-      let context = {error:'투표할 수 있는 선거가 없습니다.'};
-      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-      return;
-    }else{
-      pass = false;
-    }
-  }
-  if(departmentElectionCast === 'NULL' && pass){
-    univ = req.session.univ;
-    let year = new Date();
-    electId = await getElectIdByYearUniv(year.getFullYear(), univ);
-    if(!electId){
-      console.log('에러 발생.');
-      let context = {error:req.session.univ+' 선거가 존재하지 않음'};
-      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-      return;
-    }
-  }else if(pass){
-    console.log('이미 모든 투표를 완료하였습니다.');
-    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
-    return;
-  }
+
   //투표 기간이 되었는지 확인하기
-  let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
-  let election = JSON.parse(ress);
   let curDate = new Date();
   let t1 = new Date(election.startDate);
   let t2 = new Date(election.endDate);
-  if(curDate >= t1 && curDate <= t2 && election.univ === univ){
-    console.log('투표기간입니다.');
+  if(curDate >= t1 && curDate <= t2){
+    console.log(election.univ + ' 투표기간입니다.');
   }else{
-    console.log('투표 기간이 아닙니다.');
-    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
+    console.log(election.univ + ' 투표 기간이 아닙니다.');
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert('+election.univ+'\' 투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
     return;
   }
 
   let context = {
     session:req.session,
-    univ:univ
+    univ:election.univ
   };
   htmlrender(req, res, 'sign', context);
       
@@ -962,6 +936,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
   let election = JSON.parse(ress);
+  networkObj = await network.connectToNetwork(walletid);
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
