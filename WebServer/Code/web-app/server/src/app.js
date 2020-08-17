@@ -837,7 +837,7 @@ app.post('/process/modifyvote', async (req, res) => {
   console.log('len = ' + len);
   let candidates = [];
   // DB에 선거 및 후보자 정보를 수정한다.
-  if(len === 1){
+  if(len === 1 || len === '1'){
     let data = {
       hname:req.body.hname,
       link:req.body.link,
