@@ -320,7 +320,7 @@ app.get('/adminNow', async (req, res) => {
       resp = JSON.parse(resp);
       let avg = resp.success;
       avg = parseFloat(avg);
-      if(response.error){
+      if(resp.error){
         console.log('에러!');
         return;
       }else{
