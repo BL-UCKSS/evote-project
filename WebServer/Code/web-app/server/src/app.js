@@ -469,6 +469,8 @@ app.get('/sign', async (req, res) => {
   let stat = req.session.stat;
   let pass = true;
   let electId;
+  let slots = ['slot1', 'slot2', 'slot3', 'slot4'];
+  let i = 0;
 
   if (stat !== '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
@@ -478,12 +480,13 @@ app.get('/sign', async (req, res) => {
 
   let walletid = await getHashPw2(userid);
   let networkObj = await network.connectToNetwork(walletid);
-  let vBallot = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-  vBallot = JSON.parse(vBallot);
-  if(vBallot.error){ //투표용지가 없는 경우 => 투표를 한 적이 없는 경우
-    console.log('vBallot error : ' + vBallot.error);
-    let year = new Date();
-    electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+  let student = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+  student = JSON.parse(student);
+  let year = new Date();
+  electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+  if(student.error){ //투표용지가 없는 경우 => 투표를 한 적이 없는 경우
+    console.log('student error : ' + student.error);
+    
     if(!electId){
       console.log('에러 발생.');
       let context = {error:'선거가 존재하지 않음'};
@@ -501,25 +504,38 @@ app.get('/sign', async (req, res) => {
       console.log(response.error);
       return;
     }
+  }else{ //투표용지가 하나라도 만들어진 경우, slot1 이 NULL이 아닌 경우
+    electId = await getElectIdByYearUniv(year.getFullYear(), req.session.univ);
+    if(!electId){
+      console.log('에러 발생.');
+      let context = {error:'선거가 존재하지 않음'};
+      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+      return;
+    }
+    let args = {
+      walletId: walletid,
+      electionId: electId
+    };
+    let networkObj = await network.connectToNetwork(walletid);
+    let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
+    response = JSON.parse(response);
+    if(response.error){
+      console.log(response.error);
+      return;
+    }
   }
+
   networkObj = await network.connectToNetwork(walletid);
-  vBallot = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-  vBallot = JSON.parse(vBallot);
-  if(vBallot.error){
-    console.log('vBallot error : ' + vBallot.error);
+  student = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+  student = JSON.parse(student);
+  console.log('look at this');
+  console.log(student);
+  if(student.error){
+    console.log('student error : ' + student.error);
     return;
   }
   let electionCast;
-  if(vBallot.slot1 !== 'NULL'){ //보궐 선거는 어떻게 할건데? 이미 종료된 선거 인지 확인해야함.(아직 구현안함)
-    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot1);
-  }else if(vBallot.slot2 !== 'NULL'){
-    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot2);
-  }else if(vBallot.slot3 !== 'NULL'){
-    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot3);
-  }else if(vBallot.slot4 !== 'NULL'){
-    electionCast = await network.invoke(networkObj, true, 'readMyAsset', vBallot.slot4);
-  }
-  
+  electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[i]]);
   electionCast = JSON.parse(electionCast);
   let totalElectionCast;
   let departmentElectionCast;
@@ -562,7 +578,6 @@ app.get('/sign', async (req, res) => {
     res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
     return;
   }
-
   //투표 기간이 되었는지 확인하기
   let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
   let election = JSON.parse(ress);
