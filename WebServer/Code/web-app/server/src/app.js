@@ -478,6 +478,9 @@ app.get('/sign', async (req, res) => {
   let electId;
   let slots = ['slot1', 'slot2', 'slot3', 'slot4'];
   let i = 0;
+  let pass = true;
+  let electionCast;
+  let election;
 
   if (stat !== '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
@@ -491,6 +494,12 @@ app.get('/sign', async (req, res) => {
   student = JSON.parse(student);
   let year = new Date();
   electId = await getElectIdByYearUniv(year.getFullYear(), '총학생회');
+  if(!electId){
+    console.log('에러 발생.');
+    let context = {error:'선거가 존재하지 않음'};
+    res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+    return;
+  }
   if(student.error){ //투표용지가 없는 경우 => 투표를 한 적이 없는 경우
     console.log('student error : ' + student.error);
     
@@ -512,56 +521,68 @@ app.get('/sign', async (req, res) => {
       return;
     }
   }else{ //투표용지가 하나라도 만들어진 경우, slot1 이 NULL이 아닌 경우
-    electId = await getElectIdByYearUniv(year.getFullYear(), req.session.univ);
-    if(!electId){
-      console.log('에러 발생.');
-      let context = {error:'선거가 존재하지 않음'};
-      res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-      return;
-    }
-    let args = {
-      walletId: walletid,
-      electionId: electId
-    };
+    //총학생회 투표를 동의안함 했는지 체크하기
     let networkObj = await network.connectToNetwork(walletid);
-    let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
-    response = JSON.parse(response);
-    if(response.error){
-      console.log(response.error);
+    let electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[0]]);
+    electionCast = JSON.parse(electionCast);
+    if(electionCast.picked !== 'NULL'){ //투표했다면, 단과대 투표로 넘어가면됨.
+      //투표해야됨.
+      electId = await getElectIdByYearUniv(year.getFullYear(), req.session.univ);
+      if(!electId){
+        console.log('에러 발생.');
+        let context = {error:'선거가 존재하지 않음'};
+        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+        return;
+      }
+      let args = {
+        walletId: walletid,
+        electionId: electId
+      };
+      let networkObj = await network.connectToNetwork(walletid);
+      let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
+      response = JSON.parse(response);
+      if(response.error){
+        console.log(response.error);
+        return;
+      }
+    }else { //투표안했다면, 바로 투표하러가기
+      election = electionCast.election;
+      pass = false;
+    }
+    
+  }
+  
+  if(pass){
+    // 투표용지 생성 이후 다시 자신의 slots들을 열어봄
+    networkObj = await network.connectToNetwork(walletid);
+    student = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
+    student = JSON.parse(student);
+    console.log('look at this');
+    console.log(student);
+    if(student.error){
+      console.log('student error : ' + student.error);
       return;
     }
-  }
-
-  networkObj = await network.connectToNetwork(walletid);
-  student = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
-  student = JSON.parse(student);
-  console.log('look at this');
-  console.log(student);
-  if(student.error){
-    console.log('student error : ' + student.error);
-    return;
-  }
-  let electionCast;
-  let election;
-  // 목적: 투표를 하지 않은 VBallot을 찾는다(picked가 없음). 그 VBallot.election을 투표하도록 한다.
-  // student[slots[i]] 를 readMyAsset 하면 VBallot이 나오고, 투표를 했는지 확인할 수 있다.
-  // 투표했다면, i++ 투표를 하지 않았다면 break
-  for(;i<slots.length; i++){
-    if(student[slots[i]] !== 'NULL'){ //투표용지를 발급받았을 경우만
-      networkObj = await network.connectToNetwork(walletid);
-      electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[i]]);
-      electionCast = JSON.parse(electionCast);
-      if(electionCast.picked !== 'NULL'){ //이미 투표했다면
-        continue;
-      }else{ //투표용지를 발급받았지만, 투표를 하지 않았다면
-        //해당 투표용지의 선거를 확인해서 투표를 할 수 있도록 한다.
-        election = electionCast.election;
-        electId = election.electionId;
-        break;
+    
+    // 목적: 투표를 하지 않은 VBallot을 찾는다(picked가 없음). 그 VBallot.election을 투표하도록 한다.
+    // student[slots[i]] 를 readMyAsset 하면 VBallot이 나오고, 투표를 했는지 확인할 수 있다.
+    // 투표했다면, i++ 투표를 하지 않았다면 break
+    for(;i<slots.length; i++){
+      if(student[slots[i]] !== 'NULL'){ //투표용지를 발급받았을 경우만
+        networkObj = await network.connectToNetwork(walletid);
+        electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[i]]);
+        electionCast = JSON.parse(electionCast);
+        if(electionCast.picked !== 'NULL'){ //이미 투표했다면
+          continue;
+        }else{ //투표용지를 발급받았지만, 투표를 하지 않았다면
+          //해당 투표용지의 선거를 확인해서 투표를 할 수 있도록 한다.
+          election = electionCast.election;
+          break;
+        }
       }
     }
   }
-
+  
   //투표 기간이 되었는지 확인하기
   let curDate = new Date();
   let t1 = new Date(election.startDate);
