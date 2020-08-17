@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.body.name + file.originalname;
+    let name = req.body.electionid + file.originalname;
     let c = crypto.createHash('sha256').update(name).digest('hex').substring(0, 10);
     cb(null, c+'.'+file.mimetype.split('/')[1]);
   }
@@ -933,7 +933,8 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
   console.log('createElection response : ' + typeof response + ' => ' + response);
 
   let context = {
-    session:req.session
+    session:req.session,
+    electionid:response.success
   };
   htmlrender(req, res, 'adminMain', context);
 });
