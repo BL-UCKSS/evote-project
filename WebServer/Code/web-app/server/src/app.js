@@ -945,6 +945,8 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let walletid = await getHashPw2(paramStdno);
   let array = [];
   let networkObj = await network.connectToNetwork(walletid);
+  let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
+  let election = JSON.parse(ress);
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
@@ -974,6 +976,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
       array.push(data);
     }
     let context = {
+      electionName: election.name,
       list: array,
       session: req.session,
       univ:univ,
