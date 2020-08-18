@@ -413,19 +413,25 @@ app.get('/voteresult', async (req, res) => {
   // }
 
   //선거 종료 날짜 이전일 경우 조회되는 데이터 없도록 구현
-  for (let i in parsedElection){
-    let t1 = new Date(parsedElection[i].Record.startDate.substring(0,4));
+  for (let i=0; i < parsedElection.length; i++){
+    //parsedElection[i].Record.startDate 형식: Wed Jan 01 2020 09:00:00 GMT+0900 (GMT+09:00)
+    let t1 = new Date(parsedElection[i].Record.startDate);
+    t1 = t1.getFullYear();
     let year = date.getFullYear();
     let t2 = new Date(parsedElection[i].Record.endDate);
+    t2 = t2.getFullYear();
     let total;          //선거의 총 참여자 수
     let totalTurnout;   //선거의 총 투표율
     let candidateCount = []; //선거의 후보자 목록-투표한 학생 수 (배열)
     
     //선거 시작 날짜와 현재 시각의 연도만 비교 (선거는 1년마다 갱신되므로)
-    if(year === t1 && date >= t2) {
+    //0818 오전12시 우선 잘 들어가는지 확인을 위해 연도만 확인하는 것으로 임시수정
+    if(year === t1) {
       let electionId = parsedElection[i].Record.electionId;
-      let res = await network.invoke(networkObj, false, 'queryCandidateResults', electionId);
-      res = JSON.parse(res);
+      networkObj = await network.connectToNetwork(walletid);
+      let res = await network.invoke(networkObj, true, 'queryCandidateResults', String(electionId));
+      // res = JSON.parse(res);
+      console.log('CandidateResults를 받아오고 난 후의 res: '+res);
       total = res.count[0];     //선거의 총 참여자 수
 
       //선거의 투표율이 40%가 넘지 않았을 경우, 투표율 무산
@@ -962,6 +968,7 @@ app.post('/process/existagree/:univ', async (req, res) => {
   let networkObj = await network.connectToNetwork(walletid);
   let ress = await network.invoke(networkObj, true, 'readMyAsset', electId);
   let election = JSON.parse(ress);
+  networkObj = await network.connectToNetwork(walletid);
   let candidate = await network.invoke(networkObj, true, 'getCandidateInfo', electId);
   candidate = JSON.parse(candidate);
   if(candidate.success){
