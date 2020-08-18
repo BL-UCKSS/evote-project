@@ -12,9 +12,8 @@
     <div class="text-center">
         <%- include('header.ejs'); %>
         <div class="vote-banner">
-            <span class="vote-date">2020 상명대 선거</span>
-            <% /* session.univ는 학생의 단과대학을 표시해줌 */ %>
-            <span class="vote-name">총학생회</span>
+            <span class="vote-date"><%- electionName %></span>
+                <span class="vote-name"><%- univ %></span>
         </div>
         <form action="/process/finvote/<%=univ%>" method="post">
             <input type="hidden" name="electId" value="<%= electId %>">
@@ -47,7 +46,7 @@
             <!-- vote-table end -->
             <div class="vote-box">
                 <div class="votebtns">
-                    <button class="signbtn btn btn-secondary" style="background-color:#6C757D;border-color:#6C757D;" onclick=history.back();>뒤로가기</button>
+                    <button class="signbtn btn btn-secondary" style="background-color:#6C757D;border-color:#6C757D;" onclick="history.back();return false;">뒤로가기</button>
                     <button class="signbtn btn btn-primary" type="submit">투표하기</button>
                 </div>
             </div>

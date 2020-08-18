@@ -182,7 +182,7 @@ exports.registerVoter = async function (voterId) {
     if (userExists) {
       let response = {};
       //console.log(`An identity for the user ${voterId} already exists in the wallet`);
-      response.error = `Error! An identity for the user ${voterId} already exists in the wallet. Please enter
+      response.exists = `Error! An identity for the user ${voterId} already exists in the wallet. Please enter
         a different license number.`;
       return response;
     }

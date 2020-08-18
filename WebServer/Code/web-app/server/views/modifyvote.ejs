@@ -54,6 +54,7 @@
                         <label for="himage_file">
                             <input type="file" id="himage_file" name="image"
                                 style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="icon" value="<%= candidateData[0].icon %>">
                             <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
                                 style="position: absolute; top: 75px; left: 20px; width: 80px; height: 20px;">
                                 <div data-text-content="true"
@@ -95,6 +96,7 @@
                         <label for="image3_file">
                             <input type="file" id="image3_file" name="image"
                                 style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile1" value="<%= candidateData[0].profile1 %>">
                             <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
                                 style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
                                 <div data-text-content="true"
@@ -144,6 +146,7 @@
                         <label for="image4_file">
                             <input type="file" id="image4_file" name="image"
                                 style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile2" value="<%= candidateData[0].profile2 %>">
                             <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
                                 style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
                                 <div data-text-content="true"
@@ -203,6 +206,7 @@
                         <label for="himage_file<%= cnt %>">
                             <input type="file" id="himage_file<%= cnt %>" name="image"
                                 style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="icon" value="<%= candidateData[i].icon %>">
                             <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
                                 style="position: absolute; top: 75px; left: 20px; width: 80px; height: 20px;">
                                 <div data-text-content="true"
@@ -245,6 +249,7 @@
                         <label for="image<%= cnt %>_file">
                             <input type="file" id="image<%= cnt %>_file" name="image"
                                 style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile1" value="<%= candidateData[i].profile1 %>">
                             <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
                                 style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
                                 <div data-text-content="true"
@@ -296,6 +301,7 @@
                         <label for="image<%= cnt %>_file">
                             <input type="file" id="image<%= cnt %>_file" name="image"
                                 style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile2" value="<%= candidateData[i].profile2 %>">
                             <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
                                 style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
                                 <div data-text-content="true"
@@ -352,7 +358,7 @@
             <div class="modal-content small-modal-content vote-modal">
                 <div class="modal-body" style="text-align: center;">
                     <p class="mb1">정말로 취소하시겠습니까?</p>
-                    <p class="mb2">(입력하신 정보는 저장되지 않습니다.)</p>
+                    <p class="mb2">(수정하신 정보는 저장되지 않습니다.)</p>
                 </div>
                 <div class="vote-modal-footer modal-footer">
                     <button type="button" class="cancel-vote btn btn-primary" data-dismiss="modal">취소</button>
@@ -481,6 +487,18 @@
             return true;
         }
         var goNextPage = function (id, page) {
+            if(id == 1 && page == 2){
+                var now = new Date();
+                var start = new Date($('#startdate').val());
+                var end = new Date($('#enddate').val());
+                if(start.getDate() < now.getDate() + 3){
+                    alert('수정하려는 선거 시작시간을 현재시간 기준으로 3일 이후로 지정해야합니다.')
+                    return false;
+                }else if(end <= start){
+                    alert('수정하려는 선거 종료시간을 시작시간보다 이후여야 합니다.');
+                    return false;
+                }
+            }
             var hide = '#page' + id;
             var show = '#page' + page;
             var empty = checkemptyForModifyVote(hide);
