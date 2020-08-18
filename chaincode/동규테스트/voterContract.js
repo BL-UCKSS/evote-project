@@ -509,39 +509,45 @@ async generateCandidateResult(ctx ,  args , electionId) {
        if (student.slot1 !== "NULL") {
          let vBallot1 = await this.readMyAsset(ctx, student.slot1);
          let reVBallot1 ={};
-          reVBallot1.voterId = student.slot1; //동규가 추가함
+          reVBallot1.voterId = student.slot1;
           reVBallot1.election = vBallot1.election;
           reVBallot1.picked = vBallot1.picked;
-         queryResults.push(reVBallot1);
-       }else if (student.slot2 !== "NULL"){
+          if(vBallot1.picked !== 'NULL'){
+            queryResults.push(reVBallot1);
+          }
+       }
+       if (student.slot2 !== "NULL"){
         let vBallot2 = await this.readMyAsset(ctx, student.slot2);
         let reVBallot2 ={};
-        reVBallot2.voterId = student.slot2; //동규가 추가함
+        reVBallot2.voterId = student.slot2;
         reVBallot2.election = vBallot2.election;
         reVBallot2.picked = vBallot2.picked;
-        queryResults.push(reVBallot2);
-   
-       } else if (student.slot3 !== "NULL"){
+        if(vBallot2.picked !== 'NULL'){
+          queryResults.push(reVBallot2);
+        }
+       }
+       if (student.slot3 !== "NULL"){
         let vBallot3 = await this.readMyAsset(ctx, student.slot3);
         let reVBallot3 ={};
-        reVBallot3.voterId = student.slot3; //동규가 추가함
+        reVBallot3.voterId = student.slot3;
         reVBallot3.election = vBallot3.election;
         reVBallot3.picked = vBallot3.picked;
-        queryResults.push(reVBallot3);
+        if(vBallot3.picked !== 'NULL'){
+          queryResults.push(reVBallot3);
+        }
    
-       } else if (student.slot4 !== "NULL"){
+       }
+       if (student.slot4 !== "NULL"){
         let vBallot4 = await this.readMyAsset(ctx, student.slot4);
         let reVBallot4 ={};
-        reVBallot4.voterId = student.slot4; //동규가 추가함
+        reVBallot4.voterId = student.slot4;
         reVBallot4.election = vBallot4.election;
         reVBallot4.picked = vBallot4.picked;
-        queryResults.push(reVBallot4);
+        if(vBallot4.picked !== 'NULL'){
+          queryResults.push(reVBallot4);
+        }
    
-       } else {
-           let response = {};
-           response.error = '정상적이지 않은 student 객체생성이 감지되었습니다.';
-           return response;
-       }
+       } 
        let response = {};
        response.success = queryResults;
        return response;
