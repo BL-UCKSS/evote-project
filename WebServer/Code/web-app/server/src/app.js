@@ -876,7 +876,7 @@ app.post('/process/modifyvote', async (req, res) => {
   }
   let args = {
     electionId: req.body.electionid,
-    name: req.body.hname,
+    name: req.body.name,
     univ: req.body.univ,
     startdate: req.body.startdate,
     enddate: req.body.enddate,
