@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.session.userid + file.originalname;
+    let name = req.body.name + file.originalname;
     let c = crypto.createHash('sha256').update(name).digest('hex').substring(0, 10);
     cb(null, c+'.'+file.mimetype.split('/')[1]);
   }
@@ -830,8 +830,8 @@ app.post('/modifyvote', async (req, res) => {
 
 app.post('/process/modifyvote', async (req, res) => {
   console.log('/process/modifyvote 라우팅 함수 호출됨.');
-  console.log(req.files);
-  
+  //console.log(req.files);
+
   // ledger에 등록된 선거 수정
   let len = req.body.isMulti;
   console.log('len = ' + len);
@@ -839,7 +839,7 @@ app.post('/process/modifyvote', async (req, res) => {
   // DB에 선거 및 후보자 정보를 수정한다.
   if(len === 1 || len === '1'){
     let data = {
-      hname:req.body.hname,
+      name:req.body.hname,
       link:req.body.link,
       hakbun1:req.body.no1,
       name1:req.body.sname1,
@@ -849,12 +849,15 @@ app.post('/process/modifyvote', async (req, res) => {
       name2:req.body.sname2,
       dept2:req.body.dept2,
       grade2:req.body.grade2,
+      icon:req.body.icon,
+      profile1:req.body.profile1,
+      profile2:req.body.profile2
     };
     candidates.push(data);
   }else{
     for(let i=0; i<len; i++){
       let data = {
-        hname:req.body.hname[i],
+        name:req.body.hname[i],
         link:req.body.link[i],
         hakbun1:req.body.no1[i],
         name1:req.body.sname1[i],
@@ -864,6 +867,9 @@ app.post('/process/modifyvote', async (req, res) => {
         name2:req.body.sname2[i],
         dept2:req.body.dept2[i],
         grade2:req.body.grade2[i],
+        icon:req.body.icon[i],
+        profile1:req.body.profile1[i],
+        profile2:req.body.profile2[i]
       };
       candidates.push(data);
     }
