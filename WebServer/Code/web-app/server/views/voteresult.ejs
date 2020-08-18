@@ -13,14 +13,14 @@
         
         <div class="myvote-cards">
             <% if(list.length === 0) { %>
-                <div class="myvote-card" style="text-align: center;padding:25px;">참여한 선거가 없습니다.</div>
+                <div class="myvote-card" style="text-align: center; padding: 15px; font-size: 14px;">선거가 종료되지 않았거나,<p> 결과 조회가 가능한 선거가 존재하지 않습니다.</div>
             <% } else { %>
                 <% for(var i=0; i<list.length; i++) { %>
                     <!-- 투표율이 40%가 넘지 않았을 경우 -->
-                    <% if(list[i].count < 40) { %>
+                    <% if(list[i].count[0] < 40) { %>
                         <div class="myvoteresult-card">
                             <div class="myvoteresult-card-span" style="text-decoration: line-through;"><%= list[i].electionName %></div>
-                            <div class="myvoteresult-card-span2"><%= list[i].startDate %>~<%= list[i].endDate %><p>투표율 미달로 인해 선거가 무산되었습니다</p></div>
+                            <div class="myvoteresult-card-span2"><%= list[i].startDate %> ~ <%= list[i].endDate %><p>투표율 미달로 인해 선거가 무산되었습니다</p></div>
                             <!-- 선거 투표율 -->
                             <div class="myvotresult-card-contentbox">
                                 <div class="myvotresult-card-content">
@@ -37,18 +37,19 @@
                         <div class="myvoteresult-card">
                             <div class="myvoteresult-card-span"><%= list[i].electionName %></div>
                             <!-- 선거 기간 -->
-                            <div class="myvoteresult-card-span2"><%= list[i].startDate %>~<%= list[i].endDate %></div>
+                            <div class="myvoteresult-card-span2"><%= list[i].startDate %> ~ <%= list[i].endDate %></div>
                             <!-- 후보별 투표율 -->
-                            <% for (var i=0; list[i].length; i++) { %>
-                                <% for (var k=1; k <= list[i].candidateName.length; i++) { %>
+                            <% for (var k in list[i].candidateName) { %>
+                                <% if (k==0) { %>       <!-- 첫번째 값은 문자열 voteNum이므로 제외 -->
+                                <% } else {%>
                                     <div class="myvotresult-card-contentbox">
                                         <div class="myvotresult-card-content">
                                             <%= list[i].candidateName[k] %>
                                         </div>
                                         <div class="progress">
-                                                <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[k] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                                                    <%= list[i].count[k] %>%             <!-- 임의값 할당, 실제 구현에서는 투표율을 넣어야 함. width에도 마찬가지 -->
-                                                </div>
+                                            <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[k] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                                <%= list[i].count[k] %>%
+                                            </div>
                                         </div>
                                     </div>
                                 <% } %>
