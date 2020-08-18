@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
     cb(null, 'public/img/');
   },
   filename : (req, file, cb) => {
-    let name = req.body.electionid + file.originalname;
+    let name = req.session.userid + file.originalname;
     let c = crypto.createHash('sha256').update(name).digest('hex').substring(0, 10);
     cb(null, c+'.'+file.mimetype.split('/')[1]);
   }
@@ -930,11 +930,10 @@ app.post('/process/registervote', upload.fields([{name: 'image'},{name:'image1'}
     res.send('<script>alert("오류가 발생하였습니다.");document.location.href="/adminMain";</script>');
     return;
   } 
-  console.log('createElection response : ' + typeof response + ' => ' + response);
+  console.log('createElection response : ' + typeof response + ' => ' + JSON.stringify(response));
 
   let context = {
-    session:req.session,
-    electionid:response.success
+    session:req.session
   };
   htmlrender(req, res, 'adminMain', context);
 });
