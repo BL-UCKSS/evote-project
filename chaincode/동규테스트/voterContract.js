@@ -572,21 +572,28 @@ async generateCandidateResult(ctx ,  args , electionId) {
 
     //get the political party the voter voted for, also the key
     let candidateId = args.candidateId;
-
-    //동규가 추가함
+    let slots = ['slot1', 'slot2', 'slot3', 'slot4'];
     let univ = args.univ;
-    let myBallot = await this.checkMyVBallot(ctx, args.walletId);
+    //선거에 맞는 투표용지를 찾아서, 
+    let student = await this.readMyAsset(ctx, args.walletId);
+    if(student.error || !student){
+      let response = {};
+      response.error = "진행한 투표가 없습니다.";
+      return response;
+    }
+    //투표를 하지 않았음을 재검사한다. + vBallot의 voterId를 가져오는 작업
     let voterId;
-    for(let i=0; i<myBallot.success.length; i++){
-      if(myBallot.success[i].election.univ === univ){
-        voterId = myBallot.success[i].voterId;
-        break;
+    let vBallot;
+    let i;
+    for(i=0; i<slots.length; i++){
+      if(student[slots[i]] !== 'NULL'){
+        vBallot = await this.readMyAsset(ctx, student[slots[i]]);
+        if(vBallot.election.univ === univ && vBallot.picked === 'NULL'){ //투표를 안했음.
+          voterId = student[slots[i]];
+          break;
+        }
       }
     }
-
-    // 동규가 수정함. args.voterId => voterId 로 변경함
-    //check to make sure the election exists 
-    let vBallot = await this.readMyAsset(ctx, voterId);
 
     if (await this.validateAfterDate(vBallot.election.startDate) && await this.validatePreviousDate(vBallot.election.endDate)) {
       //let vBallot = await this.readMyAsset(ctx, args.voterId);
