@@ -11,7 +11,7 @@
     <div class="text-center">
     	<%- include('header2.ejs'); %>
     	
-    	<div class="vote-container">
+    	<div class="vote-container loading-action">
     		<a href="/registervote"><span class="myvote registervote">
     			<img class="txtimg" src="/img/registerVoteIcon.png">
     			<div class="txt1">
@@ -19,14 +19,14 @@
 	    			<span id="txtln_1">선거 정보를 등록할 수 있습니다.</span>
 	    		</div>
     		</span></a>
-    		<a href="#" onclick="noElection('manage')"><span class="myvote managevote">
+    		<a href="#" onclick="goUrl('/adminManage');return false;" class="loading-action"><span class="myvote managevote">
     			<img class="txtimg" src="/img/manageVoteIcon.png">
     			<div class="txt1">
 	    			<span id="txt_2" class="txt font-weight-bolder">선거 관리하기</span>
 	    			<span id="txtln_2">등록된 선거를 관리할 수 있습니다.</span>
 	    		</div>
     		</span></a>
-            <a href="#" onclick="noElection('count')"><span class="myvote countvote">
+            <a href="#" onclick="goUrl('/adminNow');return false;" class="loading-action"><span class="myvote countvote">
     			<img class="txtimg" src="/img/checkVoteRateIcon.png">
     			<div class="txt1">
 	    			<span id="txt_3" class="txt font-weight-bolder">투표율 확인</span>
