@@ -566,7 +566,6 @@ app.get('/sign', async (req, res) => {
         break;
       }
     }else{ //student[slots[i]] === 'NULL'
-      // 문제점 : univArray[2] 는 또다시 '총학생회' 이다. 
       // 만약 univArray[0] 이 미달일 경우(now >= enddate && 투표율 40% 미달)의 
       // 선거 정보를 가져오는 함수 구현하기 => getElectIdByBogwol
       if(i >= 2){ // 2, 3
