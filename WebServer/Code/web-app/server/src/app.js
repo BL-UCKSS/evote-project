@@ -484,7 +484,6 @@ app.get('/sign', async (req, res) => {
   let slots = ['slot1', 'slot2', 'slot3', 'slot4'];
   let univArray = ['총학생회', req.session.univ, '총학생회', req.session.univ];
   let year = new Date();
-  let electIds = [];
 
   if (stat !== '재학') {
     console.log(userid + ' 학생은 ' + stat +'상태 이므로 투표할 수 없습니다.');
@@ -537,18 +536,19 @@ app.get('/sign', async (req, res) => {
   //만약 투표를 한 적이 있거나 개인정보보호 동의 안함 눌렀을 경우 또는 투표 중 이탈했을 경우
   let electionCast;
   let election;
+  let slotsUntil2 = slots.length - 2;
   if(student.error){ //투표권 발급 이후에 다시 student 객체 새로고침하기
     let networkObj = await network.connectToNetwork(walletid);
     let std = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
     student = JSON.parse(std);
   }
-  for(let i=0; i<slots.length; i++){
+  for(let i=0; i<slotsUntil2; i++){
     if(student[slots[i]] !== 'NULL'){
       let networkObj = await network.connectToNetwork(walletid);
       electionCast = await network.invoke(networkObj, true, 'readMyAsset', student[slots[i]]);
       electionCast = JSON.parse(electionCast);
       if(electionCast.picked !== 'NULL'){
-        if(i === slots.length - 1){
+        if(i === slotsUntil2 - 1){
           console.log('이미 모든 투표를 완료했습니다.');
           res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
           return;
@@ -565,63 +565,59 @@ app.get('/sign', async (req, res) => {
         }
         break;
       }
-    }else{ //student[slots[i]] === 'NULL'
-      // 만약 univArray[0] 이 미달일 경우(now >= enddate && 투표율 40% 미달)의 
-      // 선거 정보를 가져오는 함수 구현하기 => getElectIdByBogwol
-      if(i >= 2){ // 2, 3
-        //electId = await getElectIdByBogwol(year.getFullYear(), univArray[i]);
-        /*if(!electId){
-          console.log('에러 발생.');
-          let context = {error:'선거가 존재하지 않음'};
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-          return;
-        }
-        let args = {
-          walletId: walletid,
-          electionId: electId
-        };
-        let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
-        response = JSON.parse(response);
-        if(response.error){
-          console.log(response.error);
-          return;
-        }else{
-          let networkObj = await network.connectToNetwork(walletid);
-          electionCast = await network.invoke(networkObj, true, 'readMyAsset', response.success);
-          electionCast = JSON.parse(electionCast);
-          election = electionCast.election;
-        }*/
-        console.log('이미 모든 투표를 완료했습니다.');
-        res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
+    }else{  // student[slots[i]] === 'NULL'
+      electId = await getElectIdByYearUniv(year.getFullYear(), univArray[i]);
+      if(!electId){
+        let context = {error:univArray[i] + ' 선거가 존재하지 않음'};
+        console.log(context.error);
+        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
         return;
-      }else{ // 0, 1
-        electId = await getElectIdByYearUniv(year.getFullYear(), univArray[i]);
-        if(!electId){
-          console.log('에러 발생.');
-          let context = {error:'선거가 존재하지 않음'};
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
-          return;
-        }
-        let args = {
-          walletId: walletid,
-          electionId: electId
-        };
+      }
+      let args = {
+        walletId: walletid,
+        electionId: electId
+      };
+      let networkObj = await network.connectToNetwork(walletid);
+      let response = await network.invoke(networkObj, false, 'createVBallot', args);
+      response = JSON.parse(response);
+      if(response.error){
+        console.log(response.error);
+        return;
+      }else{
         let networkObj = await network.connectToNetwork(walletid);
-        let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
-        response = JSON.parse(response);
-        if(response.error){
-          console.log(response.error);
-          return;
-        }else{
-          let networkObj = await network.connectToNetwork(walletid);
-          electionCast = await network.invoke(networkObj, true, 'readMyAsset', response.success);
-          electionCast = JSON.parse(electionCast);
-          election = electionCast.election;
-        }
+        electionCast = await network.invoke(networkObj, true, 'readMyAsset', response.success);
+        electionCast = JSON.parse(electionCast);
+        election = electionCast.election;
       }
     }
   }
+  // 보궐 선거 존재 유무 확인하기
+  /*
+  for(let j=2; j<slots.length; j++){ // j === 2 는 총학생회 보궐선거, j === 3 는 단과대 보궐선거. 
+      // 미달 선거를 파악하고, 해당 미달 선거에 대한 보궐 선거의 electId를 가져오는 함수 구현하기
+      electId = await getBogwolElectId(year.getFullYear(), univArray[j]]);
+      if(!electId){ // 총학생회/단과대의 보궐선거가 없다면
+        continue;
+      }
+      //총학생회 선거의 보궐선거가 존재한다면, 투표용지 만들기
+      let args = {
+        walletId: walletid,
+        electionId: electId
+      };
+      let networkObj = await network.connectToNetwork(walletid);
+      let response = await network.invoke(networkObj, false, 'createVBallot', args);
+      response = JSON.parse(response);
+      if(response.error){
+        console.log(response.error);
+        return;
+      }else{
+        let networkObj = await network.connectToNetwork(walletid);
+        electionCast = await network.invoke(networkObj, true, 'readMyAsset', response.success);
+        electionCast = JSON.parse(electionCast);
+        election = electionCast.election;
+      }
+  }
+  */
   
   //투표 기간이 되었는지 확인하기
   let curDate = new Date();
