@@ -313,24 +313,48 @@ app.get('/adminNow', async (req, res) => {
   let networkObj = await network.connectToNetwork(appAdmin);
   let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
   let parsedElection = await JSON.parse(resElection);
-  parsedElection = await JSON.parse(parsedElection);
-  
+  parsedElection = await JSON.parse(parsedElection);  
   let now = new Date();
+
   //선거 목록 출력 후 선거별로 투표율 계산 및 출력
   for (let i in parsedElection){
     let t1 = new Date(parsedElection[i].Record.startDate);
     let t2 = new Date(parsedElection[i].Record.endDate);
+    let total;         //선거의 총 참여자 수
+    let totalTurnout;   //선거의 총 투표율
+    let candidateCount = []; //선거의 후보자 목록: 투표한 학생 수 (배열)
+
     if(now >= t1 && now <= t2){ 
-      let args = {
-        electionId: parsedElection[i].Key,
-        totalNum: totalNum,
-        deptNum: deptNum
-      };
+      let electionId = parsedElection[i].Key;
+
       networkObj = await network.connectToNetwork(appAdmin);
-      let resp = await network.invoke(networkObj, false, 'queryCurrentTimeTurnout', args);
+      let resp = await network.invoke(networkObj, true, 'queryCandidateResults', String(electionId));
       resp = JSON.parse(resp);
-      let avg = resp.success;
-      avg = parseFloat(avg);
+      total = resp.count[0];  //선거의 총 참여자 수
+      console.log('해당 선거의 총 참여자수: '+total);
+
+      if(parsedElection[i].Record.univ === "총학생회") {
+        totalTurnout = total/totalNum*100;
+        if(totalTurnout < 40){
+          console.log('('+ parsedElection[i].Record.name+') 해당 선거는 투표율 미달로 인해 무산되었습니다.');
+        }
+      } else {    //단과대 학생회 선거일 경우 deptNum 사용
+        totalTurnout = res.count[0]/deptNum*100;
+        if(totalTurnout < 40){
+          console.log('('+ parsedElection[i].Record.name+') 해당 선거는 투표율 미달로 인해 무산되었습니다.');
+        }
+      }
+      totalTurnout = parseFloat(totalTurnout);      //전체 투표율 소수점 변환
+      console.log('해당 선거의 총 투표율: '+totalTurnout+'%');
+
+      //각 후보자 별 투표율 계산해서 배열에 저장
+      for (let a=0; a < resp.count.length; a++) {
+        if (a ==0){
+          candidateCount[a] = totalTurnout;   //선거 총 투표율
+        } else {
+        candidateCount[a] = (resp.count[a]/total)*100; //후보 별 투표율
+        }
+      }
       if(resp.error){
         console.log('에러!');
         return;
@@ -338,7 +362,9 @@ app.get('/adminNow', async (req, res) => {
         arr.push({
           name: parsedElection[i].Record.name,
           enddate: parsedElection[i].Record.endDate.replace(/-/g, '.').substring(2, 10),
-          avg: avg === 0 || avg === '0' ? avg : avg.toFixed(2),
+          totalTurnout: totalTurnout === 0 || totalTurnout === '0' ? totalTurnout : totalTurnout.toFixed(2),
+          candidateName: resp.name,   //배열형식, 첫번째 값만 voteNum, 선거운동본부 이름
+          count: candidateCount  //배열형식, 첫번째 값만 해당 선거 투표율. 각 후보자 별 투표율
         });
       }
     }
