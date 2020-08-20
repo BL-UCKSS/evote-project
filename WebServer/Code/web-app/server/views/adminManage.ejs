@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+<%- include('head.ejs'); %>
+<title>Admin Main Page</title>
+</head>
+<% if(session.userid != 'admin' && session.g != 'Y') { %>
+<script>document.location.href="/login";</script>
+<% } else { %>
+<body class="loginbody">
+<div class="text-center">
+<%- include('header2.ejs'); %>
+<!-- slide start -->
+<div id="carouselIndicators" class="carousel slide manage-carousel-slide" data-ride="carousel" data-interval="false">
+<ol class="carousel-indicators manage-slide-ol">
+    <li data-target="#carouselIndicators" data-slide-to="0" class="manage-slide-li active"></li>
+    <li data-target="#carouselIndicators" data-slide-to="1" class="manage-slide-li"></li>
+</ol>
+<% var t1 = new Date() %>
+<% t1.setHours(t1.getHours() + 9) %>
+<div class="carousel-inner">
+    <!-- 등록된 선거 -->
+    <div class="carousel-item active manage-carousel-item">
+        <!-- title -->
+        <div class="manage-carousel-item-title">
+            <div class="manage-carousel-item-title-inner">등록된 선거</div>
+        </div>
+        <!-- title end -->
+        <% var regCnt = 0; %>
+        <% for (var i=0; i<list.length; i++) { %>
+            <% /* 등록된 선거 조건으로 출력해야함 */ %>
+            <% var t2 = new Date(list[i].Record.startDate) %>
+            <% var t3 = new Date(list[i].Record.endDate) %>
+            <% if(t1 < t2 && t1 < t3) { %>
+            <% regCnt++ %>
+        <div class="manage-carousel-item-content" onclick="changeTitle('regElecModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
+            <div class="manage-carousel-item-content-1">
+                <div class="manage-carousel-item-content-2"><%= String(list[i].Record.startDate).substring(0,10) %> <%= String(list[i].Record.startDate).substring(11,16) %> ~ <%= String(list[i].Record.endDate).substring(0,10) %> <%= String(list[i].Record.endDate).substring(11,16) %></div>
+                <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
+            </div>
+        </div>
+            <% } %>
+        <% } %>
+        <% if(regCnt == 0) { %>
+        <div class="myvote-cards">
+            <div class="myvote-card" style="text-align: center;padding:25px;">등록된 선거가 없습니다.</div>
+        </div>
+        <% } %>
+    </div>
+    <!-- 진행 중인 선거 -->
+    <div class="carousel-item">
+        <!-- title -->
+        <div class="manage-carousel-item-title">
+            <div class="manage-carousel-item-title-inner">진행 중인 선거</div>
+        </div> <!-- title end -->
+        <% var conCnt=0; %>
+        <% for (var i=0; i<list.length; i++) { %>
+            <% /* 진행 중인 선거 조건으로 출력해야함 */ %>
+            <% var t2 = new Date(list[i].Record.startDate) %>
+            <% var t3 = new Date(list[i].Record.endDate) %>
+            <% if(t1 >= t2 && t1 <= t3) { %>
+            <% conCnt++ %>
+        <div class="manage-carousel-item-content" onclick="changeTitle('exitElectionModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
+            <div class="manage-carousel-item-content-1">
+                <div class="manage-carousel-item-content-2"><%= String(list[i].Record.startDate).substring(0,10) %> <%= String(list[i].Record.startDate).substring(11,16) %> ~ <%= String(list[i].Record.endDate).substring(0,10) %> <%= String(list[i].Record.endDate).substring(11,16) %></div>
+                <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
+            </div>
+        </div>
+            <% } %>
+        <% } %>
+        <% if(conCnt == 0) { %>
+        <div class="myvote-cards">
+            <div class="myvote-card" style="text-align: center;padding:25px;">진행 중인 선거가 없습니다.</div>
+        </div>
+        <% } %>
+    </div>
+    <!-- slide end -->
+    <!-- modal start -->
+    <div class="modal fade" id="regElecModal" tabindex="-1" role="dialog" aria-labelledby="regElecModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac" id="modalTitle">
+                    2020 상명대학교 총학생회 선거
+                </div>
+                <div style="display:none;" id="modalElectId"></div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" id="modify" onclick="modifyElection();return false;">선거 수정</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" onclick="hideToggle('exampleModal','deleteElectionModal');">선거 삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- modal start -->
+    <div class="modal fade" id="deleteElectionModal" tabindex="-1" role="dialog" aria-labelledby="deleteElectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac">
+                    <div style="font-size:medium;">
+                        선거를 삭제하시겠습니까?
+                    </div>
+                    <div style="font-size:small;" id="modalTitle">
+                        2020 상명대학교 총학생회 선거
+                    </div>
+                    <div style="display:none;" id="modalElectId"></div>
+                </div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="remove('deleteElectionModal');">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- modal start -->
+    <div class="modal fade" id="electionDeletedModal" tabindex="-1" role="dialog" aria-labelledby="electionDeletedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac">
+                    <div style="font-size:medium;" id="modalTitle">
+                        2020 상명대학교 사범대 학생회 선거
+                    </div>
+                    <div style="display:none;" id="modalElectId"></div>
+                    <div style="font-size:small;">
+                        선거가 삭제되었습니다.
+                    </div>
+                </div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="goUrl('/adminManage');">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- modal start -->
+    <div class="modal fade" id="exitElectionModal" tabindex="-1" role="dialog" aria-labelledby="exitElectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac">
+                    <div style="font-size:medium;">
+                        선거를 종료하시겠습니까?
+                        <div style="font-size: small;">
+                            강제로 종료하실 경우, 모든 데이터가 삭제됩니다.<br>
+                            (후보자 정보, 발급된 투표지 등)
+                        </div>
+                    </div>
+                    <div style="font-size:small;" id="modalTitle">
+                        2020 상명대학교 총학생회 선거
+                    </div>
+                    <div style="display:none;" id="modalElectId"></div>
+                </div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-secondary manage-modal-footer-button-2" style="width:45%;" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" id="remove" onclick="remove('exitElectionModal');">종료</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- modal start -->
+    <div class="modal fade" id="electionExitedModal" tabindex="-1" role="dialog" aria-labelledby="electionExitedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="margin:70px;">
+                <div class="modal-body tac">
+                    <div style="font-size:medium;" id="modalTitle">
+                        2020 상명대학교 사범대 학생회 선거
+                    </div>
+                    <div style="display:none;" id="modalElectId"></div>
+                    <div style="font-size:small;">
+                        선거가 종료되었습니다.
+                    </div>
+                </div>
+                <div class="modal-footer jac">
+                    <button type="button" class="btn btn-primary manage-modal-footer-button" style="width:45%;" onclick="goUrl('/adminManage');">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal end -->
+    <!-- hidden form -->
+    <form action="/modifyvote" method="post" style="display:none;" name="modifyFrm">
+        <input type="hidden" name="electionid">
+    </form>
+</div>
+<%- include('foot.ejs'); %>
+<script type="text/javascript" src="/public/script.js"></script>
+<script>
+$(function() {
+    var params = {};
+    window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str, key, value) { params[key] = value; });
+    if (params.id == 2){ //id=2 일 경우에만 두번째 슬라이드가 먼저 나오도록
+        $('.carousel-indicators > li:nth-child(1)').removeClass('active')
+        $('.carousel-indicators > li:nth-child(2)').addClass('active');
+        $('.carousel-inner > .carousel-item:nth-child(1)').removeClass('active');
+        $('.carousel-inner > .carousel-item:nth-child(2)').addClass('active');
+    }else{ //id=0이든 id=1이든 2가 아닌 모든 경우에는 항상 첫번째 슬라이드가 먼저 나오도록
+        $('.carousel-indicators > li:nth-child(1)').addClass('active');
+        $('.carousel-indicators > li:nth-child(2)').removeClass('active')
+        $('.carousel-inner > .carousel-item:nth-child(1)').addClass('active');
+        $('.carousel-inner > .carousel-item:nth-child(2)').removeClass('active');
+    }
+})
+var remove = function(hide){
+    var electionid = $('#remove').parent().parent().find('#modalElectId').text()
+    $.ajax({
+        url: '/process/removeElection',
+        type: 'post',
+        data: {
+            electionid:electionid
+        },
+        dataType: 'json',
+        success: function(response){
+            hideToggle(hide,'electionDeletedModal');
+        }
+    });
+}
+var modifyElection = function(){
+    var electionid = $('#modify').parent().parent().find('#modalElectId').text();
+    $('form[name=modifyFrm] input').val(electionid);
+    document.modifyFrm.submit();
+}
+</script>
+</body>
+<% } %>
+</html>

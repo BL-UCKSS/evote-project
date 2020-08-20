@@ -1,14 +1,13 @@
 몽고디비 테스트 데이터
 
-SSO DB 사용자 3명 추가
-총학생회 기호 1번 브릿지 후보로 추가
-
+1. SSO DB 사용자 추가 쿼리문 예시
 db.ssousers.insertOne({ "stdno" : "201712345", "password" : "123456", "name" : "김동형", "grade" : 4, "dept" : "컴퓨터과학과", "stat" :
 "재학", "email" : "johnkim@naver.com", "univ" : "융합공과대학" })
-db.ssousers.insertOne({ "stdno" : "201712346", "password" : "123456", "name" : "김동팍", "grade" : 3, "dept" : "전자공학과", "stat" : "
-재학", "email" : "digidigi@naver.com", "univ" : "융합공과대학" })
-db.ssousers.insertOne({ "stdno" : "201712347", "password" : "123456", "name" : "김동한", "grade" : 2, "dept" : "휴먼공학과", "stat" : "
-재학", "email" : "ganadara@naver.com", "univ" : "융합공과대학" })
-db.ssousers.insertOne({ "stdno" : "201712350", "password" : "123456", "name" : "김동혁","grade" : 1, "dept" : "전기공학과", "stat" : "재학", "email" : "ganadara@naver.com", "univ" : "융합공과대학" })
-db.candidates.insertOne({no:1,electionid:'m1xagvyp8re9taxvr52f',hakbun1:17,hakbun2:15,name1:'박수민',name2:'이은지',dept1:'공공인재학부',dept2:'컴퓨터과학전공',grade1:4,grade2:4,profile1:'1.png',profile2:'2.png',hname:'브릿지',icon:'bridge.png',link:'https://www.smu.ac.kr/lounge/campus/s_student.do?mode=view&articleNo=708119&article.offset=0&articleLimit=10'})
-db.candidates.insert({no:2,electionid:'m1xagvyp8re9taxvr52f',hakbun1:15,hakbun2:14,name1:'김동규',name2:'조혜령',dept1:'컴퓨터과학전공',dept2:'컴퓨터과학전공',grade1:4,grade2:4,profile1:'1.png',profile2:'2.png',hname:'잇지',icon:'bridge.png',link:'https://www.smu.ac.kr/lounge/campus/s_student.do?mode=view&articleNo=708119&article.offset=0&articleLimit=10'})
+
+2. 선거 및 후보자 DB 쿼리문 예시
+db.candidates.find().pretty()
+
+3. 선거 및 후보자 DB 전체 삭제문 예시
+db.candidates.deleteMany({})
+
+4. 선거 및 후보자 DB 추가는 관리자 선거 등록하기 메뉴에서 가능

@@ -1,224 +1,83 @@
+<!doctype html>
 <html lang="ko">
-
-<head>
-    <%- include('head.ejs'); %>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
-    <style>
-        .banner{
-            background-color:#3E5E99;
-            color:white;
-            width: 500px;
-            height: 120px;
-            margin:0 auto;
-            text-align: center;
-            padding-top: 40px;
-        }
-        .date {
-            background-color: #EEF6F9;
-            width: 500px;
-            margin:10px auto;
-            text-align: center;
-            padding: 10px 0;
-        }
-        hr {
-            border-top: 1px dashed #D4D4D4;
-            width: 500px;
-        }
-        .content {
-            text-align: left;
-            width: 500px;
-            margin: 0px auto;
-        }
-        .hubos {
-            margin:0 auto;
-        }
-        .hubos tr td ul{
-            list-style: none;
-            text-align: center;;
-            margin-left: -20px;
-        }
-        .hubo-img{
-            width: 160px;
-            height: 220px;
-        }
-        .voteItems {
-            width: 500px;
-            margin: 0 auto;
-            text-align: left;
-            font-size: 20px;
-        }
-        .hubo-title {
-            font-size: 15px;
-            font-weight: bold;;
-        }
-        .hubo-desc {
-            font-size: 14px;
-        }
-    </style>
-</head>
-
-<body>
-    <%- include('header.ejs'); %>
-    <% if(session.userid) { %>
-        <a href="/logout" class="">로그아웃</a>&nbsp;
-    <% } else {%>
-        <script>location.replace('/');</script>
-    <% } %>
-    <div class="posts">
-        <div class="banner">
-            <h1>2020학년도 총학생회 재선거 투표</h1>
-        </div>
-        <div class="date">
-            <b>2020-04-23(목) ~ 2020-04-24(금)</b>
-        </div>
-        <hr/><br><br>
-        <div class="content">
-            <!-- 반복문 -->
-            <% for(var i=0;i<contents.length;i++){ %>
-            <span style="color:red">* 필수 질문</span><br><br>
-            <b>2020학년도 총학생회 선거 투표</b><br><br>
-            * 총학생회 선거운동본부 기호1번<br>
-            &nbsp;&nbsp;1. 선거운동본부명칭 : <%=contents[i].hname%><br>
-            &nbsp;&nbsp;2. 정후보 : <%=contents[i].name1%>(<%=contents[i].dept1%> <%=contents[i].grade1%>학년)<br>
-            &nbsp;&nbsp;3. 부후보 : <%=contents[i].name2%>(<%=contents[i].dept2%> <%=contents[i].grade2%>학년)<br>
-            <a href="<%=contents[i].link%>" target="_blank">소견문 링크</a>
-            <br>
-            <p>* 최종 선택 후(제출 완료)에는 변경하실 수 없습니다.</p>
-            <div style="font-size:10px;text-align:center;">
-                [총학생회 선거운동본부 기호 <%=contents[i].no%>번 <%=contents[i].hname%>]
+  <head>
+	<%- include('head.ejs'); %>
+	<title>Vote Page</title>
+  </head>
+  <% /* session.univ는 학생의 단과대학을 표시해줌 */ %>
+  <% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+  <% } else { %>
+<body class="loginbody">
+    <div class="text-center">
+        <%- include('header.ejs'); %>
+        <form action="/process/vote2/<%=univ%>" method="post">
+            <div class="vote-banner">
+                <% /* 여기는 DB에 저장된 정보가 아님 */ %>
+                <span class="vote-date"><%- electionName %></span>
+                <span class="vote-name"><%- univ %></span>
             </div>
-            <div style="text-align: center;" ><img src="/public/img/<%=contents[i].icon%>" alt="이미지 없음"></div>
-            <table class="hubos">
-                <tr>
-                    <td>
-                        <ul>
-                            <li><img class="hubo-img" src="/public/img/<%=contents[i].profile1%>" alt="이미지 없음"></li>
-                            <li><span class="hubo-title">정후보</span></li>
-                            <li><span class="hubo-desc"><%=contents[i].dept1%> <%=contents[i].grade1%>학년 <%=contents[i].hakbun1%>학번<br><%=contents[i].name1%></span></li>
-                        </ul>
-                    </td>
-                    <td>
-                        <ul>
-                            <li><img class="hubo-img" src="/public/img/<%=contents[i].profile2%>" alt="이미지 없음"></li>
-                            <li><span class="hubo-title">부후보</span></li>
-                            <li><span class="hubo-desc"><%=contents[i].dept2%> <%=contents[i].grade2%>학년 <%=contents[i].hakbun2%>학번<br><%=contents[i].name2%></span></li>
-                        </ul>
-                    </td>
-                </tr>
-            </table>
-            <!-- 반복문 끝 -->
-            <% } %>
+            <!-- vote-table slide -->
+            <div id="carouselIndicators" class="carousel slide vote-table vote-slide" data-ride="carousel" data-interval="false">
+                <ol class="carousel-indicators">
+                    <li data-target="#carouselIndicators" data-slide-to="0" class="vote-slide-li active"></li>
+                    <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="1"></li>
+                    <li class="vote-slide-li" data-target="#carouselIndicators" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <% for(var i=0; i<list.length; i++) { %>
+                    <% if(i==0) { %>
+                    <div class="carousel-item active">
+                    <% } else { %>
+                    <div class="carousel-item">
+                    <% } %>
+                        <!-- hubo banner -->
+                        <div class="hubo-banner">
+                            <!-- title -->
+                            <div><span class="hubo-title">기호 <%= i+1 %>번 <%= list[i].hname %></span></div>
+                            <!-- logo -->
+                            <div class="hubo-logo"><a href="<%= list[i].link %>" target="_blank"><img style="width:70px;height:70px;" src="/img/<%= list[i].icon %>"></a></div>
+                        </div>
+                        <!-- hubo-div -->
+                        <div class="hubo-container">
+                            <!-- hubo 1-->
+                            <div class="hubo-one">
+                                <p class="hubo-classify">정후보</p>
+                                <img class="hubo-img" src="/img/<%= list[i].profile1 %>">
+                                <p class="hubo-info"><%= list[i].name1 %><br><%= list[i].dept1 %><br><%= list[i].grade1 %>학년 <%= list[i].hakbun1 %>학번</p>
+                            </div>
+                            <!-- hubo 2-->
+                            <div class="hubo-two">
+                                <p class="hubo-classify">부후보</p>
+                                <img class="hubo-img" src="/img/<%= list[i].profile2 %>">
+                                <p class="hubo-info"><%= list[i].name2 %><br><%= list[i].dept2 %><br><%= list[i].grade2 %>학년 <%= list[i].hakbun2 %>학번</p>
+                            </div>
+                            <!-- slide index -->
+                            <br>
+                            <span class="slide-index">
+                            </span>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+                <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#carouselIndicators" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
             </div>
-        </div>
-        <!-- 조건문 -->
-        <% if(contents.length == 1) { %>
-        <div class="voteItems">
-            <input type="radio" id="agree" name="ballot" value="agree">
-            <label for="agree">찬성</label><br>
-            <input type="radio" id="disagree" name="ballot" value="disagree">
-            <label for="disagree">반대</label><br>
-            <input type="radio" id="blank" name="ballot" value="blank">
-            <label for="blank">기권</label>
-        </div>
-        <% } else { %>
-        <div class="voteItems">
-            <!-- 반복문 -->
-            <% for(var i=0;i<contents.length;i++) { %>
-            <input type="radio" id="no<%=contents[i].no%>" name="ballot" value="<%=contents[i].hname%>">
-            <label for="no<%=contents[i].no%>">기호 <%=contents[i].no%>번 : <%=contents[i].hname%></label><br>
-            <% } %>
-            <!-- 반복문 끝 -->
-            <input type="radio" id="blank" name="ballot" value="blank">
-            <label for="blank">기권</label>
-        </div>
-        <% } %>
-        <!-- 조건문 끝 -->
-        <br>
-        <span id="picked"></span><br><br>
-        <!--input type="text" id="voterId" placeholder="Enter VoterId" value=""><br-->
-        <input type="hidden" id="electionId" value="1">
-        <button onclick="vote()">Cast Vote</button><br>
-        <br>
-        <span id="castBallot"><b></b></span><br>
-        <!---->
+            <!-- slide end -->
+            <div class="vote-box">
+                <div class="votebtns">
+                    <button class="signbtn btn btn-primary loading-action" type="submit">투표하기</button>
+                </div>
+            </div>
+        </form>
     </div>
-    </div>
-</body>
-
-<script type="text/javascript">
-    var vote = function () {
-        // var electionId = $('#electionId').val();
-        var picked = $('input[type=radio]:checked').val();
-        var voterId = '<%=session.userid%>';
-        if(picked == undefined|| picked == ''){
-            console.log(picked == '');
-            $('#castBallot > b').html('You have to pick a party to vote for!');
-            return;
-        }
-        else if (voterId == undefined || voterId == ''){
-            $('#castBallot > b').html('You have to enter your voterId to cast a vote!');
-            return;
-        }
-        else {
-            var electionId = '';
-
-            $.ajax({
-                type: "POST",
-                url:'/queryWithQueryString',
-                data: {'selected': 'election'},
-                success:function(data){
-                    var json_data = JSON.parse(data);
-                    // console.log(json_data[0]);
-                    electionId = json_data[0].Key;
-                    // electionId = JSON.stringify(electionId);
-                    if(picked == 'agree'){
-                        picked = '<%=contents.hname%>';
-                    }
-                    $.ajax({
-                        type: "POST",
-                        url: '/castBallot',
-                        data: { 'electionId': electionId,
-                                'picked': picked,
-                                'voterId': voterId },
-                        success: function (data) {
-                            var d = JSON.parse(data);
-                            if(d.error){
-                                $('#castBallot > b').html(d.error);
-                            }
-                            else{
-                                if(d.ballotCast){
-                                    //$('#castBallot > b').html('vote finished');
-                                    $.ajax({
-                                        type: "POST",
-                                        url: '/process/personalagree',
-                                        data: {'voterId':voterId,
-                                                'agree':true},
-                                        success: function(data){
-                                            console.log('개인정보동의됨');
-                                        }
-                                    });
-                                    alert('vote finished');
-                                    location.replace('/');
-                                }else{
-                                    $('#castBallot > b').html(JSON.stringify(data, undefined, 4));
-                                }
-                            }
-                        }
-                    })
-                }
-            })
-
-            
-        }
-    }
-    
-    $(function(){
-        $('input[type=radio]').click(function(){
-            var radioValue = $(this).val();
-            radioValue = '<b>'+radioValue+'</b>';
-            $('#picked').html('Picked : ' + radioValue);
-        })
-    })
-</script>
-
+	<%- include('foot.ejs'); %>
+  </body>
+  <% } %>
 </html>

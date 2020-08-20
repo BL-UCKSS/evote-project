@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <%- include('head.ejs'); %>
+    <title>Help Page</title>
+  </head>
+<% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+<% } else { %>
+  <body class="loginbody">
+    <div class="text-center">
+    	<%- include('header.ejs'); %>
+
+		<div class="myvote-cards">
+			<% if(list.length == 0) { %>
+			<div class="myvote-card" style="text-align: center;padding:25px;">참여한 선거가 없습니다.</div>
+			<% } else { %>
+			<% for(var i=0;i<list.length; i++) { %>
+				<% //선거 결과 확인하기 %>
+			<div class="myvote-card">
+				<span class="myvote-card-title">
+					<%= list[i].election.name %>
+				</span>
+				<span class="myvote-card-content">
+					<%= list[i].picked %>
+				</span>
+			</div>
+			<% } %>
+			<% } %>
+		</div>
+    	
+    </div>
+    <%- include('foot.ejs'); %>
+  </body>
+<% } %>
+</html>

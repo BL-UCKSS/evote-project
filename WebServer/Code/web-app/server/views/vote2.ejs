@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+	<%- include('head.ejs'); %>
+	<title>Vote2 Page</title>
+  </head>
+  <% /* session.univ는 학생의 단과대학을 표시해줌 */ %>
+  <% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+  <% } else { %>
+<body class="loginbody">
+    <div class="text-center">
+        <%- include('header.ejs'); %>
+        <div class="vote-banner">
+            <span class="vote-date"><%- electionName %></span>
+                <span class="vote-name"><%- univ %></span>
+        </div>
+        <form action="/process/finvote/<%=univ%>" method="post">
+            <input type="hidden" name="electId" value="<%= electId %>">
+            <!-- vote-table -->
+            <div class="vote-table vote-table2">
+                <% for(var i=0; i<list.length+1; i++) { %>
+                    <% if(i == list.length) { %>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                    <input type="radio" name="candidates" id="giho_giveup" value="<%= gigwon %>">
+                                </div>
+                            </div>
+                            <label class="form-control giho" for="giho_giveup">기권</label>
+                        </div>
+                    <% } else {%>
+                        <!-- radio input loop -->
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                    <input type="radio" name="candidates" id="giho_<%= i+1 %>" value="<%= list[i].candidateId%>">
+                                </div>
+                            </div>
+                            <label class="form-control giho" for="giho_<%= i+1 %>">기호 <%= i+1 %>번 <%= list[i].hname %></label>
+                        </div>
+                    <% } %>
+                <% } %>
+                <!-- radio input loop end -->
+            </div>
+            <!-- vote-table end -->
+            <div class="vote-box">
+                <div class="votebtns">
+                    <button class="signbtn btn btn-secondary" style="background-color:#6C757D;border-color:#6C757D;" onclick="history.back();return false;">뒤로가기</button>
+                    <button class="signbtn btn btn-primary loading-action" type="submit">투표하기</button>
+                </div>
+            </div>
+        </form>
+    </div>
+	<%- include('foot.ejs'); %>
+  </body>
+  <% } %>
+</html>

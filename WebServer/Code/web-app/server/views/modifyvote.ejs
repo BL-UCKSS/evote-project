@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+    <link rel="stylesheet" href="/public/bootstrap-datepicker.min.css">
+    <title>Modify Vote Page</title>
+</head>
+<% if(session.userid != 'admin' && session.g != 'Y') { %>
+<script>document.location.href = "/login";</script>
+<% } else { %>
+
+<body class="loginbody">
+    <div class="text-center">
+        <%- include('header2.ejs'); %>
+        <form action="/process/modifyvote" method="post" id="modifyFrm" name="modify">
+            <input type="hidden" name="electionid" value="<%= electionData.electionId %>">
+            <input type="hidden" id="isMulti" name="isMulti" value="">
+            <input type="hidden" id="max_page" name="max_page" value="">
+            <div id="page1">
+                <div class="register-box">
+                    <div class="in-register-box">
+                        <p class="registertext">선거 이름</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="name" value="<%= electionData.name %>"
+                                placeholder="선거명을 입력해 주세요.">
+                        </div>
+                        <p class="registertext">선거 종류</p>
+                        <div class="form-group">
+                            <select class="custom-select form-control" id="univSelect" name="univ">
+                                <option value="<%= electionData.univ %>" selected><%= electionData.univ %></option>
+                                <% for(var i=0; i<univList.length; i++) { %>
+                                <option value="<%= univList[i] %>"><%= univList[i] %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <p class="registertext">시작 날짜 선택</p>
+                        <input type="text" id="startdate" class="form-control" name="startdate" value="">
+                        <br>
+                        <p class="registertext">종료 날짜 선택</p>
+                        <input type="text" id="enddate" class="form-control" name="enddate" value="">
+                    </div>
+                    <div class="registervotebtns">
+                        <button class="nregisterbtn btn"
+                            onclick="$('#cancelModifyVoteModal').modal('show');return false;">취소</button>
+                        <button class="registerbtn btn" onclick="goNextPage(1, 2);return false;">다음</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page2" style="display:none;">
+                <div class="register-box">
+                    <div class="candidate-img-box" style="border-radius: 0; width: 100%">
+                        <label for="himage_file">
+                            <input type="file" id="himage_file" name="image"
+                                style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="icon" value="<%= candidateData[0].icon %>">
+                            <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
+                                style="position: absolute; top: 75px; left: 20px; width: 80px; height: 20px;">
+                                <div data-text-content="true"
+                                    style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">
+                                    선거운동본부</div>
+                            </div>
+                            <div data-obj-id="ftabY" data-obj-type="icon" class="himage_icon"
+                                style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;cursor: pointer;"
+                                data-released-from-group="VdIJ0">
+                                <img style='width:95px;height:100px;margin-bottom:-40px;'
+                                    src='/img/<%= candidateData[0].icon %>'>
+                            </div>
+                            <br><br><br>
+                            <p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>선거운동본부 이미지를
+                                수정하세요.</p>
+                        </label>
+                    </div>
+                    <div class="in-candidate-box">
+                        <p class="registertext">선거운동본부 명칭</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="hname" name="hname"
+                                value="<%= candidateData[0].hname %>" placeholder="선거운동본부 명칭을 입력해 주세요."></div>
+                        <p class="registertext">소견문</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="link" name="link"
+                                value="<%= candidateData[0].link %>" placeholder="소견문 링크를 입력해 주세요."></div>
+                    </div>
+                    <div class="registerbtns">
+                        <button class="nregisterbtn btn" onclick="goNextPage(2, 1);return false;">뒤로</button>
+                        <button class="registerbtn btn" onclick="goNextPage(2, 3);return false;">다음</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page3" style="display:none;">
+                <div class="register-box">
+                    <div data-toggle="modal" data-target="#addToImageModal" class="btn candidate-img-box"
+                        style="border-radius: 0; width: 100%">
+                        <label for="image3_file">
+                            <input type="file" id="image3_file" name="image"
+                                style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile1" value="<%= candidateData[0].profile1 %>">
+                            <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
+                                style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
+                                <div data-text-content="true"
+                                    style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">
+                                    정후보</div>
+                            </div>
+                            <div data-obj-id="ftabY" data-obj-type="icon" class=""
+                                style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;"
+                                data-released-from-group="VdIJ0">
+                                <img style='width:95px;height:100px;margin-bottom:-40px;'
+                                    src='/img/<%= candidateData[0].profile1 %>'>
+                            </div>
+                            <br><br><br>
+                            <p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>정후보 이미지를 수정하세요.
+                            </p>
+                        </label>
+                    </div>
+                    <div class="in-candidate-box">
+                        <p class="candidatetext">학과</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="dept1" name="dept1"
+                                value="<%= candidateData[0].dept1 %>" placeholder="학과를 입력해 주세요."></div>
+                        <p class="candidatetext">학번</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="no1" name="no1"
+                                value="<%= candidateData[0].hakbun1 %>" placeholder="학번을 입력해 주세요." min="1" max="99"></div>
+                        <p class="candidatetext">학년</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="grade1" name="grade1"
+                                value="<%= candidateData[0].grade1 %>" placeholder="학년을 입력해 주세요." min="1" max="4"></div>
+                        <p class="candidatetext">이름</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="name1" name="sname1"
+                                value="<%= candidateData[0].name1 %>" placeholder="이름을 입력해 주세요."></div>
+                    </div>
+                    <div class="registerbtns">
+                        <button class="nregisterbtn btn" onclick="goNextPage(3, 2);return false;">뒤로</button>
+                        <button class="registerbtn btn" onclick="goNextPage(3, 4);return false;">다음</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page4" style="display:none;">
+                <div class="register-box">
+                    <div data-toggle="modal" data-target="#addToImageModal" class="btn candidate-img-box"
+                        style="border-radius: 0; width: 100%">
+                        <label for="image4_file">
+                            <input type="file" id="image4_file" name="image"
+                                style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile2" value="<%= candidateData[0].profile2 %>">
+                            <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
+                                style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
+                                <div data-text-content="true"
+                                    style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">
+                                    부후보</div>
+                            </div>
+                            <div data-obj-id="ftabY" data-obj-type="icon" class=""
+                                style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;"
+                                data-released-from-group="VdIJ0">
+                                <img style='width:95px;height:100px;margin-bottom:-40px;'
+                                    src='/img/<%= candidateData[0].profile2 %>'>
+                            </div>
+                            <br><br><br>
+                            <p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>부후보 이미지를 수정하세요.
+                            </p>
+                        </label>
+                    </div>
+                    <div class="in-candidate-box">
+                        <p class="candidatetext">학과</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="dept2" name="dept2"
+                                value="<%= candidateData[0].dept2 %>" placeholder="학과를 입력해 주세요.">
+                        </div>
+                        <p class="candidatetext">학번</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="no2" name="no2"
+                                value="<%= candidateData[0].hakbun2 %>" placeholder="학번을 입력해 주세요." min="1" max="99">
+                        </div>
+                        <p class="candidatetext">학년</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="grade2" name="grade2"
+                                value="<%= candidateData[0].grade2 %>" placeholder="학년을 입력해 주세요." min="1" max="4">
+                        </div>
+                        <p class="candidatetext">이름</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="name2" name="sname2"
+                                value="<%= candidateData[0].name2 %>" placeholder="이름을 입력해 주세요.">
+                        </div>
+                    </div>
+                    <% if(candidateData.length == 1) { %>
+                    <div><button class="btn btn-outline-primary" onclick="addNewPage(4);return false;"
+                            style="width:100px;margin-bottom:0px;margin-top:-30px;">추가</button></div>
+                    <% } %>
+                    <div class="registerbtns">
+                        <button class="nregisterbtn btn" onclick="goNextPage(4, 3);return false;">뒤로</button>
+                        <button class="registerbtn btn" onclick="goNextPage(4, 5);return false;"><% if(candidateData.length == 1) { %>확인<% } else { %>다음<% } %></button>
+                    </div>
+                </div>
+            </div>
+            <% var cnt = 4 %>
+            <% if(candidateData.length > 1) { %>
+            <% for(var i=1;i<candidateData.length;i++){ %>
+            <% cnt++ %>
+            <div id="page<%= cnt %>" style="display:none;">
+                <div class="register-box">
+                    <div class="candidate-img-box" style="border-radius: 0; width: 100%">
+                        <label for="himage_file<%= cnt %>">
+                            <input type="file" id="himage_file<%= cnt %>" name="image"
+                                style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="icon" value="<%= candidateData[i].icon %>">
+                            <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
+                                style="position: absolute; top: 75px; left: 20px; width: 80px; height: 20px;">
+                                <div data-text-content="true"
+                                    style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">
+                                    선거운동본부</div>
+                            </div>
+                            <div data-obj-id="ftabY" data-obj-type="icon" class="himage_icon"
+                                style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;cursor: pointer;"
+                                data-released-from-group="VdIJ0">
+                                <img style='width:95px;height:100px;margin-bottom:-40px;'
+                                    src='/img/<%= candidateData[i].icon %>'></div>
+                            <br><br><br>
+                            <p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>선거운동본부 이미지를
+                                수정하세요.</p>
+                        </label>
+                    </div>
+                    <div class="in-candidate-box">
+                        <p class="registertext">선거운동본부 명칭</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="hname" name="hname"
+                                value="<%= candidateData[i].hname %>" placeholder="선거운동본부 명칭을 입력해 주세요."></div>
+                        <p class="registertext">소견문</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="link" name="link"
+                                value="<%= candidateData[i].link %>" placeholder="소견문 링크를 입력해 주세요."></div>
+                    </div>
+                    <div class="registerbtns">
+                        <button class="nregisterbtn btn"
+                            onclick="goNextPage('<%= cnt %>', '<%= cnt-1 %>');return false;">뒤로</button>
+                        <button class="registerbtn btn"
+                            onclick="goNextPage('<%= cnt %>', '<%= cnt+1 %>');return false;">다음</button>
+                    </div>
+                </div>
+            </div>
+            <% cnt++ %>
+            <div id="page<%= cnt %>" style="display:none;">
+                <div class="register-box">
+                    <div data-toggle="modal" data-target="#addToImageModal" class="btn candidate-img-box"
+                        style="border-radius: 0; width: 100%">
+                        <label for="image<%= cnt %>_file">
+                            <input type="file" id="image<%= cnt %>_file" name="image"
+                                style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile1" value="<%= candidateData[i].profile1 %>">
+                            <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
+                                style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
+                                <div data-text-content="true"
+                                    style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">
+                                    정후보</div>
+                            </div>
+                            <div data-obj-id="ftabY" data-obj-type="icon" class=""
+                                style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;"
+                                data-released-from-group="VdIJ0">
+                                <img style='width:95px;height:100px;margin-bottom:-40px;'
+                                    src='/img/<%= candidateData[i].profile1 %>'></div>
+                            <br><br><br>
+                            <p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>정후보 이미지를 수정하세요.
+                            </p>
+                        </label>
+                    </div>
+                    <div class="in-candidate-box">
+                        <p class="candidatetext">학과</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="dept1" name="dept1"
+                                value="<%= candidateData[i].dept1 %>" placeholder="학과를 입력해 주세요."></div>
+                        <p class="candidatetext">학번</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="no1" name="no1"
+                                value="<%= candidateData[i].hakbun1 %>" placeholder="학번을 입력해 주세요." min="1" max="99">
+                        </div>
+                        <p class="candidatetext">학년</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="grade1" name="grade1"
+                                value="<%= candidateData[i].grade1 %>" placeholder="학년을 입력해 주세요." min="1" max="4"></div>
+                        <p class="candidatetext">이름</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="name1" name="sname1"
+                                value="<%= candidateData[i].name1 %>" placeholder="이름을 입력해 주세요."></div>
+                    </div>
+                    <div class="registerbtns">
+                        <button class="nregisterbtn btn"
+                            onclick="goNextPage('<%= cnt %>', '<%= cnt-1 %>');return false;">뒤로</button>
+                        <button class="registerbtn btn"
+                            onclick="goNextPage('<%= cnt %>', '<%= cnt+1 %>');return false;">다음</button>
+                    </div>
+                </div>
+            </div>
+            <% cnt++ %>
+            <div id="page<%= cnt %>" style="display:none;">
+                <div class="register-box">
+                    <div data-toggle="modal" data-target="#addToImageModal" class="btn candidate-img-box"
+                        style="border-radius: 0; width: 100%">
+                        <label for="image<%= cnt %>_file">
+                            <input type="file" id="image<%= cnt %>_file" name="image"
+                                style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);">
+                            <input type="hidden" name="profile2" value="<%= candidateData[i].profile2 %>">
+                            <div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class=""
+                                style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;">
+                                <div data-text-content="true"
+                                    style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">
+                                    부후보</div>
+                            </div>
+                            <div data-obj-id="ftabY" data-obj-type="icon" class=""
+                                style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;"
+                                data-released-from-group="VdIJ0">
+                                <img style='width:95px;height:100px;margin-bottom:-40px;'
+                                    src='/img/<%= candidateData[i].profile2 %>'></div>
+                        <br><br><br>
+                        <p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>부후보 이미지를 수정하세요.</p>
+                        </label>
+                    </div>
+                    <div class="in-candidate-box">
+                        <p class="candidatetext">학과</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="dept2" name="dept2"
+                                value="<%= candidateData[i].dept2 %>" placeholder="학과를 입력해 주세요."></div>
+                        <p class="candidatetext">학번</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="no2" name="no2"
+                                value="<%= candidateData[i].hakbun2 %>" placeholder="학번을 입력해 주세요." min="1" max="99"></div>
+                        <p class="candidatetext">학년</p>
+                        <div class="form-group">
+                            <input type="number" class="form-control" style="height: 24px;" id="grade2" name="grade2"
+                                value="<%= candidateData[i].grade2 %>" placeholder="학년을 입력해 주세요." min="1" max="4"></div>
+                        <p class="candidatetext">이름</p>
+                        <div class="form-group">
+                            <input type="text" class="form-control" style="height: 24px;" id="name2" name="sname2"
+                                value="<%= candidateData[i].name2 %>" placeholder="이름을 입력해 주세요."></div>
+                    </div>
+                    <div><button class="btn btn-outline-primary" onclick="addNewPage('<%= cnt %>');return false;"
+                            style="width:100px;margin-bottom:0px;margin-top:-30px;">추가</button></div>
+                    <div class="registerbtns">
+                        <button class="nregisterbtn btn"
+                            onclick="goNextPage('<%= cnt %>', '<%= cnt-1 %>');return false;">뒤로</button>
+                        <button class="registerbtn btn"
+                            onclick="goNextPage('<%= cnt %>', '<%= cnt+1 %>');return false;">확인</button>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+            <% } %>
+        </form>
+    </div>
+    <!-- ------------------------------------------------------------------------------------------------------------------------------------------------ -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="cancelModifyVoteModal" tabindex="-1" role="dialog"
+        aria-labelledby="cancelModifyVoteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content small-modal-content vote-modal">
+                <div class="modal-body" style="text-align: center;">
+                    <p class="mb1">정말로 취소하시겠습니까?</p>
+                    <p class="mb2">(수정하신 정보는 저장되지 않습니다.)</p>
+                </div>
+                <div class="vote-modal-footer modal-footer">
+                    <button type="button" class="cancel-vote btn btn-primary" data-dismiss="modal">취소</button>
+                    <button type="button" class="confirm-vote btn btn-primary loading-action"
+                        onclick="goUrl('/adminManage');">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="finalModifyCandidateModal" tabindex="-1" role="dialog"
+        aria-labelledby="finalModifyCandidateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content small-modal-content vote-modal">
+                <div class="modal-body" style="text-align: center;">
+                    <span>입력한 선거대로 수정하시겠습니까?</span>
+                </div>
+                <div class="vote-modal-footer modal-footer">
+                    <button type="button" class="cancel-vote btn btn-primary" data-dismiss="modal">취소</button>
+                    <button type="button" class="confirm-vote btn btn-primary loading-action"
+                        onclick="submitModifyFrm();return false;">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('foot.ejs'); %>
+    <script type="text/javascript" src="/public/script.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.3/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.3/moment-with-locales.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.3/locale/ko.js"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" />
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+    <script>
+        var formData = new FormData();
+        $('#univSelect').val($('#univSelect option[selected]').val());
+        var len = parseInt('<%= candidateData.length %>');
+        $('#isMulti').val(len);
+        $(function () {
+            var startDate = new Date('<%= electionData.startDate %>');
+            var endDate = new Date('<%= electionData.endDate %>');
+            $('#startdate').val(getFormatDate(startDate, 0));
+            $('#enddate').val(getFormatDate(endDate, 0));
+            var temp = [];
+            var date = new Date();
+            for (var i = 1; i < date.getDate(); i++) {
+                var month = (date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : '0' + (date.getMonth() + 1);
+                var day = i >= 10 ? i : '0' + i;
+                temp = temp.concat(date.getFullYear() + '-' + month + '-' + day);
+            }
+            $('#startdate').datetimepicker({
+                format: "YYYY-MM-DD hh:mm",
+                disabledDates: temp,
+                minDate: date.getFullYear() + '-01-01 00:00',
+                maxDate: date.getFullYear() + '-12-31 00:00',
+                tooltips: { today: "오늘", selectTime: '시간설정' },
+            });
+            $('#enddate').datetimepicker({
+                format: "YYYY-MM-DD hh:mm",
+                disabledDates: temp,
+                minDate: date.getFullYear() + '-01-01 00:00',
+                maxDate: date.getFullYear() + '-12-31 00:00',
+                tooltips: { today: "오늘", selectTime: '시간설정' }
+            })
+        })
+        $(document).ready(function () {
+            $('#page2').css('display', 'none');
+            $('#page3').css('display', 'none');
+            $('#page4').css('display', 'none');
+            refresh_event();
+        });
+        var refresh_event = function () { //이미지 변경 시 파일 즉시 업로드 기능 추가
+            $('input[type=file]').change(function () {
+                var target = this.id;
+                if ($('#' + target).val().length != 0) {
+                    var fileInput = document.getElementById(target);
+                    var reader = new FileReader();
+                    reader.readAsDataURL(fileInput.files[0]);
+
+                    reader.onload = function () {
+                        $('#' + target).next().next().replaceWith('<img style=\'width:95px;height:100px;margin-bottom:-40px;\' src=\'' + reader.result + '\'>');
+                    };
+                    reader.onerror = function (error) {
+                        console.log('Error: ', error);
+                    };
+                }
+                //이미지 변경 시 파일 즉시 업로드(파일명은 원본 파일명 그대로 사용-DB에서 불러와야함)
+                var file = $(this).get(0).files[0];
+                let fname = $(this).get(0).name;
+                //예전 이름 가져오기(ajax)
+                let original_fname = $(this).next().next().children().attr('src').split('/')[2];
+                formData.append(fname, file, original_fname);
+            });
+        };
+        var checkemptyForModifyVote = function (hide) {
+            var test = $(hide + ' input[type=text]');
+            for (var i = 0; i < test.length; i++) {
+                if (test[i].value == '' || test[i].value.length == 0) {
+                    return false;
+                }
+            }
+            var select = $('#univSelect').val();
+            if (!select) {
+                return false;
+            }
+            if ($(hide + ' #no1').length != 0) {
+                var no1 = $(hide + ' #no1').val();
+                var grade1 = $(hide + ' #grade1').val();
+                if (!Number.isInteger(parseInt(no1)) || !Number.isInteger(parseInt(grade1) || no1 > 99 || no1 < 0 || grade1 < 1 || grade1 > 4)) {
+                    console.log(false);
+                    return false;
+                }
+            }
+            if ($(hide + ' #no2').length != 0) {
+                var no2 = $(hide + ' #no2').val();
+                var grade2 = $(hide + ' #grade2').val();
+                if (!Number.isInteger(parseInt(no2)) || !Number.isInteger(parseInt(grade2) || no2 > 99 || no2 < 0 || grade2 < 1 || grade2 > 4)) {
+                    console.log(false);
+                    return false;
+                }
+            }
+            return true;
+        }
+        var goNextPage = function (id, page) {
+            if(id == 1 && page == 2){
+                var now = new Date();
+                var start = new Date($('#startdate').val());
+                var end = new Date($('#enddate').val());
+                if(start.getDate() < now.getDate() + 3){
+                    alert('수정하려는 선거 시작시간을 현재시간 기준으로 3일 이후로 지정해야합니다.')
+                    return false;
+                }else if(end <= start){
+                    alert('수정하려는 선거 종료시간을 시작시간보다 이후여야 합니다.');
+                    return false;
+                }
+            }
+            var hide = '#page' + id;
+            var show = '#page' + page;
+            var empty = checkemptyForModifyVote(hide);
+            var last_page = $('form > div').length;
+            if (id > page) {
+                empty = true;
+            }
+            if (empty) {
+                $(hide).css('display', 'none');
+                $(show).css('display', '');
+                if (page == last_page + 1) {
+                    $(hide).css('display', '');
+                    $('#finalModifyCandidateModal').modal('toggle');
+                    var max_page = parseInt($('form').children().last().attr('id').substring(4));
+                    $('#max_page').val(max_page);
+                }
+            } else {
+                alert("모든 값을 입력해야 다음 페이지로 넘어갈 수 있습니다.");
+            }
+            return false;
+        }
+        var addNewPage = function (page) {
+            len++;
+            $('#isMulti').val(len);
+            var id = 'page' + page;
+            var sun_page = page + 1;
+            var jung_page = page + 2;
+            var bu_page = page + 3;
+            $('#' + id + ' .registerbtns > button:last').text('다음');
+            $('#' + id + ' .registerbtns > button:last').attr('onclick', 'goNextPage(' + page + ',' + sun_page + ');return false;');
+            $('.btn-outline-primary').replaceWith('<p style="font-size:10px;margin-bottom:0px;">추가되었습니다. 아래 다음버튼을 눌러주세요.</p>');
+            $('#' + id).after('<div id="page' + sun_page + '" style="display:none;"><div class="register-box"><div class="candidate-img-box" style="border-radius: 0; width: 100%"><label for="image' + sun_page + '_file"><input type="file" id="image' + sun_page + '_file" name="image" style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);"><div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class="" style="position: absolute; top: 75px; left: 20px; width: 80px; height: 20px;"><div data-text-content="true" style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">선거운동본부</div></div><div data-obj-id="ftabY" data-obj-type="icon" class="himage_icon" style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;cursor: pointer;" data-released-from-group="VdIJ0"><svg xmlns="http://www.w3.org/2000/svg" width="100" height="120" viewBox="0 0 48 48" data-svg-content="true" fill="rgb(255, 255, 255)"><path d="M24 24c4.42 0 8-3.59 8-8 0-4.42-3.58-8-8-8s-8 3.58-8 8c0 4.41 3.58 8 8 8zm0 4c-5.33 0-16 2.67-16 8v4h32v-4c0-5.33-10.67-8-16-8z"></path></svg></div><br><br><br><p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>선거운동본부 이미지를 등록해주세요.</p></label></div><div class="in-candidate-box"> <p class="registertext">선거운동본부 명칭</p><div class="form-group"><input type="text" class="form-control" style="height: 24px;" id="hname" name="hname" placeholder="선거운동본부 명칭을 입력해 주세요."  ></div><p class="registertext">소견문</p><div class="form-group"><input type="text" class="form-control" style="height: 24px;" id="link" name="link" placeholder="소견문 링크를 입력해 주세요."  ></div></div><div class="registerbtns"><button class="nregisterbtn btn" onclick="goNextPage(' + sun_page + ', ' + page + ');return false;">뒤로</button><button class="registerbtn btn" onclick="goNextPage(' + sun_page + ', ' + jung_page + ');return false;">다음</button></div></div></div>');
+            $('#' + id).after('<div id="page' + bu_page + '" style="display:none;"><div class="register-box"><div data-toggle="modal" data-target="#addToImageModal" class="btn candidate-img-box" style="border-radius: 0; width: 100%"><label for="image' + bu_page + '_file"><input type="file" id="image' + bu_page + '_file" name="image" style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);"><div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class="" style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;"><div data-text-content="true" style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">부후보</div></div><div data-obj-id="ftabY" data-obj-type="icon" class="" style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;" data-released-from-group="VdIJ0"><svg xmlns="http://www.w3.org/2000/svg" width="100" height="120" viewBox="0 0 48 48" data-svg-content="true" fill="rgb(255, 255, 255)"><path d="M24 24c4.42 0 8-3.59 8-8 0-4.42-3.58-8-8-8s-8 3.58-8 8c0 4.41 3.58 8 8 8zm0 4c-5.33 0-16 2.67-16 8v4h32v-4c0-5.33-10.67-8-16-8z"></path></svg></div><br><br><br><p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>부후보 이미지를 등록해주세요.</p></label></div><div class="in-candidate-box"> <p class="candidatetext">학과</p><div class="form-group"><input type="text" class="form-control" style="height: 24px;" id="dept2" name="dept2" placeholder="학과를 입력해 주세요."></div><p class="candidatetext">학번</p><div class="form-group"><input type="number" class="form-control" style="height: 24px;" id="no2" name="no2" placeholder="학번을 입력해 주세요." min="1" max="99"></div><p class="candidatetext">학년</p><div class="form-group"><input type="number" class="form-control" style="height: 24px;" id="grade2" name="grade2" placeholder="학년을 입력해 주세요." min="1" max="4"></div><p class="candidatetext">이름</p><div class="form-group"><input type="text" class="form-control" style="height: 24px;" id="name" name="sname2" placeholder="이름을 입력해 주세요."></div></div><div><button class="btn btn-outline-primary" onclick="addNewPage(' + (bu_page) + ');return false;" style="width:100px;margin-bottom:0px;margin-top:-30px;">추가</button></div><div class="registerbtns"><button class="nregisterbtn btn" onclick="goNextPage(' + bu_page + ', ' + jung_page + ');return false;">뒤로</button><button class="registerbtn btn" onclick="goNextPage(' + bu_page + ', ' + (bu_page + 1) + ');return false;">확인</button></div></div></div>');
+            $('#' + id).after('<div id="page' + jung_page + '" style="display:none;"><div class="register-box"><div data-toggle="modal" data-target="#addToImageModal" class="btn candidate-img-box" style="border-radius: 0; width: 100%"><label for="image' + jung_page + '_file"><input type="file" id="image' + jung_page + '_file" name="image" style="width:1px;height:1px;overflow:hidden;margin:-1px;position: absolute; border:0; padding:0;clip:rect(0,0,0,0);"><div data-obj-id="oQMoJ" data-obj-type="element" data-text-editable="true" class="" style="position: absolute; top: 75px; left: 20px; width: 40px; height: 20px;"><div data-text-content="true" style="font-size: 12px; border-radius: 2px; box-shadow: rgba(0, 0, 0, 0.227) 3px 3px 8px 0px; background-color: rgba(250, 250, 250, 0.49);">정후보</div></div><div data-obj-id="ftabY" data-obj-type="icon" class="" style="position: absolute; top: 75px; left: 132.5px; width: 95px; height: 100px;" data-released-from-group="VdIJ0"><svg xmlns="http://www.w3.org/2000/svg" width="100" height="120" viewBox="0 0 48 48" data-svg-content="true" fill="rgb(255, 255, 255)"><path d="M24 24c4.42 0 8-3.59 8-8 0-4.42-3.58-8-8-8s-8 3.58-8 8c0 4.41 3.58 8 8 8zm0 4c-5.33 0-16 2.67-16 8v4h32v-4c0-5.33-10.67-8-16-8z"></path></svg></div><br><br><br><p style="text-align: center; color: #ffffff; font-size: 11px;">여기를 클릭하여<br>정후보 이미지를 등록해주세요.</p></label></div><div class="in-candidate-box"><p class="candidatetext">학과</p><div class="form-group"><input type="text" class="form-control" style="height: 24px;" id="dept1" name="dept1" placeholder="학과를 입력해 주세요."></div><p class="candidatetext">학번</p><div class="form-group"><input type="number" class="form-control" style="height: 24px;" id="no1" name="no1" placeholder="학번을 입력해 주세요." min="1" max="99"></div><p class="candidatetext">학년</p><div class="form-group"><input type="number" class="form-control" style="height: 24px;" id="grade1" name="grade1" placeholder="학년을 입력해 주세요." min="1" max="4"></div><p class="candidatetext">이름</p><div class="form-group"><input type="text" class="form-control" style="height: 24px;" id="name" name="sname1" placeholder="이름을 입력해 주세요."></div></div><div class="registerbtns"><button class="nregisterbtn btn" onclick="goNextPage(' + jung_page + ', ' + sun_page + ');return false;">뒤로</button><button class="registerbtn btn" onclick="goNextPage(' + jung_page + ', ' + bu_page + ');return false;">다음</button></div></div></div>');
+            refresh_event();
+        }
+        var submitModifyFrm = function(){
+            $.ajax({
+                url: '/process/upload_image',
+                async: true,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response){
+                    console.log(response);
+                },
+                error: function(err){
+                    console.log(err);
+                }
+            });
+            document.modify.submit();
+        }
+    </script>
+</body>
+<% } %>
+
+</html>

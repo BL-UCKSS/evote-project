@@ -34,11 +34,10 @@ exports.connectToNetwork = async function (userName) {
     console.log('userName: ');
     console.log(userName);
 
-    console.log('wallet: ');
-    console.log(util.inspect(wallet));
-    console.log('ccp: ');
-    console.log(util.inspect(ccp));
-    // userName = 'V123412';
+    //console.log('wallet: ');
+    //console.log(util.inspect(wallet));
+    //console.log('ccp: ');
+    //console.log(util.inspect(ccp));
     const userExists = await wallet.exists(userName);
     if (!userExists) {
       console.log('An identity for the user ' + userName + ' does not exist in the wallet');
@@ -84,7 +83,7 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
   try {
     console.log('inside invoke');
     console.log(`isQuery: ${isQuery}, func: ${func}, args: ${args}`);
-    console.log(util.inspect(networkObj));
+    //console.log(util.inspect(networkObj));
 
 
     // console.log(util.inspect(JSON.parse(args[0])));
@@ -93,9 +92,10 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
       console.log('inside isQuery');
 
       if (args) {
-        console.log('inside isQuery, args');
-        console.log(args);
+        console.log('inside isQuery, args : ' + args);
+        //console.log(args);
         let response = await networkObj.contract.evaluateTransaction(func, args);
+        console.log('=========RESPONSE=========');
         console.log(response);
         console.log(`Transaction ${func} with args ${args} has been evaluated`);
   
@@ -121,15 +121,15 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
         console.log(args);
         console.log(func);
         console.log(typeof args);
-
-        args = JSON.parse(args[0]);
-
-        console.log(util.inspect(args));
+        
+        //args = JSON.parse(args[0]);
+        
+        //console.log(util.inspect(args));
         args = JSON.stringify(args);
-        console.log(util.inspect(args));
+        //console.log(util.inspect(args));
 
         console.log('before submit');
-        console.log(util.inspect(networkObj));
+        //console.log(util.inspect(networkObj));
         let response = await networkObj.contract.submitTransaction(func, args);
         console.log('after submit');
 
@@ -174,15 +174,15 @@ exports.registerVoter = async function (voterId) {
     // Create a new file system based wallet for managing identities.
     const walletPath = path.join(process.cwd(), 'wallet');
     const wallet = new FileSystemWallet(walletPath);
-    console.log(`Wallet path: ${walletPath}`);
-    console.log(wallet);
+    //console.log(`Wallet path: ${walletPath}`);
+    //console.log(wallet);
 
     // Check to see if we've already enrolled the user.
     const userExists = await wallet.exists(voterId);
     if (userExists) {
       let response = {};
-      console.log(`An identity for the user ${voterId} already exists in the wallet`);
-      response.error = `Error! An identity for the user ${voterId} already exists in the wallet. Please enter
+      //console.log(`An identity for the user ${voterId} already exists in the wallet`);
+      response.exists = `Error! An identity for the user ${voterId} already exists in the wallet. Please enter
         a different license number.`;
       return response;
     }

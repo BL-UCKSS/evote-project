@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+    <title>Admin Page</title>
+</head>
+<% if(session.userid != 'admin' && session.g != 'Y') { %>
+	<script>document.location.href="/login";</script>
+<% } else { %>
+<body class="loginbody">
+    <div class="text-center">
+        <%- include('header2.ejs'); %>
+        <!-- title -->
+        <div class="now-title">
+            <div>진행 중인 선거</div>
+        </div>
+        <!-- title end -->
+        <!-- content -->
+        <% if(list.length > 0) { %>
+        <% for(var i=0; i<list.length; i++) { %>
+        <div class="now-content">
+            <div>
+                <span class="now-content-span"><%= list[i].name %></span>
+                <span class="now-content-span2">~ <%= list[i].enddate %></span>
+            </div>
+            <div class="now-content-result">
+                <div class="progress">
+                    <% if(list[i].avg > 20) { %>
+                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                        <%= list[i].avg %>%
+                    </div>
+                    <% } else { %>
+                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div style="text-align: center; font-weight:bold;width:100%">
+                        <%= list[i].avg %>%
+                    </div>
+                    <% } %>
+                </div>
+                
+            </div>
+        </div>
+        <% } %>
+        <% } else { %>
+        <div class="myvote-cards">
+            <div class="myvote-card" style="text-align: center;padding:25px;">진행 중인 선거가 없습니다.</div>
+        </div>
+        <% } %>
+        <!-- content end -->
+    </div>
+    <%- include('foot.ejs'); %>
+</body>
+<% } %>
+</html>
