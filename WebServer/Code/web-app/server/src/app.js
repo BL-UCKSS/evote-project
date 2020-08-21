@@ -131,54 +131,6 @@ let getElectIdByYearUniv = async function(year, univ){
   }
   return res[i].Key;
 };
-let getBogwolElection = async function(univ){
-  // 미달 선거를 찾아서
-  // 종료된 선거 + 투표율 40% 미만인 선거 == 미달 선거
-  let totalNum = 20;
-  let deptNum = 10;
-  let networkObj = await network.connectToNetwork(appAdmin);
-  let response = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-  let elections = JSON.parse(JSON.parse(response));
-  let now = new Date();
-  let i;
-  for(i=0; i<elections.length; i++){
-    let end = new Date(elections[i].enddate);
-    if(now >= end){ //종료된 선거
-      // 해당 선거의 투표율을 탐색
-      networkObj = await network.connectToNetwork(appAdmin);
-      let resp = await network.invoke(networkObj, true, 'queryByObjectType', 'vBallot');
-      let vBallots = JSON.parse(JSON.parse(resp));
-      let cnt = 0;
-      for(let j=0; j<vBallots.length; j++){
-        if(vBallots[i].Record.election.electionId === elections[i].Key && vBallots[i].Record.picked !== 'NULL'){ // 해당 선거에 투표를 한 용지
-          cnt++;
-        }
-      }
-      let avg;
-      if(vBallots[i].Record.election.univ === '총학생회'){
-        avg = cnt / totalNum * 100; 
-      }else{
-        avg = cnt / deptNum * 100;
-      }
-      if(avg < 40){ //40% 미만
-        break;
-      }
-    }
-  }
-
-  // 해당 미달 선거에 대한 보궐 선거 찾기
-  let midalElection = elections[i];
-  networkObj = await network.connectToNetwork(appAdmin);
-  let resp = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-  let elects = JSON.parse(JSON.parse(resp));
-  for(let i=0; i<elects.length; i++){
-    if(elects[i].Record.univ === midalElection.Record.univ && elects[i].Key !== midalElection.Key){
-      console.log('미달선거: ' + midalElection.Key + ' ==> 보궐선거: ' + elects[i].Key);
-      return elects[i].Key; // 보궐 선거의 electionId 반환
-    }
-  }
-  return false;
-};
 let getHashPw = function(database, stdno, callback) {
   console.log('getHashPw 호출됨 : ' + stdno);
   
@@ -665,31 +617,6 @@ app.get('/sign', async (req, res) => {
       }
     }
   }
-  // 보궐 선거 존재 유무 확인하기 (구현 미흡, 예외처리 미흡, 복잡도 너무 높음)
-  /*for(let j=2; j<slots.length; j++){ // j === 2 는 총학생회 보궐선거, j === 3 는 단과대 보궐선거. 
-    // 미달 선거를 파악하고, 해당 미달 선거에 대한 보궐 선거의 electId를 가져오는 함수 구현하기
-    electId = await getBogwolElection(univArray[j]);
-    if(!electId){ // 총학생회/단과대의 보궐선거가 없다면
-      continue;
-    }
-    //총학생회 선거의 보궐선거가 존재한다면, 투표용지 만들기
-    let args = {
-      walletId: walletid,
-      electionId: electId
-    };
-    let networkObj = await network.connectToNetwork(walletid);
-    let response = await network.invoke(networkObj, false, 'createVBallot', args);
-    response = JSON.parse(response);
-    if(response.error){
-      console.log(response.error);
-      return;
-    }else{
-      let networkObj = await network.connectToNetwork(walletid);
-      electionCast = await network.invoke(networkObj, true, 'readMyAsset', response.success);
-      electionCast = JSON.parse(electionCast);
-      election = electionCast.election;
-    }
-  }*/
   
   //투표 기간이 되었는지 확인하기
   let curDate = new Date();
