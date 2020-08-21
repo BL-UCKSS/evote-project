@@ -21,23 +21,37 @@
         <% for(var i=0; i<list.length; i++) { %>
         <div class="now-content">
             <div>
-                <span class="now-content-span"><%= list[i].name %></span>
+                <span class="now-content-span" style="font-weight: bold;"><%= list[i].name %></span>
                 <span class="now-content-span2">~ <%= list[i].enddate %></span>
             </div>
             <div class="now-content-result">
-                <div class="progress">
-                    <% if(list[i].avg > 20) { %>
-                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                        <%= list[i].avg %>%
+                <div class="myvotresult-card-contentbox">
+                    <div class="myvotresult-card-content">
+                        전체 투표율
                     </div>
-                    <% } else { %>
-                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].avg %>%" aria-valuenow="<%= list[i].avg %>" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                    <div style="text-align: center; font-weight:bold;width:100%">
-                        <%= list[i].avg %>%
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[0] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                            <%= list[i].count[0] %>%
+                        </div>
                     </div>
-                    <% } %>
                 </div>
-                
+                <hr>
+                <!-- 후보별 투표율 -->
+                <% for (var k in list[i].candidateName) { %>
+                    <% if (k==0) { %>       <!-- 첫번째 값은 문자열 voteNum이므로 제외 -->
+                    <% } else {%>
+                        <div class="myvotresult-card-contentbox">
+                            <div class="myvotresult-card-content">
+                                <%= list[i].candidateName[k] %>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[k] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                    <%= list[i].count[k] %>%
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                <% } %>
             </div>
         </div>
         <% } %>
