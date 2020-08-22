@@ -333,13 +333,13 @@ app.get('/adminNow', async (req, res) => {
       total = resp.count[0];  //선거의 총 참여자 수
       console.log('해당 선거의 총 참여자수: '+total);
 
-      if(parsedElection[i].Record.univ === "총학생회") {
+      if(parsedElection[i].Record.univ === '총학생회') {
         totalTurnout = total/totalNum*100;
         if(totalTurnout < 40){
           console.log('('+ parsedElection[i].Record.name+') 해당 선거는 투표율 미달로 인해 무산되었습니다.');
         }
       } else {    //단과대 학생회 선거일 경우 deptNum 사용
-        totalTurnout = res.count[0]/deptNum*100;
+        totalTurnout = resp.count[0]/deptNum*100;
         if(totalTurnout < 40){
           console.log('('+ parsedElection[i].Record.name+') 해당 선거는 투표율 미달로 인해 무산되었습니다.');
         }
@@ -349,10 +349,10 @@ app.get('/adminNow', async (req, res) => {
 
       //각 후보자 별 투표율 계산해서 배열에 저장
       for (let a=0; a < resp.count.length; a++) {
-        if (a ==0){
+        if (a === 0){
           candidateCount[a] = totalTurnout;   //선거 총 투표율
         } else {
-        candidateCount[a] = (resp.count[a]/total)*100; //후보 별 투표율
+          candidateCount[a] = (resp.count[a]/total)*100; //후보 별 투표율
         }
       }
       if(resp.error){
@@ -535,7 +535,7 @@ app.get('/sign', async (req, res) => {
         electionId: electId1
       };
       let networkObj = await network.connectToNetwork(walletid);
-      let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
+      let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot1가 생겨야함.
       response = JSON.parse(response);
       if(response.error){
         console.log(response.error);
@@ -559,7 +559,6 @@ app.get('/sign', async (req, res) => {
       }
     }
   }
-  //만약 투표를 한 적이 있거나 개인정보보호 동의 안함 눌렀을 경우 또는 투표 중 이탈했을 경우
   let electionCast;
   let election;
   let slotsUntil2 = slots.length - 2;
@@ -568,6 +567,7 @@ app.get('/sign', async (req, res) => {
     let std = await network.invoke(networkObj, true, 'readMyAsset', walletid); //walletid만 넘기겠음
     student = JSON.parse(std);
   }
+  //만약 투표를 한 적이 있거나 개인정보보호 동의 안함 눌렀을 경우 또는 투표 중 이탈했을 경우
   for(let i=0; i<slotsUntil2; i++){
     if(student[slots[i]] !== 'NULL'){
       let networkObj = await network.connectToNetwork(walletid);
