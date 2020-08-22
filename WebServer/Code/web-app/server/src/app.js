@@ -302,27 +302,21 @@ app.get('/adminMain', async (req, res) => {
 
 app.get('/adminNow', async (req, res) => {
   let totalNum = 20; //재학생 수
-  let deptNum = 10;
-  //단과대별로 재학생 수 가져오기 (임시로 10명 고정)
-  if(req.session.univ === '융합공과대학'){
-    deptNum = 10;
-  }else{
-    deptNum = 10;
-  }
+  let deptNum = 10;  //단과대 학생 수 (임시로 10명 고정)
+
   let arr = [];
   let networkObj = await network.connectToNetwork(appAdmin);
   let resElection = await network.invoke(networkObj, true, 'queryByObjectType', 'election');
-  let parsedElection = await JSON.parse(resElection);
-  parsedElection = await JSON.parse(parsedElection);  
+  let parsedElection = await JSON.parse(JSON.parse(resElection));
   let now = new Date();
 
   //선거 목록 출력 후 선거별로 투표율 계산 및 출력
   for (let i in parsedElection){
     let t1 = new Date(parsedElection[i].Record.startDate);
     let t2 = new Date(parsedElection[i].Record.endDate);
-    let total;         //선거의 총 참여자 수
-    let totalTurnout;   //선거의 총 투표율
-    let candidateCount = []; //선거의 후보자 목록: 투표한 학생 수 (배열)
+    let total;                //선거의 총 참여자 수
+    let totalTurnout;         //선거의 총 투표율
+    let candidateCount = [];  //선거의 후보자 목록: 투표한 학생 수 (배열)
 
     if(now >= t1 && now <= t2){ 
       let electionId = parsedElection[i].Key;
@@ -351,10 +345,13 @@ app.get('/adminNow', async (req, res) => {
       for (let a=0; a < resp.count.length; a++) {
         if (a === 0){
           candidateCount[a] = totalTurnout;   //선거 총 투표율
+        } else if( resp.count[a] == 0) {
+          candidateCount[a] = 0;   //참여자가 없어 후보 투표율이 0일 경우 0으로 할당 (하지 않으면 Nan으로 할당됨)
         } else {
           candidateCount[a] = (resp.count[a]/total)*100; //후보 별 투표율
         }
       }
+
       if(resp.error){
         console.log('에러!');
         return;

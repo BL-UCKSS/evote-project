@@ -29,11 +29,18 @@
                     <div class="myvotresult-card-content">
                         전체 투표율
                     </div>
-                    <div class="progress">
-                        <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[0] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                    <% if(list[i].count[0] ==0) {%>
+                        <div class="progress">
+                            <div style="text-align: center; width:100%; color:black">
                             <%= list[i].count[0] %>%
                         </div>
-                    </div>
+                    <% } else { %>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[0] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                <%= list[i].count[0] %>%
+                            </div>
+                        </div>
+                    <% } %>
                 </div>
                 <hr>
                 <!-- 후보별 투표율 -->
@@ -44,11 +51,19 @@
                             <div class="myvotresult-card-content">
                                 <%= list[i].candidateName[k] %>
                             </div>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[k] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
-                                    <%= list[i].count[k] %>%
+                            <% if(list[i].count[k] ==0) {%>
+                                <div class="progress">
+                                    <div style="text-align: center; width:100%; color:black">
+                                        <%= list[i].count[k] %>%
+                                    </div>   
+                                </div>                             
+                            <% } else { %>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: <%= list[i].count[k] %>%" aria-valuenow="30" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                        <%= list[i].count[k] %>%
+                                    </div>
                                 </div>
-                            </div>
+                            <% } %>
                         </div>
                     <% } %>
                 <% } %>
