@@ -16,7 +16,7 @@ let appAdmin = config.appAdmin;
 let orgMSPID = config.orgMSPID;
 
 // connect to the connection file
-const ccpPath = path.join(process.cwd(), connection_file);
+const ccpPath = path.resolve(__dirname, '..', '..','..', '..','..', '..', 'network', 'connection-org1.json');
 const ccpJSON = fs.readFileSync(ccpPath, 'utf8');
 const ccp = JSON.parse(ccpJSON);
 
