@@ -92,3 +92,4 @@ joinChannelWithRetry() {
   fi
   verifyResult $res "After $MAX_RETRY attempts, peer${PEER}.org${ORG} has failed to join channel '$CHANNEL_NAME' "
 }
+

@@ -26,7 +26,6 @@ COUNTER=1
 MAX_RETRY=10
 
 
-
 echo "Channel name : "$CHANNEL_NAME
 
 # import utils
@@ -74,6 +73,8 @@ joinChannel
 ## Set the anchor peers for each org in the channel
 echo "Updating anchor peers for org1..."
 updateAnchorPeers 0 1
+
+
 
 
 echo
