@@ -9,7 +9,7 @@ Capstone Design - evote hyperledger fabric project
 5. cd ../server/ 한다. (server 폴더로 이동)
 6. node src/app 한다. (웹서버 구동)
 7. http://localhost:8081 웹 브라우저로 접속 (node webserver 접속)
-8. http://localhost:5984/\_utils 웹 브라우저로 접속 (couchdb0 확인, couchdb1은 6984 포트임)
+8. http://localhost:5984/_utils 웹 브라우저로 접속 (couchdb0 확인, couchdb1은 6984 포트임)
 9. 각 노드별로 로그 확인은 알아서 하길 바람. (docker console/GUI 이용바람)
 
 # 참고사항
