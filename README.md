@@ -2,6 +2,7 @@
 Capstone Design - evote hyperledger fabric project
 
 # 사용법(요약)
+0. (사전에 bin 폴더에 binary 파일들을 가져오길 바람 - 필수!)
 1. 현재 경로에서 git bash 를 켠다.
 2. cd network/ 한다. (network 폴더로 이동)
 3. bash shut.sh (docker 종료 및 폴더 삭제 등)
@@ -16,4 +17,4 @@ Capstone Design - evote hyperledger fabric project
 1. 실행은 git bash 를 사용하길 바람.
 2. docker desktop은 file sharing에 network 폴더를 등록해두길 바람.
 3. 기타 궁금한 사항은 담당자에게 물어보기 바람.
-4. bin 폴더 내용물은 크ꈰ가 너무 커서 github에는 올리지 않음.
+4. bin 폴더 내용물은 크기(용량)가 너무 커서 github에는 올리지 않음.
