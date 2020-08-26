@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <%- include('head.ejs'); %>
+    <title>Main Page</title>
+</head>
+<%# session.univ %>
+<% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+<% } else if(session.userid == 'admin' && session.g == 'Y') { %>
+    <script>document.location.href="/adminMain";</script>
+<% } else { %>
+<body class="loginbody">
+    <div class="text-center">
+        <%- include('header.ejs'); %>
+        
+        <div class="vote-container loading-action">
+            <a href="/sign"><span class="myvote">
+                <img class="txtimg" src="/img/voteIcon.png">
+                <div class="txt1">
+                    <span id="txt_2" class="txt font-weight-bolder">투표하기</span>
+                    <span id="txtln_2">후보에게 투표를 할 수 있습니다.</span>
+                </div>
+            </span></a>
+            <a href="/myvote"><span class="myvote">
+                <img class="txtimg" src="/img/checkMyVoteIcon.png">
+                <div class="txt1">
+                    <span id="txt_3" class="txt font-weight-bolder">투표 확인</span>
+                    <span id="txtln_3">내 투표 내역을 확인할 수 있습니다.</span>
+                </div>
+            </span></a>
+            <a href="/voteresult"><span class="myvote">
+                <img class="txtimg" src="/img/results.png">
+                <div class="txt1">
+                    <span id="txt_3" class="txt font-weight-bolder">선거 결과 확인</span>
+                    <span id="txtln_3">모든 선거의 결과를 확인할 수 있습니다.</span>
+                </div>
+            </span></a>
+        </div>
+    </div>
+    <%- include('foot.ejs'); %>
+</body>
+<% } %>
+</html>

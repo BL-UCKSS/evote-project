@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+	<%- include('head.ejs'); %>
+	<title>Help Page</title>
+  </head>
+  <% /* session.univ는 학생의 단과대학을 표시해줌 */ %>
+  <% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+  <% } else { %>
+
+<body class="loginbody">
+    <div class="text-center">
+      <%- include('header.ejs'); %>
+        <div class="help-box">
+            <span class="help-email"><%= email %></span>
+            <span class="help-text">건의사항이 있을 경우 위 이메일로 메일을 보내주세요.</span>
+        </div>
+    </div>
+	<%- include('foot.ejs'); %>
+  </body>
+  <% } %>
+</html>

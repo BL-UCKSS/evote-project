@@ -1,0 +1,13 @@
+몽고디비 테스트 데이터
+
+1. SSO DB 사용자 추가 쿼리문 예시
+db.ssousers.insertOne({ "stdno" : "201712345", "password" : "123456", "name" : "김동형", "grade" : 4, "dept" : "컴퓨터과학과", "stat" :
+"재학", "email" : "johnkim@naver.com", "univ" : "융합공과대학" })
+
+2. 선거 및 후보자 DB 쿼리문 예시
+db.candidates.find().pretty()
+
+3. 선거 및 후보자 DB 전체 삭제문 예시
+db.candidates.deleteMany({})
+
+4. 선거 및 후보자 DB 추가는 관리자 선거 등록하기 메뉴에서 가능

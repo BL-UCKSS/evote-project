@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <%- include('head.ejs'); %>
+    <title>Final Vote Page</title>
+  </head>
+<% if(!session.userid) { %>
+    <script>document.location.href="/login";</script>
+<% } else { %>
+  <body class="loginbody">
+    <div class="text-center">
+    	<%- include('header.ejs'); %>
+
+    	<div class="fin-box">
+    		<div class="text-vote">
+    		<span>소중한 시간을 내어</span>
+    		<span>투표를 해주셔서 감사합니다.</span>
+    		<span>확인 버튼을 누르면 메인으로 돌아갑니다.</span>
+    		</div>
+    		<div class="signbtns">
+    		<button onclick="document.location.href='/main'" class="finbtn btn btn-primary">확인</button>
+    		</div>
+    	</div>
+    </div>
+
+    <%- include('foot.ejs'); %>
+  </body>
+</html>
