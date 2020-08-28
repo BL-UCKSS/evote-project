@@ -544,6 +544,7 @@ a:link {
     margin: 20px;
     padding: 10px;
     cursor: pointer;
+    box-shadow: 3px 3px 8px 0px #0000003a;
 }
 
 .manage-carousel-item-content-1 {
