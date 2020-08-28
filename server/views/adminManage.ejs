@@ -61,7 +61,7 @@
             <% var t3 = new Date(list[i].Record.endDate) %>
             <% if(t1 >= t2 && t1 <= t3) { %>
             <% conCnt++ %>
-        <div class="manage-carousel-item-content" onclick="changeTitle('exitElectionModal','<%= list[i].Record.name %>','<%= list[i].Key %>');return false;">
+        <div class="manage-carousel-item-content" style="cursor:default;">
             <div class="manage-carousel-item-content-1">
                 <div class="manage-carousel-item-content-2"><%= String(list[i].Record.startDate).substring(0,10) %> <%= String(list[i].Record.startDate).substring(11,16) %> ~ <%= String(list[i].Record.endDate).substring(0,10) %> <%= String(list[i].Record.endDate).substring(11,16) %></div>
                 <div class="manage-carousel-item-content-3"><%= list[i].Record.name %></div>
