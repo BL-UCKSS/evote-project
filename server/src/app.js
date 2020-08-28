@@ -535,6 +535,7 @@ app.get('/sign', async (req, res) => {
         walletId: walletid,
         electionId: electId1
       };
+      args = JSON.stringify(args);
       let networkObj = await network.connectToNetwork(walletid);
       let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot1가 생겨야함.
       response = JSON.parse(response);
@@ -550,6 +551,7 @@ app.get('/sign', async (req, res) => {
           walletId: walletid,
           electionId: electId2
         };
+        args = JSON.stringify(args);
         let networkObj = await network.connectToNetwork(walletid);
         let response = await network.invoke(networkObj, false, 'createVBallot', args); //여기서 slot2가 생겨야함.
         response = JSON.parse(response);
@@ -604,6 +606,7 @@ app.get('/sign', async (req, res) => {
         walletId: walletid,
         electionId: electId
       };
+      args = JSON.stringify(args);
       let networkObj = await network.connectToNetwork(walletid);
       let response = await network.invoke(networkObj, false, 'createVBallot', args);
       response = JSON.parse(response);
@@ -1142,7 +1145,8 @@ app.post('/process/finvote/:univ', async (req, res) => {
     candidateId:candidateid,
     univ:univ
   };
-  console.log('args : ' + JSON.stringify(args));
+  args = JSON.stringify(args);
+  console.log('args : ' + args);
   let networkObj = await network.connectToNetwork(walletid);
   let response = await network.invoke(networkObj, false, 'castVote', args); 
   response = JSON.parse(response);
