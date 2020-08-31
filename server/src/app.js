@@ -352,7 +352,7 @@ app.get('/adminNow', async (req, res) => {
         } else if( resp.count[a] == 0) {
           candidateCount[a] = 0;   //참여자가 없어 후보 투표율이 0일 경우 0으로 할당 (하지 않으면 Nan으로 할당됨)
         } else {
-          candidateCount[a] = (resp.count[a]/total)*100; //후보 별 투표율
+          candidateCount[a] = Math.round((resp.count[a]/total)*100); //후보 별 투표율
         }
       }
 
