@@ -541,6 +541,7 @@ app.get('/sign', async (req, res) => {
       response = JSON.parse(response);
       if(response.error){
         console.log(response.error);
+        res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+response.error+'\');document.location.href=\'/main\';</script>');
         return;
       }
       //단과대 선거 존재여부 파악
@@ -557,6 +558,7 @@ app.get('/sign', async (req, res) => {
         response = JSON.parse(response);
         if(response.error){
           console.log(response.error);
+          res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+response.error+'\');document.location.href=\'/main\';</script>');
           return;
         }
       }
@@ -589,7 +591,7 @@ app.get('/sign', async (req, res) => {
         if(!electId){
           console.log('에러 발생.');
           let context = {error:'선거가 존재하지 않음'};
-          res.end('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
+          res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+context.error+'\');document.location.href=\'/main\';</script>');
           return;
         }
         break;
@@ -599,7 +601,7 @@ app.get('/sign', async (req, res) => {
       if(!electId){
         let context = {error:univArray[i] + ' 선거가 존재하지 않음'};
         console.log(context.error);
-        res.end('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
+        res.send('<head><meta charset=\'utf-8\'></head><script>alert(\'이미 모든 투표를 완료했습니다.\');document.location.href=\'/main\';</script>');
         return;
       }
       let args = {
@@ -612,6 +614,7 @@ app.get('/sign', async (req, res) => {
       response = JSON.parse(response);
       if(response.error){
         console.log(response.error);
+        res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+response.error+'\');document.location.href=\'/main\';</script>');
         return;
       }else{
         let networkObj = await network.connectToNetwork(walletid);
@@ -630,7 +633,7 @@ app.get('/sign', async (req, res) => {
     console.log(election.univ + ' 투표기간입니다.');
   }else{
     console.log(election.univ + ' 투표 기간이 아닙니다.');
-    res.end('<head><meta charset=\'utf-8\'></head><script>alert('+election.univ+'\' 투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
+    res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+election.univ+'\' 투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
     return;
   }
 
