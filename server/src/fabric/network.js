@@ -90,7 +90,7 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
     //console.log(util.inspect(networkObj));
 
 
-    // console.log(util.inspect(JSON.parse(args[0])));
+    //console.log(util.inspect(JSON.parse(args[0])));
 
     if (isQuery === true) {
       console.log('inside isQuery');
@@ -98,6 +98,7 @@ exports.invoke = async function (networkObj, isQuery, func, args) {
       if (args) {
         console.log('inside isQuery, args : ' + args);
         //console.log(args);
+        args = JSON.stringify(args);
         let response = await networkObj.contract.evaluateTransaction(func, args);
         console.log('=========RESPONSE=========');
         console.log(response);
