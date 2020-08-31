@@ -629,11 +629,15 @@ app.get('/sign', async (req, res) => {
   let curDate = new Date();
   let t1 = new Date(election.startDate);
   let t2 = new Date(election.endDate);
+  t2.setHours(t2.getHours() - 9);
+  console.log(curDate);
+  console.log(t1);
+  console.log(t2);
   if(curDate >= t1 && curDate <= t2){
     console.log(election.univ + ' 투표기간입니다.');
   }else{
     console.log(election.univ + ' 투표 기간이 아닙니다.');
-    res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+election.univ+'\' 투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
+    res.send('<head><meta charset=\'utf-8\'></head><script>alert(\''+election.univ+' 투표 기간이 아닙니다.\');document.location.href=\'/main\';</script>');
     return;
   }
 
