@@ -485,7 +485,7 @@ app.get('/voteresult', async (req, res) => {
         if (a ==0){
           candidateCount[a] = totalTurnout;   //선거 총 투표율
         } else {
-        candidateCount[a] = (res.count[a]/total)*100; //후보 별 투표율
+        candidateCount[a] = Math.round((res.count[a]/total)*100); //후보 별 투표율
         }
       }
       arr.push({
